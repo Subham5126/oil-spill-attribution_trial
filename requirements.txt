@@ -1,0 +1,37 @@
+# Core
+numpy
+pandas
+scipy
+scikit-learn
+matplotlib
+
+# Computer Vision
+opencv-python
+
+# Deep Learning
+torch
+torchvision
+segmentation-models-pytorch
+
+# Satellite / Scientific Data
+xarray
+netCDF4
+h5py
+
+# Backend
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+
+# Database
+sqlalchemy
+psycopg2-binary
+
+# Utilities
+requests
+tqdm
+pyyaml
+
+# Testing
+pytest
