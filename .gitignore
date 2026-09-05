@@ -32,3 +32,5 @@ Thumbs.db
 
 # Sample data
 data/sample/*
+# Pytest temporary directories
+.pytest-*-temp/
