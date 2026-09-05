@@ -1,0 +1,45 @@
+# Default owner
+* @Subham5126
+
+# AI / Segmentation
+/ai/ @AI-TEAMMATE
+
+# Satellite Processing
+/satellite/ @SATELLITE-TEAMMATE
+
+# GIS / Spill Geometry
+/gis/ @GIS-TEAMMATE
+
+# Ocean / Drift Modelling
+/ocean/ @DRIFT-TEAMMATE
+/drift/ @DRIFT-TEAMMATE
+
+# AIS / Vessel Attribution
+/ais/ @AIS-TEAMMATE
+/attribution/ @AIS-TEAMMATE
+
+# Backend / Database
+/backend/ @BACKEND-TEAMMATE
+/database/ @BACKEND-TEAMMATE
+
+# Frontend
+/frontend/ @FRONTEND-TEAMMATE
+
+# Tests
+/tests/ @Subham5126
+
+# Architecture / Project Documentation
+/docs/architecture/ @Subham5126
+/docs/api/ @Subham5126
+
+# Development Documentation
+/docs/development/ @Subham5126
+
+# Dataset Documentation
+/docs/datasets/ @Subham5126
+
+# CI / Repository Configuration
+/.github/ @Subham5126
+/.gitignore @Subham5126
+/requirements.txt @Subham5126
+/docker-compose.yml @Subham5126
