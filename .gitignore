@@ -29,3 +29,8 @@ data/processed/*
 .DS_Store
 Thumbs.db
 "@ | Set-Content .gitignore
+
+# Sample data
+data/sample/*
+# Pytest temporary directories
+.pytest-*-temp/
