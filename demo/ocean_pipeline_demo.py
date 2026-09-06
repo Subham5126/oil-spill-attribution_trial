@@ -18,11 +18,12 @@ from ocean.time.synchronization import normalize_timestamp
 from ocean.interpolation.environment import interpolate_currents, interpolate_wind
 from ocean.drift import Particle, simulate_particles, hindcast_particles
 from ocean.drift.origin import analyze_origin
+from ocean.drift.uncertainty import calculate_uncertainty
 
 
 def main():
     print("=" * 50)
-    print("OCEAN-04 -> OCEAN-08 DEMO")
+    print("OCEAN-04 -> OCEAN-08 & DRIFT-06 DEMO")
     print("=" * 50)
     
     # 1. Load Environmental Data
@@ -112,9 +113,28 @@ def main():
         print(f"    Latitude: {best_candidate.region.centroid_lat:.4f}")
         print(f"    Longitude: {best_candidate.region.centroid_lon:.4f}")
         print(f"    Relative heuristic origin score: {best_candidate.heuristic_score:.4f}")
+        
+        # DRIFT-06: Uncertainty Analysis
+        print("\nDRIFT-06:")
+        try:
+            unc_result = calculate_uncertainty(df_backward, timestamp=best_candidate.timestamp, confidence_level=0.95)
+            print("  Empirical spatial uncertainty estimate:")
+            print(f"    Timestamp: {unc_result.timestamp}")
+            print(f"    Particle count: {unc_result.particle_count}")
+            print(f"    Centroid: {unc_result.centroid_latitude:.4f} N, {unc_result.centroid_longitude:.4f} E")
+            print(f"    Spread: {unc_result.spread_km:.4f} km")
+            print(f"    95% uncertainty radius: {unc_result.uncertainty_radius_km:.4f} km")
+            print("    Bounds:")
+            print(f"      Latitude: {unc_result.min_latitude:.4f} to {unc_result.max_latitude:.4f}")
+            print(f"      Longitude: {unc_result.min_longitude:.4f} to {unc_result.max_longitude:.4f}")
+        except Exception as e:
+            print(f"  DRIFT-06 Uncertainty Analysis failed: {e}")
+            unc_result = None
+            
     except Exception as e:
         print(f"  OCEAN-08 Analysis failed: {e}")
         best_candidate = None
+        unc_result = None
 
     print("=" * 50)
     
@@ -150,7 +170,23 @@ def main():
     final_fwd = df_forward[df_forward["timestamp"] == t_max]
     ax.scatter(final_fwd["longitude"], final_fwd["latitude"], color="grey", s=5, alpha=0.5, label=f"Forward Drift ({t_max.strftime('%H:%M')} UTC)")
         
-    ax.set_title("OCEAN Pipeline: Forward Drift vs Backward Hindcast", fontsize=14)
+    # DRIFT-06: Draw uncertainty radius
+    if 'unc_result' in locals() and unc_result is not None:
+        import matplotlib.patches as patches
+        # Earth-aware conversion: 1 degree latitude ~ 111.1949 km
+        # 1 degree longitude ~ 111.1949 * cos(latitude) km
+        d_lat = unc_result.uncertainty_radius_km / 111.1949
+        d_lon = unc_result.uncertainty_radius_km / (111.1949 * np.cos(np.radians(unc_result.centroid_latitude)))
+        
+        ellipse = patches.Ellipse(
+            (unc_result.centroid_longitude, unc_result.centroid_latitude),
+            width=2*d_lon, height=2*d_lat,
+            edgecolor='red', facecolor='none', linestyle='--', linewidth=1.5, zorder=6,
+            label="95% Empirical Uncertainty Radius"
+        )
+        ax.add_patch(ellipse)
+
+    ax.set_title("OCEAN Pipeline: Forward Drift, Hindcast, Origin & Uncertainty", fontsize=14)
     ax.set_xlabel("Longitude")
     ax.set_ylabel("Latitude")
     ax.legend(loc="best")
