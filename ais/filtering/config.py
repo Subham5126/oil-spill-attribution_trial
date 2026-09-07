@@ -86,3 +86,67 @@ class SpatialFilterConfig:
                     raise ValueError(
                         f"{lon_name} must be a finite number in [-180.0, 180.0], got {lon_val}"
                     )
+
+
+@dataclass(frozen=True)
+class TemporalFilterConfig:
+    """Configuration settings for AIS temporal filtering.
+
+    Attributes:
+        window_minutes: Default symmetric temporal search window in minutes.
+            Defaults to 30.0 minutes.
+        before_minutes: Optional explicit time window in minutes prior to the
+            origin timestamp. Precedence rule: before_minutes if explicitly provided,
+            otherwise window_minutes.
+        after_minutes: Optional explicit time window in minutes following the
+            origin timestamp. Precedence rule: after_minutes if explicitly provided,
+            otherwise window_minutes.
+        retain_full_segments: If False (default), returns only the specific
+            observations whose timestamps fall within the time window.
+            If True, retains all observations of any continuous trajectory segment
+            that has at least one observation within the time window.
+    """
+
+    window_minutes: float = 30.0
+    before_minutes: Optional[float] = None
+    after_minutes: Optional[float] = None
+    retain_full_segments: bool = False
+
+    def __post_init__(self) -> None:
+        """Validate temporal filter configuration constraints.
+
+        Raises:
+            ValueError: If window parameters are non-finite, NaN, or negative.
+        """
+        if not np.isfinite(self.window_minutes) or self.window_minutes < 0.0:
+            raise ValueError(
+                f"window_minutes must be a finite non-negative number, got {self.window_minutes}"
+            )
+        if self.before_minutes is not None:
+            if not np.isfinite(self.before_minutes) or self.before_minutes < 0.0:
+                raise ValueError(
+                    f"before_minutes must be a finite non-negative number, got {self.before_minutes}"
+                )
+        if self.after_minutes is not None:
+            if not np.isfinite(self.after_minutes) or self.after_minutes < 0.0:
+                raise ValueError(
+                    f"after_minutes must be a finite non-negative number, got {self.after_minutes}"
+                )
+
+    @property
+    def effective_before_minutes(self) -> float:
+        """Effective time window in minutes prior to origin timestamp."""
+        return (
+            self.before_minutes
+            if self.before_minutes is not None
+            else self.window_minutes
+        )
+
+    @property
+    def effective_after_minutes(self) -> float:
+        """Effective time window in minutes following origin timestamp."""
+        return (
+            self.after_minutes
+            if self.after_minutes is not None
+            else self.window_minutes
+        )

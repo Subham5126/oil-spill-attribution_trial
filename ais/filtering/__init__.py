@@ -5,7 +5,7 @@ with anti-meridian handling, trajectory segment qualification, and Member 4
 uncertainty envelope integration.
 """
 
-from ais.filtering.config import SpatialFilterConfig
+from ais.filtering.config import SpatialFilterConfig, TemporalFilterConfig
 from ais.filtering.spatial import (
     EARTH_RADIUS_KM,
     SpatialFilterReport,
@@ -17,6 +17,14 @@ from ais.filtering.spatial import (
     filter_spatial,
     filter_trajectories_spatially,
     haversine_distance_km,
+)
+from ais.filtering.temporal import (
+    TemporalFilterReport,
+    TemporalFilterResult,
+    filter_by_origin_time,
+    filter_by_time_window,
+    filter_temporal,
+    filter_trajectories_temporally,
 )
 
 __all__ = [
@@ -31,4 +39,11 @@ __all__ = [
     "filter_by_origin_uncertainty",
     "filter_trajectories_spatially",
     "filter_spatial",
+    "TemporalFilterConfig",
+    "TemporalFilterReport",
+    "TemporalFilterResult",
+    "filter_by_time_window",
+    "filter_by_origin_time",
+    "filter_trajectories_temporally",
+    "filter_temporal",
 ]
