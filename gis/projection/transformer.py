@@ -5,7 +5,16 @@ from __future__ import annotations
 import math
 from typing import Any, Tuple, Union
 
-from gis.geometry.models import BoundingBox, LineString, MultiPolygon, Point, Polygon
+from gis.geometry.models import (
+    BoundingBox,
+    Coordinate,
+    LinearRing,
+    LineString,
+    MultiPolygon,
+    OilSpillGeometry,
+    Point,
+    Polygon,
+)
 from gis.projection.crs import CRS
 from gis.projection.exceptions import OutOfRangeError, ProjectionError
 
@@ -36,7 +45,7 @@ def wgs84_to_utm(
     if not (-80.0 <= latitude <= 84.0):
         raise OutOfRangeError(f"Latitude {latitude} is outside standard UTM limits (-80 to +84 degrees).")
 
-    hemi = hemisphere.upper()
+    hemi = str(hemisphere).strip().upper()
     if hemi not in ("N", "S"):
         raise ProjectionError(f"Hemisphere must be 'N' or 'S', got '{hemisphere}'")
 
@@ -99,7 +108,7 @@ def utm_to_wgs84(
     hemisphere: str = "N",
 ) -> Tuple[float, float]:
     """Convert UTM Easting and Northing (meters) to WGS84 geographic coordinates (lon, lat in degrees)."""
-    hemi = hemisphere.upper()
+    hemi = str(hemisphere).strip().upper()
     if hemi not in ("N", "S"):
         raise ProjectionError(f"Hemisphere must be 'N' or 'S', got '{hemisphere}'")
 
@@ -187,66 +196,85 @@ def web_mercator_to_wgs84(x: float, y: float) -> Tuple[float, float]:
     return lon_deg, lat_deg
 
 
-def transform_point(point: Point, source_crs: CRS, target_crs: CRS) -> Point:
+def transform_point(
+    point: Point,
+    source_crs: Union[CRS, str, int],
+    target_crs: Union[CRS, str, int],
+) -> Point:
     """Transform a Point from source_crs to target_crs."""
-    target_crs_str = f"EPSG:{target_crs.epsg}"
+    src = CRS.from_epsg(source_crs) if not isinstance(source_crs, CRS) else source_crs
+    tgt = CRS.from_epsg(target_crs) if not isinstance(target_crs, CRS) else target_crs
+    target_crs_str = tgt.epsg_str
 
-    if source_crs.epsg == target_crs.epsg:
+    if src.epsg == tgt.epsg:
         return Point(point.x, point.y, crs=target_crs_str)
 
     # Convert source -> WGS84 first if needed
-    if source_crs.epsg == 4326:
+    if src.epsg == 4326:
         lon, lat = point.x, point.y
-    elif source_crs.epsg == 3857:
+    elif src.epsg == 3857:
         lon, lat = web_mercator_to_wgs84(point.x, point.y)
-    elif source_crs.is_utm:
-        lon, lat = utm_to_wgs84(point.x, point.y, zone=source_crs.zone, hemisphere=source_crs.hemisphere or "N")
+    elif src.is_utm:
+        lon, lat = utm_to_wgs84(point.x, point.y, zone=src.zone, hemisphere=src.hemisphere or "N")
     else:
-        raise ProjectionError(f"Unsupported source CRS: {source_crs}")
+        raise ProjectionError(f"Unsupported source CRS: {src}")
 
     # Convert WGS84 -> target
-    if target_crs.epsg == 4326:
+    if tgt.epsg == 4326:
         return Point(lon, lat, crs=target_crs_str)
-    elif target_crs.epsg == 3857:
+    elif tgt.epsg == 3857:
         tx, ty = wgs84_to_web_mercator(lon, lat)
         return Point(tx, ty, crs=target_crs_str)
-    elif target_crs.is_utm:
-        tx, ty = wgs84_to_utm(lon, lat, zone=target_crs.zone, hemisphere=target_crs.hemisphere or "N")
+    elif tgt.is_utm:
+        tx, ty = wgs84_to_utm(lon, lat, zone=tgt.zone, hemisphere=tgt.hemisphere or "N")
         return Point(tx, ty, crs=target_crs_str)
     else:
-        raise ProjectionError(f"Unsupported target CRS: {target_crs}")
+        raise ProjectionError(f"Unsupported target CRS: {tgt}")
 
 
 def reproject_geometry(
-    geometry: Union[Point, LineString, Polygon, MultiPolygon, BoundingBox],
-    source_crs: CRS,
-    target_crs: CRS,
+    geometry: Union[Point, Coordinate, LineString, LinearRing, Polygon, MultiPolygon, BoundingBox, OilSpillGeometry],
+    source_crs: Union[CRS, str, int],
+    target_crs: Union[CRS, str, int],
 ) -> Any:
     """Reproject any GIS geometry instance from source_crs to target_crs."""
-    source_crs_str = f"EPSG:{source_crs.epsg}"
-    target_crs_str = f"EPSG:{target_crs.epsg}"
+    src = CRS.from_epsg(source_crs) if not isinstance(source_crs, CRS) else source_crs
+    tgt = CRS.from_epsg(target_crs) if not isinstance(target_crs, CRS) else target_crs
+    source_crs_str = src.epsg_str
+    target_crs_str = tgt.epsg_str
 
-    if source_crs.epsg == target_crs.epsg:
+    if src.epsg == tgt.epsg:
         return geometry
 
     if isinstance(geometry, Point):
-        return transform_point(geometry, source_crs, target_crs)
+        return transform_point(geometry, src, tgt)
+
+    elif isinstance(geometry, Coordinate):
+        pt = transform_point(Point(geometry.x, geometry.y, crs=source_crs_str), src, tgt)
+        return Coordinate(pt.x, pt.y, geometry.z)
 
     elif isinstance(geometry, LineString):
         new_coords = [
-            transform_point(Point(pt.x, pt.y, crs=source_crs_str), source_crs, target_crs)
+            transform_point(Point(pt.x, pt.y, crs=source_crs_str), src, tgt)
             for pt in geometry.coordinates
         ]
         return LineString(coordinates=new_coords, crs=target_crs_str)
 
+    elif isinstance(geometry, LinearRing):
+        new_coords = [
+            transform_point(Point(pt.x, pt.y, crs=source_crs_str), src, tgt)
+            for pt in geometry.coordinates
+        ]
+        return LinearRing(coordinates=new_coords, crs=target_crs_str)
+
     elif isinstance(geometry, Polygon):
         new_exterior = [
-            transform_point(Point(pt.x, pt.y, crs=source_crs_str), source_crs, target_crs)
+            transform_point(Point(pt.x, pt.y, crs=source_crs_str), src, tgt)
             for pt in geometry.exterior.coordinates
         ]
         new_interiors = [
             [
-                transform_point(Point(pt.x, pt.y, crs=source_crs_str), source_crs, target_crs)
+                transform_point(Point(pt.x, pt.y, crs=source_crs_str), src, tgt)
                 for pt in interior.coordinates
             ]
             for interior in geometry.interiors
@@ -255,7 +283,7 @@ def reproject_geometry(
 
     elif isinstance(geometry, MultiPolygon):
         new_polygons = [
-            reproject_geometry(poly, source_crs, target_crs)
+            reproject_geometry(poly, src, tgt)
             for poly in geometry.polygons
         ]
         return MultiPolygon(polygons=new_polygons, crs=target_crs_str)
@@ -268,7 +296,7 @@ def reproject_geometry(
             Point(geometry.min_x, geometry.max_y, crs=source_crs_str),
         ]
         transformed_corners = [
-            transform_point(c, source_crs, target_crs) for c in corners
+            transform_point(c, src, tgt) for c in corners
         ]
         xs = [c.x for c in transformed_corners]
         ys = [c.y for c in transformed_corners]
@@ -277,6 +305,19 @@ def reproject_geometry(
             min_y=min(ys),
             max_x=max(xs),
             max_y=max(ys),
+        )
+
+    elif isinstance(geometry, OilSpillGeometry):
+        reprojected_geom = reproject_geometry(geometry.geometry, src, tgt)
+        return OilSpillGeometry(
+            spill_id=geometry.spill_id,
+            geometry=reprojected_geom,
+            detection_timestamp=geometry.detection_timestamp,
+            source_sensor=geometry.source_sensor,
+            confidence=geometry.confidence,
+            crs=target_crs_str,
+            properties=geometry.properties,
+            validate=False,  # Target CRS might be projected
         )
 
     else:

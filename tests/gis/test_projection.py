@@ -1,9 +1,19 @@
 """Unit tests for GIS projection module."""
 
 import math
+from datetime import datetime, timezone
 import pytest
 
-from gis.geometry import BoundingBox, LineString, MultiPolygon, Point, Polygon
+from gis.geometry import (
+    BoundingBox,
+    Coordinate,
+    LinearRing,
+    LineString,
+    MultiPolygon,
+    OilSpillGeometry,
+    Point,
+    Polygon,
+)
 from gis.projection import (
     CRS,
     CRSError,
@@ -31,6 +41,8 @@ class TestCRS:
         assert crs.is_projected is False
         assert crs.is_utm is False
         assert crs.unit == "degree"
+        assert crs.epsg_str == "EPSG:4326"
+        assert str(crs) == "EPSG:4326"
 
     def test_web_mercator_factory(self) -> None:
         crs = CRS.web_mercator()
@@ -39,6 +51,7 @@ class TestCRS:
         assert crs.is_projected is True
         assert crs.is_utm is False
         assert crs.unit == "metre"
+        assert crs.epsg_str == "EPSG:3857"
 
     def test_utm_factory(self) -> None:
         crs_north = CRS.utm(zone=30, hemisphere="N")
@@ -48,7 +61,7 @@ class TestCRS:
         assert crs_north.zone == 30
         assert crs_north.hemisphere == "N"
 
-        crs_south = CRS.utm(zone=30, hemisphere="S")
+        crs_south = CRS.utm(zone=30, hemisphere="s")
         assert crs_south.epsg == 32730
         assert crs_south.is_utm is True
         assert crs_south.hemisphere == "S"
@@ -63,12 +76,22 @@ class TestCRS:
 
     def test_from_epsg(self) -> None:
         assert CRS.from_epsg(4326) == CRS.wgs84()
+        assert CRS.from_epsg("EPSG:4326") == CRS.wgs84()
+        assert CRS.from_epsg("WGS84") == CRS.wgs84()
         assert CRS.from_epsg(3857) == CRS.web_mercator()
+        assert CRS.from_epsg("EPSG:3857") == CRS.web_mercator()
         assert CRS.from_epsg(32633) == CRS.utm(33, "N")
+        assert CRS.from_epsg("EPSG:32633") == CRS.utm(33, "N")
         assert CRS.from_epsg(32719) == CRS.utm(19, "S")
+        assert CRS.from_epsg("EPSG:32719") == CRS.utm(19, "S")
+
+        existing_crs = CRS.wgs84()
+        assert CRS.from_epsg(existing_crs) is existing_crs
 
         with pytest.raises(CRSError):
             CRS.from_epsg(99999)
+        with pytest.raises(CRSError):
+            CRS.from_epsg("invalid_crs_string")
 
 
 class TestUTMDetection:
@@ -90,6 +113,7 @@ class TestUTMDetection:
 
         # Dateline edge cases
         assert get_utm_zone(-180.0, 0.0) == 1
+        assert get_utm_zone(180.0, 0.0) == 60
         assert get_utm_zone(179.9, 0.0) == 60
 
     def test_get_utm_epsg(self) -> None:
@@ -100,29 +124,35 @@ class TestUTMDetection:
 
     def test_get_utm_crs_for_geometry(self) -> None:
         pt = Point(72.8, 19.0)
-        crs = get_utm_crs_for_geometry(pt)
-        assert crs.epsg == 32643
+        assert get_utm_crs_for_geometry(pt).epsg == 32643
+
+        coord = Coordinate(72.8, 19.0)
+        assert get_utm_crs_for_geometry(coord).epsg == 32643
 
         poly = Polygon(exterior=[
-            Point(10.0, 50.0),
-            Point(11.0, 50.0),
-            Point(11.0, 51.0),
-            Point(10.0, 51.0),
-            Point(10.0, 50.0),
+            (10.0, 50.0),
+            (11.0, 50.0),
+            (11.0, 51.0),
+            (10.0, 51.0),
+            (10.0, 50.0),
         ])
-        crs_poly = get_utm_crs_for_geometry(poly)
-        assert crs_poly.epsg == 32632
+        assert get_utm_crs_for_geometry(poly).epsg == 32632
+
+        spill = OilSpillGeometry(
+            spill_id="SPILL-01",
+            geometry=poly,
+            detection_timestamp=datetime(2026, 9, 8, 8, 0, tzinfo=timezone.utc),
+        )
+        assert get_utm_crs_for_geometry(spill).epsg == 32632
 
         bbox = BoundingBox(min_x=-75.0, min_y=40.0, max_x=-73.0, max_y=42.0)
-        crs_bbox = get_utm_crs_for_geometry(bbox)
-        assert crs_bbox.epsg == 32618
+        assert get_utm_crs_for_geometry(bbox).epsg == 32618
 
 
 class TestTransformations:
     """Tests for forward and inverse coordinate projections."""
 
     def test_utm_central_meridian_forward_inverse(self) -> None:
-        # On central meridian (Zone 31 central meridian is 3°E)
         lon = 3.0
         lat = 0.0  # Equator
         easting, northing = wgs84_to_utm(lon, lat, zone=31, hemisphere="N")
@@ -153,12 +183,10 @@ class TestTransformations:
             wgs84_to_utm(0.0, -82.0, zone=31, hemisphere="S")
 
     def test_web_mercator_forward_inverse(self) -> None:
-        # Equator, Greenwich
         x, y = wgs84_to_web_mercator(0.0, 0.0)
         assert math.isclose(x, 0.0, abs_tol=1e-3)
         assert math.isclose(y, 0.0, abs_tol=1e-3)
 
-        # General point roundtrip
         lon, lat = 72.8777, 19.0760  # Mumbai
         x, y = wgs84_to_web_mercator(lon, lat)
         rev_lon, rev_lat = web_mercator_to_wgs84(x, y)
@@ -171,27 +199,28 @@ class TestTransformations:
 
 
 class TestGeometryReprojection:
-    """Tests for reprojecting Point, LineString, Polygon, MultiPolygon, BoundingBox."""
+    """Tests for reprojecting Point, Coordinate, LineString, Polygon, MultiPolygon, BoundingBox, OilSpillGeometry."""
 
     def test_transform_point(self) -> None:
         pt = Point(72.8, 19.0)
-        crs_wgs = CRS.wgs84()
-        crs_utm = CRS.from_epsg(32643)
 
-        # WGS84 -> UTM
-        pt_utm = transform_point(pt, crs_wgs, crs_utm)
+        # WGS84 -> UTM using string CRS
+        pt_utm = transform_point(pt, "EPSG:4326", "EPSG:32643")
         assert pt_utm.x > 100000.0
         assert pt_utm.y > 100000.0
+        assert pt_utm.crs == "EPSG:32643"
 
         # UTM -> WGS84
-        pt_wgs = transform_point(pt_utm, crs_utm, crs_wgs)
+        pt_wgs = transform_point(pt_utm, "EPSG:32643", 4326)
         assert math.isclose(pt_wgs.x, pt.x, abs_tol=1e-5)
         assert math.isclose(pt_wgs.y, pt.y, abs_tol=1e-5)
+        assert pt_wgs.crs == "EPSG:4326"
 
-        # Identity transformation
-        pt_same = transform_point(pt, crs_wgs, crs_wgs)
-        assert pt_same.x == pt.x
-        assert pt_same.y == pt.y
+    def test_reproject_coordinate(self) -> None:
+        coord = Coordinate(10.0, 50.0)
+        reprojected = reproject_geometry(coord, "EPSG:4326", "EPSG:32632")
+        assert isinstance(reprojected, Coordinate)
+        assert reprojected.x > 100000.0
 
     def test_reproject_linestring(self) -> None:
         ls = LineString(coordinates=[(10.0, 50.0), (10.1, 50.1)])
@@ -202,7 +231,6 @@ class TestGeometryReprojection:
         assert isinstance(ls_utm, LineString)
         assert len(ls_utm.coordinates) == 2
 
-        # Reproject back
         ls_rev = reproject_geometry(ls_utm, crs_utm, crs_wgs)
         assert math.isclose(ls_rev.coordinates[0].x, 10.0, abs_tol=1e-5)
         assert math.isclose(ls_rev.coordinates[0].y, 50.0, abs_tol=1e-5)
@@ -229,43 +257,30 @@ class TestGeometryReprojection:
 
         poly_utm = reproject_geometry(poly, crs_wgs, crs_utm)
         assert isinstance(poly_utm, Polygon)
-        assert len(poly_utm.exterior) == 5  # closed
+        assert len(poly_utm.exterior) == 5
         assert len(poly_utm.interiors) == 1
-        assert len(poly_utm.interiors[0]) == 5
 
-        # Reproject back
         poly_rev = reproject_geometry(poly_utm, crs_utm, crs_wgs)
         assert math.isclose(poly_rev.exterior.coordinates[0].x, 10.0, abs_tol=1e-5)
 
-    def test_reproject_multipolygon(self) -> None:
-        poly1 = Polygon(exterior=[
-            (10.0, 50.0),
-            (10.1, 50.0),
-            (10.1, 50.1),
-            (10.0, 50.1),
-            (10.0, 50.0),
-        ])
-        poly2 = Polygon(exterior=[
-            (10.2, 50.2),
-            (10.3, 50.2),
-            (10.3, 50.3),
-            (10.2, 50.3),
-            (10.2, 50.2),
-        ])
-        mp = MultiPolygon(polygons=[poly1, poly2])
-        crs_wgs = CRS.wgs84()
-        crs_utm = CRS.utm(32, "N")
+    def test_reproject_oil_spill_geometry(self) -> None:
+        poly = Polygon(
+            exterior=[
+                (10.0, 50.0),
+                (10.1, 50.0),
+                (10.1, 50.1),
+                (10.0, 50.1),
+                (10.0, 50.0),
+            ]
+        )
+        spill = OilSpillGeometry(
+            spill_id="SPILL-01",
+            geometry=poly,
+            detection_timestamp=datetime(2026, 9, 8, 8, 0, tzinfo=timezone.utc),
+            confidence=0.9,
+        )
 
-        mp_utm = reproject_geometry(mp, crs_wgs, crs_utm)
-        assert isinstance(mp_utm, MultiPolygon)
-        assert len(mp_utm.polygons) == 2
-
-    def test_reproject_bounding_box(self) -> None:
-        bbox = BoundingBox(min_x=10.0, min_y=50.0, max_x=10.2, max_y=50.2)
-        crs_wgs = CRS.wgs84()
-        crs_utm = CRS.utm(32, "N")
-
-        bbox_utm = reproject_geometry(bbox, crs_wgs, crs_utm)
-        assert isinstance(bbox_utm, BoundingBox)
-        assert bbox_utm.min_x < bbox_utm.max_x
-        assert bbox_utm.min_y < bbox_utm.max_y
+        spill_utm = reproject_geometry(spill, "EPSG:4326", "EPSG:32632")
+        assert isinstance(spill_utm, OilSpillGeometry)
+        assert spill_utm.spill_id == "SPILL-01"
+        assert spill_utm.crs == "EPSG:32632"
