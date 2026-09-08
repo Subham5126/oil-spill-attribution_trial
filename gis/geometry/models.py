@@ -196,6 +196,8 @@ class LineString:
         for pt in coordinates:
             if isinstance(pt, Coordinate):
                 parsed.append(pt)
+            elif isinstance(pt, Point):
+                parsed.append(pt.coordinate)
             elif isinstance(pt, (tuple, list)):
                 parsed.append(Coordinate.from_tuple(pt))
             else:
@@ -244,6 +246,8 @@ class LinearRing:
         for pt in coordinates:
             if isinstance(pt, Coordinate):
                 parsed.append(pt)
+            elif isinstance(pt, Point):
+                parsed.append(pt.coordinate)
             elif isinstance(pt, (tuple, list)):
                 parsed.append(Coordinate.from_tuple(pt))
             else:
