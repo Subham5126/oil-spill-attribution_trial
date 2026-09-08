@@ -4,4 +4,7 @@ Provides geospatial geometry modeling, projections, geodetic measurements,
 and visualization utilities.
 """
 
-__all__ = ["geometry"]
+from gis import geometry, measurements
+from gis import measurement
+
+__all__ = ["geometry", "measurements", "measurement"]
