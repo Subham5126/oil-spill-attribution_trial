@@ -18,6 +18,11 @@ from attribution.models import (
     validate_ais_observations,
     validate_origin_metadata,
 )
+from attribution.scoring import (
+    AttributionScoringConfig,
+    attribute_vessels,
+    score_candidates,
+)
 
 __all__ = [
     "CandidateVessel",
@@ -32,4 +37,7 @@ __all__ = [
     "validate_origin_metadata",
     "REQUIRED_AIS_COLUMNS",
     "OPTIONAL_AIS_COLUMNS",
+    "AttributionScoringConfig",
+    "score_candidates",
+    "attribute_vessels",
 ]
