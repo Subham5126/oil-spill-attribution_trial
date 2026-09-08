@@ -34,3 +34,6 @@ Thumbs.db
 data/sample/*
 # Pytest temporary directories
 .pytest-*-temp/
+
+# Local AIS datasets
+data/ais/
