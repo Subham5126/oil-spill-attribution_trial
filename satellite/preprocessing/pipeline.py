@@ -191,6 +191,58 @@ class Sentinel1Preprocessor:
 
         return out, report
 
+    def process_scene(
+        self,
+        image: np.ndarray,
+        metadata: dict[str, Any] | None = None,
+    ) -> tuple[np.ndarray, dict[str, Any] | None, PreprocessingReport]:
+        """Execute the preprocessing pipeline and synchronize scene metadata.
+
+        If resizing is applied, updates spatial metadata (dimensions, transform,
+        pixel_spacing) to maintain geospatial accuracy. If resizing is not applied
+        (the default), metadata is preserved cleanly.
+
+        Args:
+            image: NumPy array of shape (2, H, W).
+            metadata: Optional scene metadata dictionary from the loader.
+
+        Returns:
+            Tuple of (preprocessed_image, updated_metadata, report).
+        """
+        out, report = self.process(image)
+
+        if metadata is None:
+            return out, None, report
+
+        updated_meta = dict(metadata)
+
+        if report.resizing_applied and self.config.target_size is not None:
+            from satellite.sentinel1.coordinates import update_transform_for_resizing
+
+            orig_h, orig_w = report.input_shape[1], report.input_shape[2]
+            new_h, new_w = self.config.target_size
+            updated_meta["dimensions"] = [new_h, new_w]
+            updated_meta["height"] = new_h
+            updated_meta["width"] = new_w
+
+            if "transform" in updated_meta and updated_meta["transform"]:
+                updated_meta["transform"] = update_transform_for_resizing(
+                    updated_meta["transform"], (orig_h, orig_w), (new_h, new_w)
+                )
+
+            if "pixel_spacing" in updated_meta and updated_meta["pixel_spacing"]:
+                sx = float(orig_w) / float(new_w)
+                sy = float(orig_h) / float(new_h)
+                old_rx, old_ry = updated_meta["pixel_spacing"]
+                new_spacing = (old_rx * sx, old_ry * sy)
+                updated_meta["pixel_spacing"] = new_spacing
+                updated_meta["pixel_resolution"] = new_spacing
+
+        if report.normalization_applied != "none":
+            updated_meta["unit"] = "normalized"
+
+        return out, updated_meta, report
+
     def __call__(self, image: np.ndarray) -> np.ndarray:
         """Callable interface returning only the model-ready array.
 
@@ -202,3 +254,23 @@ class Sentinel1Preprocessor:
         """
         output_image, _ = self.process(image)
         return output_image
+
+
+def process_scene(
+    image: np.ndarray,
+    metadata: dict[str, Any] | None = None,
+    config: PreprocessingConfig | None = None,
+) -> tuple[np.ndarray, dict[str, Any] | None, PreprocessingReport]:
+    """Convenience function to preprocess a SAR scene and synchronize metadata.
+
+    Args:
+        image: NumPy array of shape (2, H, W).
+        metadata: Optional scene metadata dictionary from the loader.
+        config: Optional PreprocessingConfig; defaults to default configuration.
+
+    Returns:
+        Tuple of (preprocessed_image, updated_metadata, report).
+    """
+    preprocessor = Sentinel1Preprocessor(config)
+    return preprocessor.process_scene(image, metadata)
+
