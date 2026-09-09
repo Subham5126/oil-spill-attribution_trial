@@ -7,6 +7,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+import numpy as np
 import rasterio
 from rasterio.transform import Affine
 
@@ -105,10 +106,80 @@ def main():
         assert src.dtypes[0] == "float32"
         assert str(src.crs) == sample_meta["crs"]
 
-    print("\n--- Step 5: Verification of Aggregated Metadata ---")
+    print("\n--- Step 5: Prediction Statistics across ALL Probability Tiles ---")
     assert "tiles" in inference_result.metadata
     print(f"Metadata tile records count: {len(inference_result.metadata['tiles'])}")
-    print(f"Sample prediction stats: {inference_result.metadata['tiles'][0].get('prediction')}")
+
+    prob_dir = inference_result.extracted_dir / "probabilities"
+    discovered_prob_files = sorted(list(prob_dir.glob("*.tif")))
+    num_prob_files = len(discovered_prob_files)
+
+    expected_tile_ids = set(m2_tile_ids)
+    discovered_tile_ids = {p.stem for p in discovered_prob_files}
+
+    if num_prob_files != len(m2_tile_ids) or discovered_tile_ids != expected_tile_ids:
+        missing = expected_tile_ids - discovered_tile_ids
+        unexpected = discovered_tile_ids - expected_tile_ids
+        print(
+            f"Error: Probability TIFF count mismatch! Expected {len(m2_tile_ids)}, found {num_prob_files}",
+            file=sys.stderr,
+        )
+        if missing:
+            print(f"Missing tile IDs: {sorted(list(missing))}", file=sys.stderr)
+        if unexpected:
+            print(f"Unexpected tile IDs: {sorted(list(unexpected))}", file=sys.stderr)
+        sys.exit(1)
+
+    all_probs = []
+    tile_stats = []
+
+    for prob_file in discovered_prob_files:
+        with rasterio.open(prob_file) as src:
+            arr = src.read(1)
+        all_probs.append(arr)
+        max_p = float(arr.max())
+        oil_px = int(np.sum(arr >= 0.5))
+        tile_stats.append({
+            "filename": prob_file.name,
+            "tile_id": prob_file.stem,
+            "max_prob": max_p,
+            "oil_pixels": oil_px,
+        })
+
+    stacked_probs = np.stack(all_probs)
+    total_pixels = stacked_probs.size
+    px_ge_01 = int(np.sum(stacked_probs >= 0.1))
+    px_ge_03 = int(np.sum(stacked_probs >= 0.3))
+    px_ge_05 = int(np.sum(stacked_probs >= 0.5))
+    px_ge_07 = int(np.sum(stacked_probs >= 0.7))
+    global_oil_pct = (px_ge_05 / total_pixels) * 100
+    tiles_with_oil = sum(1 for t in tile_stats if t["oil_pixels"] > 0)
+
+    print("Step 5: Prediction statistics")
+    print(f"Probability tiles: {num_prob_files}")
+    print(f"Total pixels: {total_pixels}")
+    print(f"Global min: {float(stacked_probs.min()):.7f}")
+    print(f"Global max: {float(stacked_probs.max()):.7f}")
+    print(f"Global mean: {float(stacked_probs.mean()):.7f}")
+    print(f"Pixels >= 0.1: {px_ge_01}")
+    print(f"Pixels >= 0.3: {px_ge_03}")
+    print(f"Pixels >= 0.5: {px_ge_05}")
+    print(f"Pixels >= 0.7: {px_ge_07}")
+    print(f"Global oil percentage: {global_oil_pct:.4f}%")
+    print(f"Tiles with >=0.5 prediction: {tiles_with_oil}")
+
+    top_tile = max(tile_stats, key=lambda t: t["max_prob"])
+    first_tile = tile_stats[0]
+    print(f"\nSample tile (first tile - single tile only, not overall scene):")
+    print(f"  File: {first_tile['filename']}")
+    print(f"  Max probability: {first_tile['max_prob']:.6f}")
+    print(f"  Pixels >= 0.5: {first_tile['oil_pixels']}")
+
+    if top_tile["oil_pixels"] > 0:
+        print(f"\nPeak oil detection tile (single tile with highest activation):")
+        print(f"  File: {top_tile['filename']}")
+        print(f"  Max probability: {top_tile['max_prob']:.6f}")
+        print(f"  Pixels >= 0.5: {top_tile['oil_pixels']}")
 
     print("\n>>> SMOKE TEST PASSED COMPLETELY! <<<")
 

@@ -295,8 +295,15 @@ class M1Client:
             for idx, m in enumerate(batch_metadata)
         ]
 
-        # 4. Serialize in-memory payloads
-        npy_bytes = self.serialize_tiles_npy(batch_images)
+        # 4. Adapt M2 channel layout [VV, VH] to M1 model training layout [VH, VV]
+        # M2 contract preserves Channel 0 = VV, Channel 1 = VH.
+        # M1 U-Net was trained with Channel 0 = VH, Channel 1 = VV.
+        m1_images = np.empty_like(batch_images)
+        m1_images[:, 0, :, :] = batch_images[:, 1, :, :]  # VH -> Channel 0
+        m1_images[:, 1, :, :] = batch_images[:, 0, :, :]  # VV -> Channel 1
+
+        # 5. Serialize in-memory payloads
+        npy_bytes = self.serialize_tiles_npy(m1_images)
         json_bytes = self.serialize_metadata_json(batch_metadata)
 
         files = {
