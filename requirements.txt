@@ -17,6 +17,7 @@ segmentation-models-pytorch
 xarray
 netCDF4
 h5py
+rasterio
 
 # Backend
 fastapi
