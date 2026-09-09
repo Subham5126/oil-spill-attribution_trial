@@ -674,7 +674,8 @@ def test_non_datetime_dtype_string_parsing():
             "longitude": [72.0, 72.0],
         }
     )
-    assert df_str["timestamp"].dtype == object
+    orig_dtype = df_str["timestamp"].dtype
+    assert pd.api.types.is_string_dtype(df_str["timestamp"])
 
     result = filter_by_time_window(
         data=df_str,
@@ -686,7 +687,7 @@ def test_non_datetime_dtype_string_parsing():
     assert pd.api.types.is_datetime64_any_dtype(result["timestamp"])
     assert str(result["timestamp"].dt.tz) == "UTC"
     # Caller input unchanged
-    assert df_str["timestamp"].dtype == object
+    assert df_str["timestamp"].dtype == orig_dtype
 
 
 # ---------------------------------------------------------------------------

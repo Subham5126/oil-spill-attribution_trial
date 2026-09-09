@@ -17,12 +17,14 @@ segmentation-models-pytorch
 xarray
 netCDF4
 h5py
+rasterio
 
 # Backend
 fastapi
 uvicorn[standard]
 pydantic
 python-dotenv
+python-multipart
 
 # Database
 sqlalchemy

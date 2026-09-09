@@ -1,4 +1,3 @@
-@"
 # Python
 __pycache__/
 *.py[cod]
@@ -12,28 +11,41 @@ env/
 # Environment variables
 .env
 
-# Data
-data/raw/*
-data/processed/*
-
-# Model weights
-*.pt
+# ML models/checkpoints
 *.pth
-*.onnx
+*.pt
+*.ckpt
 
-# IDE
-.vscode/
-.idea/
+# Generated outputs
+outputs/
+ai/outputs/
+tests/ai/*.zip
+tests/ai/m1_result/
+tests/ai/extracted_result/
+tests/ai/geospatial_verification_data/
+tests/ai/m1_result.zip
+tests/ai/m1_tiles_result.zip
+tests/ai/m2_metadata.json
+tests/ai/m2_tiles.npy
+
+# Temporary files
+tmp/
+temp/
+
+# Testing/cache
+.pytest_cache/
+.pytest-*-temp/
+
+# Sample data
+data/sample/*
 
 # OS
 .DS_Store
 Thumbs.db
-"@ | Set-Content .gitignore
 
-# Sample data
-data/sample/*
-# Pytest temporary directories
-.pytest-*-temp/
+# IDE
+.vscode/
+.idea/
 
 # Local AIS datasets
 data/ais/frontend/node_modules/
