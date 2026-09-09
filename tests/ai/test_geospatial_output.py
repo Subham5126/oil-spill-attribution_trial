@@ -167,17 +167,18 @@ def test_comprehensive_geospatial_output():
     # 4. Verify Row/Col indices and tile ordering
     grid_coverage = set()
     for i in range(expected_tile_count):
-        tile_id_str = f"tile_{i:04d}"
+        m2_tile = input_metadata["tiles"][i]
+        out_tile = output_metadata["tiles"][i]
+
+        tile_id_str = str(m2_tile.get("tile_id") or f"tile_{i:04d}")
         mask_tif = masks_dir / f"{tile_id_str}.tif"
         prob_tif = probs_dir / f"{tile_id_str}.tif"
 
         assert mask_tif.exists(), f"Missing mask file {mask_tif.name}"
         assert prob_tif.exists(), f"Missing prob file {prob_tif.name}"
 
-        m2_tile = input_metadata["tiles"][i]
-        out_tile = output_metadata["tiles"][i]
-
         assert out_tile["index"] == i, f"Index mismatch for tile {i}"
+        assert out_tile["tile_id"] == tile_id_str, f"Tile ID mismatch for tile {i}"
         r, c = m2_tile["row_idx"], m2_tile["col_idx"]
         assert 0 <= r < scene_rows and 0 <= c < scene_cols, f"Invalid row/col ({r}, {c}) for tile {i}"
         grid_coverage.add((r, c))
@@ -186,7 +187,8 @@ def test_comprehensive_geospatial_output():
 
     # 5. Per-tile raster & geospatial checks
     for i in range(expected_tile_count):
-        tile_id_str = f"tile_{i:04d}"
+        m2_tile = input_metadata["tiles"][i]
+        tile_id_str = str(m2_tile.get("tile_id") or f"tile_{i:04d}")
         mask_tif = masks_dir / f"{tile_id_str}.tif"
         prob_tif = probs_dir / f"{tile_id_str}.tif"
 
