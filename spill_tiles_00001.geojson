@@ -1,0 +1,5445 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.079664728927639,
+              55.542014902518495
+            ],
+            [
+              5.102661600201099,
+              55.542014902518495
+            ],
+            [
+              5.102661600201099,
+              55.56501177379196
+            ],
+            [
+              5.079664728927639,
+              55.56501177379196
+            ],
+            [
+              5.079664728927639,
+              55.542014902518495
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r000_c000",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 0,
+        "col_idx": 0,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 0,
+        "pixel_row_end": 256,
+        "pixel_col_start": 0,
+        "pixel_col_end": 256,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.079664728927639,
+          0.0,
+          -8.983152841195215e-05,
+          55.56501177379196
+        ],
+        "bounds": [
+          5.079664728927639,
+          55.542014902518495,
+          5.102661600201099,
+          55.56501177379196
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.102661600201099,
+              55.542014902518495
+            ],
+            [
+              5.1256584714745586,
+              55.542014902518495
+            ],
+            [
+              5.1256584714745586,
+              55.56501177379196
+            ],
+            [
+              5.102661600201099,
+              55.56501177379196
+            ],
+            [
+              5.102661600201099,
+              55.542014902518495
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r000_c001",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 0,
+        "col_idx": 1,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 0,
+        "pixel_row_end": 256,
+        "pixel_col_start": 256,
+        "pixel_col_end": 512,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.102661600201099,
+          0.0,
+          -8.983152841195215e-05,
+          55.56501177379196
+        ],
+        "bounds": [
+          5.102661600201099,
+          55.542014902518495,
+          5.1256584714745586,
+          55.56501177379196
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.1256584714745586,
+              55.542014902518495
+            ],
+            [
+              5.148655342748018,
+              55.542014902518495
+            ],
+            [
+              5.148655342748018,
+              55.56501177379196
+            ],
+            [
+              5.1256584714745586,
+              55.56501177379196
+            ],
+            [
+              5.1256584714745586,
+              55.542014902518495
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r000_c002",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 0,
+        "col_idx": 2,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 0,
+        "pixel_row_end": 256,
+        "pixel_col_start": 512,
+        "pixel_col_end": 768,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.1256584714745586,
+          0.0,
+          -8.983152841195215e-05,
+          55.56501177379196
+        ],
+        "bounds": [
+          5.1256584714745586,
+          55.542014902518495,
+          5.148655342748018,
+          55.56501177379196
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.148655342748018,
+              55.542014902518495
+            ],
+            [
+              5.171652214021479,
+              55.542014902518495
+            ],
+            [
+              5.171652214021479,
+              55.56501177379196
+            ],
+            [
+              5.148655342748018,
+              55.56501177379196
+            ],
+            [
+              5.148655342748018,
+              55.542014902518495
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r000_c003",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 0,
+        "col_idx": 3,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 0,
+        "pixel_row_end": 256,
+        "pixel_col_start": 768,
+        "pixel_col_end": 1024,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.148655342748018,
+          0.0,
+          -8.983152841195215e-05,
+          55.56501177379196
+        ],
+        "bounds": [
+          5.148655342748018,
+          55.542014902518495,
+          5.171652214021479,
+          55.56501177379196
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.171652214021479,
+              55.542014902518495
+            ],
+            [
+              5.194649085294938,
+              55.542014902518495
+            ],
+            [
+              5.194649085294938,
+              55.56501177379196
+            ],
+            [
+              5.171652214021479,
+              55.56501177379196
+            ],
+            [
+              5.171652214021479,
+              55.542014902518495
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r000_c004",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 0,
+        "col_idx": 4,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 0,
+        "pixel_row_end": 256,
+        "pixel_col_start": 1024,
+        "pixel_col_end": 1280,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.171652214021479,
+          0.0,
+          -8.983152841195215e-05,
+          55.56501177379196
+        ],
+        "bounds": [
+          5.171652214021479,
+          55.542014902518495,
+          5.194649085294938,
+          55.56501177379196
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.194649085294938,
+              55.542014902518495
+            ],
+            [
+              5.217645956568398,
+              55.542014902518495
+            ],
+            [
+              5.217645956568398,
+              55.56501177379196
+            ],
+            [
+              5.194649085294938,
+              55.56501177379196
+            ],
+            [
+              5.194649085294938,
+              55.542014902518495
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r000_c005",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 0,
+        "col_idx": 5,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 0,
+        "pixel_row_end": 256,
+        "pixel_col_start": 1280,
+        "pixel_col_end": 1536,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.194649085294938,
+          0.0,
+          -8.983152841195215e-05,
+          55.56501177379196
+        ],
+        "bounds": [
+          5.194649085294938,
+          55.542014902518495,
+          5.217645956568398,
+          55.56501177379196
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.217645956568398,
+              55.542014902518495
+            ],
+            [
+              5.2406428278418575,
+              55.542014902518495
+            ],
+            [
+              5.2406428278418575,
+              55.56501177379196
+            ],
+            [
+              5.217645956568398,
+              55.56501177379196
+            ],
+            [
+              5.217645956568398,
+              55.542014902518495
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r000_c006",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 0,
+        "col_idx": 6,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 0,
+        "pixel_row_end": 256,
+        "pixel_col_start": 1536,
+        "pixel_col_end": 1792,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.217645956568398,
+          0.0,
+          -8.983152841195215e-05,
+          55.56501177379196
+        ],
+        "bounds": [
+          5.217645956568398,
+          55.542014902518495,
+          5.2406428278418575,
+          55.56501177379196
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.2406428278418575,
+              55.542014902518495
+            ],
+            [
+              5.263639699115317,
+              55.542014902518495
+            ],
+            [
+              5.263639699115317,
+              55.56501177379196
+            ],
+            [
+              5.2406428278418575,
+              55.56501177379196
+            ],
+            [
+              5.2406428278418575,
+              55.542014902518495
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r000_c007",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 0,
+        "col_idx": 7,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 0,
+        "pixel_row_end": 256,
+        "pixel_col_start": 1792,
+        "pixel_col_end": 2048,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.2406428278418575,
+          0.0,
+          -8.983152841195215e-05,
+          55.56501177379196
+        ],
+        "bounds": [
+          5.2406428278418575,
+          55.542014902518495,
+          5.263639699115317,
+          55.56501177379196
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.079664728927639,
+              55.51901803124504
+            ],
+            [
+              5.102661600201099,
+              55.51901803124504
+            ],
+            [
+              5.102661600201099,
+              55.542014902518495
+            ],
+            [
+              5.079664728927639,
+              55.542014902518495
+            ],
+            [
+              5.079664728927639,
+              55.51901803124504
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r001_c000",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 1,
+        "col_idx": 0,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 256,
+        "pixel_row_end": 512,
+        "pixel_col_start": 0,
+        "pixel_col_end": 256,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.079664728927639,
+          0.0,
+          -8.983152841195215e-05,
+          55.542014902518495
+        ],
+        "bounds": [
+          5.079664728927639,
+          55.51901803124504,
+          5.102661600201099,
+          55.542014902518495
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.102661600201099,
+              55.51901803124504
+            ],
+            [
+              5.1256584714745586,
+              55.51901803124504
+            ],
+            [
+              5.1256584714745586,
+              55.542014902518495
+            ],
+            [
+              5.102661600201099,
+              55.542014902518495
+            ],
+            [
+              5.102661600201099,
+              55.51901803124504
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r001_c001",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 1,
+        "col_idx": 1,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 256,
+        "pixel_row_end": 512,
+        "pixel_col_start": 256,
+        "pixel_col_end": 512,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.102661600201099,
+          0.0,
+          -8.983152841195215e-05,
+          55.542014902518495
+        ],
+        "bounds": [
+          5.102661600201099,
+          55.51901803124504,
+          5.1256584714745586,
+          55.542014902518495
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.1256584714745586,
+              55.51901803124504
+            ],
+            [
+              5.148655342748018,
+              55.51901803124504
+            ],
+            [
+              5.148655342748018,
+              55.542014902518495
+            ],
+            [
+              5.1256584714745586,
+              55.542014902518495
+            ],
+            [
+              5.1256584714745586,
+              55.51901803124504
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r001_c002",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 1,
+        "col_idx": 2,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 256,
+        "pixel_row_end": 512,
+        "pixel_col_start": 512,
+        "pixel_col_end": 768,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.1256584714745586,
+          0.0,
+          -8.983152841195215e-05,
+          55.542014902518495
+        ],
+        "bounds": [
+          5.1256584714745586,
+          55.51901803124504,
+          5.148655342748018,
+          55.542014902518495
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.148655342748018,
+              55.51901803124504
+            ],
+            [
+              5.171652214021479,
+              55.51901803124504
+            ],
+            [
+              5.171652214021479,
+              55.542014902518495
+            ],
+            [
+              5.148655342748018,
+              55.542014902518495
+            ],
+            [
+              5.148655342748018,
+              55.51901803124504
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r001_c003",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 1,
+        "col_idx": 3,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 256,
+        "pixel_row_end": 512,
+        "pixel_col_start": 768,
+        "pixel_col_end": 1024,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.148655342748018,
+          0.0,
+          -8.983152841195215e-05,
+          55.542014902518495
+        ],
+        "bounds": [
+          5.148655342748018,
+          55.51901803124504,
+          5.171652214021479,
+          55.542014902518495
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.171652214021479,
+              55.51901803124504
+            ],
+            [
+              5.194649085294938,
+              55.51901803124504
+            ],
+            [
+              5.194649085294938,
+              55.542014902518495
+            ],
+            [
+              5.171652214021479,
+              55.542014902518495
+            ],
+            [
+              5.171652214021479,
+              55.51901803124504
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r001_c004",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 1,
+        "col_idx": 4,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 256,
+        "pixel_row_end": 512,
+        "pixel_col_start": 1024,
+        "pixel_col_end": 1280,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.171652214021479,
+          0.0,
+          -8.983152841195215e-05,
+          55.542014902518495
+        ],
+        "bounds": [
+          5.171652214021479,
+          55.51901803124504,
+          5.194649085294938,
+          55.542014902518495
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.194649085294938,
+              55.51901803124504
+            ],
+            [
+              5.217645956568398,
+              55.51901803124504
+            ],
+            [
+              5.217645956568398,
+              55.542014902518495
+            ],
+            [
+              5.194649085294938,
+              55.542014902518495
+            ],
+            [
+              5.194649085294938,
+              55.51901803124504
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r001_c005",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 1,
+        "col_idx": 5,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 256,
+        "pixel_row_end": 512,
+        "pixel_col_start": 1280,
+        "pixel_col_end": 1536,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.194649085294938,
+          0.0,
+          -8.983152841195215e-05,
+          55.542014902518495
+        ],
+        "bounds": [
+          5.194649085294938,
+          55.51901803124504,
+          5.217645956568398,
+          55.542014902518495
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.217645956568398,
+              55.51901803124504
+            ],
+            [
+              5.2406428278418575,
+              55.51901803124504
+            ],
+            [
+              5.2406428278418575,
+              55.542014902518495
+            ],
+            [
+              5.217645956568398,
+              55.542014902518495
+            ],
+            [
+              5.217645956568398,
+              55.51901803124504
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r001_c006",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 1,
+        "col_idx": 6,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 256,
+        "pixel_row_end": 512,
+        "pixel_col_start": 1536,
+        "pixel_col_end": 1792,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.217645956568398,
+          0.0,
+          -8.983152841195215e-05,
+          55.542014902518495
+        ],
+        "bounds": [
+          5.217645956568398,
+          55.51901803124504,
+          5.2406428278418575,
+          55.542014902518495
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.2406428278418575,
+              55.51901803124504
+            ],
+            [
+              5.263639699115317,
+              55.51901803124504
+            ],
+            [
+              5.263639699115317,
+              55.542014902518495
+            ],
+            [
+              5.2406428278418575,
+              55.542014902518495
+            ],
+            [
+              5.2406428278418575,
+              55.51901803124504
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r001_c007",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 1,
+        "col_idx": 7,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 256,
+        "pixel_row_end": 512,
+        "pixel_col_start": 1792,
+        "pixel_col_end": 2048,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.2406428278418575,
+          0.0,
+          -8.983152841195215e-05,
+          55.542014902518495
+        ],
+        "bounds": [
+          5.2406428278418575,
+          55.51901803124504,
+          5.263639699115317,
+          55.542014902518495
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.079664728927639,
+              55.496021159971576
+            ],
+            [
+              5.102661600201099,
+              55.496021159971576
+            ],
+            [
+              5.102661600201099,
+              55.51901803124504
+            ],
+            [
+              5.079664728927639,
+              55.51901803124504
+            ],
+            [
+              5.079664728927639,
+              55.496021159971576
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r002_c000",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 2,
+        "col_idx": 0,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 512,
+        "pixel_row_end": 768,
+        "pixel_col_start": 0,
+        "pixel_col_end": 256,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.079664728927639,
+          0.0,
+          -8.983152841195215e-05,
+          55.51901803124504
+        ],
+        "bounds": [
+          5.079664728927639,
+          55.496021159971576,
+          5.102661600201099,
+          55.51901803124504
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.102661600201099,
+              55.496021159971576
+            ],
+            [
+              5.1256584714745586,
+              55.496021159971576
+            ],
+            [
+              5.1256584714745586,
+              55.51901803124504
+            ],
+            [
+              5.102661600201099,
+              55.51901803124504
+            ],
+            [
+              5.102661600201099,
+              55.496021159971576
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r002_c001",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 2,
+        "col_idx": 1,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 512,
+        "pixel_row_end": 768,
+        "pixel_col_start": 256,
+        "pixel_col_end": 512,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.102661600201099,
+          0.0,
+          -8.983152841195215e-05,
+          55.51901803124504
+        ],
+        "bounds": [
+          5.102661600201099,
+          55.496021159971576,
+          5.1256584714745586,
+          55.51901803124504
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.1256584714745586,
+              55.496021159971576
+            ],
+            [
+              5.148655342748018,
+              55.496021159971576
+            ],
+            [
+              5.148655342748018,
+              55.51901803124504
+            ],
+            [
+              5.1256584714745586,
+              55.51901803124504
+            ],
+            [
+              5.1256584714745586,
+              55.496021159971576
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r002_c002",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 2,
+        "col_idx": 2,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 512,
+        "pixel_row_end": 768,
+        "pixel_col_start": 512,
+        "pixel_col_end": 768,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.1256584714745586,
+          0.0,
+          -8.983152841195215e-05,
+          55.51901803124504
+        ],
+        "bounds": [
+          5.1256584714745586,
+          55.496021159971576,
+          5.148655342748018,
+          55.51901803124504
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.148655342748018,
+              55.496021159971576
+            ],
+            [
+              5.171652214021479,
+              55.496021159971576
+            ],
+            [
+              5.171652214021479,
+              55.51901803124504
+            ],
+            [
+              5.148655342748018,
+              55.51901803124504
+            ],
+            [
+              5.148655342748018,
+              55.496021159971576
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r002_c003",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 2,
+        "col_idx": 3,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 512,
+        "pixel_row_end": 768,
+        "pixel_col_start": 768,
+        "pixel_col_end": 1024,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.148655342748018,
+          0.0,
+          -8.983152841195215e-05,
+          55.51901803124504
+        ],
+        "bounds": [
+          5.148655342748018,
+          55.496021159971576,
+          5.171652214021479,
+          55.51901803124504
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.171652214021479,
+              55.496021159971576
+            ],
+            [
+              5.194649085294938,
+              55.496021159971576
+            ],
+            [
+              5.194649085294938,
+              55.51901803124504
+            ],
+            [
+              5.171652214021479,
+              55.51901803124504
+            ],
+            [
+              5.171652214021479,
+              55.496021159971576
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r002_c004",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 2,
+        "col_idx": 4,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 512,
+        "pixel_row_end": 768,
+        "pixel_col_start": 1024,
+        "pixel_col_end": 1280,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.171652214021479,
+          0.0,
+          -8.983152841195215e-05,
+          55.51901803124504
+        ],
+        "bounds": [
+          5.171652214021479,
+          55.496021159971576,
+          5.194649085294938,
+          55.51901803124504
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.194649085294938,
+              55.496021159971576
+            ],
+            [
+              5.217645956568398,
+              55.496021159971576
+            ],
+            [
+              5.217645956568398,
+              55.51901803124504
+            ],
+            [
+              5.194649085294938,
+              55.51901803124504
+            ],
+            [
+              5.194649085294938,
+              55.496021159971576
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r002_c005",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 2,
+        "col_idx": 5,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 512,
+        "pixel_row_end": 768,
+        "pixel_col_start": 1280,
+        "pixel_col_end": 1536,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.194649085294938,
+          0.0,
+          -8.983152841195215e-05,
+          55.51901803124504
+        ],
+        "bounds": [
+          5.194649085294938,
+          55.496021159971576,
+          5.217645956568398,
+          55.51901803124504
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.217645956568398,
+              55.496021159971576
+            ],
+            [
+              5.2406428278418575,
+              55.496021159971576
+            ],
+            [
+              5.2406428278418575,
+              55.51901803124504
+            ],
+            [
+              5.217645956568398,
+              55.51901803124504
+            ],
+            [
+              5.217645956568398,
+              55.496021159971576
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r002_c006",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 2,
+        "col_idx": 6,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 512,
+        "pixel_row_end": 768,
+        "pixel_col_start": 1536,
+        "pixel_col_end": 1792,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.217645956568398,
+          0.0,
+          -8.983152841195215e-05,
+          55.51901803124504
+        ],
+        "bounds": [
+          5.217645956568398,
+          55.496021159971576,
+          5.2406428278418575,
+          55.51901803124504
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.2406428278418575,
+              55.496021159971576
+            ],
+            [
+              5.263639699115317,
+              55.496021159971576
+            ],
+            [
+              5.263639699115317,
+              55.51901803124504
+            ],
+            [
+              5.2406428278418575,
+              55.51901803124504
+            ],
+            [
+              5.2406428278418575,
+              55.496021159971576
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r002_c007",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 2,
+        "col_idx": 7,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 512,
+        "pixel_row_end": 768,
+        "pixel_col_start": 1792,
+        "pixel_col_end": 2048,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.2406428278418575,
+          0.0,
+          -8.983152841195215e-05,
+          55.51901803124504
+        ],
+        "bounds": [
+          5.2406428278418575,
+          55.496021159971576,
+          5.263639699115317,
+          55.51901803124504
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.079664728927639,
+              55.47302428869812
+            ],
+            [
+              5.102661600201099,
+              55.47302428869812
+            ],
+            [
+              5.102661600201099,
+              55.496021159971576
+            ],
+            [
+              5.079664728927639,
+              55.496021159971576
+            ],
+            [
+              5.079664728927639,
+              55.47302428869812
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r003_c000",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 3,
+        "col_idx": 0,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 768,
+        "pixel_row_end": 1024,
+        "pixel_col_start": 0,
+        "pixel_col_end": 256,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.079664728927639,
+          0.0,
+          -8.983152841195215e-05,
+          55.496021159971576
+        ],
+        "bounds": [
+          5.079664728927639,
+          55.47302428869812,
+          5.102661600201099,
+          55.496021159971576
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.102661600201099,
+              55.47302428869812
+            ],
+            [
+              5.1256584714745586,
+              55.47302428869812
+            ],
+            [
+              5.1256584714745586,
+              55.496021159971576
+            ],
+            [
+              5.102661600201099,
+              55.496021159971576
+            ],
+            [
+              5.102661600201099,
+              55.47302428869812
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r003_c001",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 3,
+        "col_idx": 1,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 768,
+        "pixel_row_end": 1024,
+        "pixel_col_start": 256,
+        "pixel_col_end": 512,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.102661600201099,
+          0.0,
+          -8.983152841195215e-05,
+          55.496021159971576
+        ],
+        "bounds": [
+          5.102661600201099,
+          55.47302428869812,
+          5.1256584714745586,
+          55.496021159971576
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.1256584714745586,
+              55.47302428869812
+            ],
+            [
+              5.148655342748018,
+              55.47302428869812
+            ],
+            [
+              5.148655342748018,
+              55.496021159971576
+            ],
+            [
+              5.1256584714745586,
+              55.496021159971576
+            ],
+            [
+              5.1256584714745586,
+              55.47302428869812
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r003_c002",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 3,
+        "col_idx": 2,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 768,
+        "pixel_row_end": 1024,
+        "pixel_col_start": 512,
+        "pixel_col_end": 768,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.1256584714745586,
+          0.0,
+          -8.983152841195215e-05,
+          55.496021159971576
+        ],
+        "bounds": [
+          5.1256584714745586,
+          55.47302428869812,
+          5.148655342748018,
+          55.496021159971576
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.148655342748018,
+              55.47302428869812
+            ],
+            [
+              5.171652214021479,
+              55.47302428869812
+            ],
+            [
+              5.171652214021479,
+              55.496021159971576
+            ],
+            [
+              5.148655342748018,
+              55.496021159971576
+            ],
+            [
+              5.148655342748018,
+              55.47302428869812
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r003_c003",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 3,
+        "col_idx": 3,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 768,
+        "pixel_row_end": 1024,
+        "pixel_col_start": 768,
+        "pixel_col_end": 1024,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.148655342748018,
+          0.0,
+          -8.983152841195215e-05,
+          55.496021159971576
+        ],
+        "bounds": [
+          5.148655342748018,
+          55.47302428869812,
+          5.171652214021479,
+          55.496021159971576
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.171652214021479,
+              55.47302428869812
+            ],
+            [
+              5.194649085294938,
+              55.47302428869812
+            ],
+            [
+              5.194649085294938,
+              55.496021159971576
+            ],
+            [
+              5.171652214021479,
+              55.496021159971576
+            ],
+            [
+              5.171652214021479,
+              55.47302428869812
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r003_c004",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 3,
+        "col_idx": 4,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 768,
+        "pixel_row_end": 1024,
+        "pixel_col_start": 1024,
+        "pixel_col_end": 1280,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.171652214021479,
+          0.0,
+          -8.983152841195215e-05,
+          55.496021159971576
+        ],
+        "bounds": [
+          5.171652214021479,
+          55.47302428869812,
+          5.194649085294938,
+          55.496021159971576
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.194649085294938,
+              55.47302428869812
+            ],
+            [
+              5.217645956568398,
+              55.47302428869812
+            ],
+            [
+              5.217645956568398,
+              55.496021159971576
+            ],
+            [
+              5.194649085294938,
+              55.496021159971576
+            ],
+            [
+              5.194649085294938,
+              55.47302428869812
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r003_c005",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 3,
+        "col_idx": 5,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 768,
+        "pixel_row_end": 1024,
+        "pixel_col_start": 1280,
+        "pixel_col_end": 1536,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.194649085294938,
+          0.0,
+          -8.983152841195215e-05,
+          55.496021159971576
+        ],
+        "bounds": [
+          5.194649085294938,
+          55.47302428869812,
+          5.217645956568398,
+          55.496021159971576
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.217645956568398,
+              55.47302428869812
+            ],
+            [
+              5.2406428278418575,
+              55.47302428869812
+            ],
+            [
+              5.2406428278418575,
+              55.496021159971576
+            ],
+            [
+              5.217645956568398,
+              55.496021159971576
+            ],
+            [
+              5.217645956568398,
+              55.47302428869812
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r003_c006",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 3,
+        "col_idx": 6,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 768,
+        "pixel_row_end": 1024,
+        "pixel_col_start": 1536,
+        "pixel_col_end": 1792,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.217645956568398,
+          0.0,
+          -8.983152841195215e-05,
+          55.496021159971576
+        ],
+        "bounds": [
+          5.217645956568398,
+          55.47302428869812,
+          5.2406428278418575,
+          55.496021159971576
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.2406428278418575,
+              55.47302428869812
+            ],
+            [
+              5.263639699115317,
+              55.47302428869812
+            ],
+            [
+              5.263639699115317,
+              55.496021159971576
+            ],
+            [
+              5.2406428278418575,
+              55.496021159971576
+            ],
+            [
+              5.2406428278418575,
+              55.47302428869812
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r003_c007",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 3,
+        "col_idx": 7,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 768,
+        "pixel_row_end": 1024,
+        "pixel_col_start": 1792,
+        "pixel_col_end": 2048,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.2406428278418575,
+          0.0,
+          -8.983152841195215e-05,
+          55.496021159971576
+        ],
+        "bounds": [
+          5.2406428278418575,
+          55.47302428869812,
+          5.263639699115317,
+          55.496021159971576
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.079664728927639,
+              55.45002741742466
+            ],
+            [
+              5.102661600201099,
+              55.45002741742466
+            ],
+            [
+              5.102661600201099,
+              55.47302428869812
+            ],
+            [
+              5.079664728927639,
+              55.47302428869812
+            ],
+            [
+              5.079664728927639,
+              55.45002741742466
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r004_c000",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 4,
+        "col_idx": 0,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1024,
+        "pixel_row_end": 1280,
+        "pixel_col_start": 0,
+        "pixel_col_end": 256,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.079664728927639,
+          0.0,
+          -8.983152841195215e-05,
+          55.47302428869812
+        ],
+        "bounds": [
+          5.079664728927639,
+          55.45002741742466,
+          5.102661600201099,
+          55.47302428869812
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.102661600201099,
+              55.45002741742466
+            ],
+            [
+              5.1256584714745586,
+              55.45002741742466
+            ],
+            [
+              5.1256584714745586,
+              55.47302428869812
+            ],
+            [
+              5.102661600201099,
+              55.47302428869812
+            ],
+            [
+              5.102661600201099,
+              55.45002741742466
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r004_c001",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 4,
+        "col_idx": 1,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1024,
+        "pixel_row_end": 1280,
+        "pixel_col_start": 256,
+        "pixel_col_end": 512,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.102661600201099,
+          0.0,
+          -8.983152841195215e-05,
+          55.47302428869812
+        ],
+        "bounds": [
+          5.102661600201099,
+          55.45002741742466,
+          5.1256584714745586,
+          55.47302428869812
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.1256584714745586,
+              55.45002741742466
+            ],
+            [
+              5.148655342748018,
+              55.45002741742466
+            ],
+            [
+              5.148655342748018,
+              55.47302428869812
+            ],
+            [
+              5.1256584714745586,
+              55.47302428869812
+            ],
+            [
+              5.1256584714745586,
+              55.45002741742466
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r004_c002",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 4,
+        "col_idx": 2,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1024,
+        "pixel_row_end": 1280,
+        "pixel_col_start": 512,
+        "pixel_col_end": 768,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.1256584714745586,
+          0.0,
+          -8.983152841195215e-05,
+          55.47302428869812
+        ],
+        "bounds": [
+          5.1256584714745586,
+          55.45002741742466,
+          5.148655342748018,
+          55.47302428869812
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.148655342748018,
+              55.45002741742466
+            ],
+            [
+              5.171652214021479,
+              55.45002741742466
+            ],
+            [
+              5.171652214021479,
+              55.47302428869812
+            ],
+            [
+              5.148655342748018,
+              55.47302428869812
+            ],
+            [
+              5.148655342748018,
+              55.45002741742466
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r004_c003",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 4,
+        "col_idx": 3,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1024,
+        "pixel_row_end": 1280,
+        "pixel_col_start": 768,
+        "pixel_col_end": 1024,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.148655342748018,
+          0.0,
+          -8.983152841195215e-05,
+          55.47302428869812
+        ],
+        "bounds": [
+          5.148655342748018,
+          55.45002741742466,
+          5.171652214021479,
+          55.47302428869812
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.171652214021479,
+              55.45002741742466
+            ],
+            [
+              5.194649085294938,
+              55.45002741742466
+            ],
+            [
+              5.194649085294938,
+              55.47302428869812
+            ],
+            [
+              5.171652214021479,
+              55.47302428869812
+            ],
+            [
+              5.171652214021479,
+              55.45002741742466
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r004_c004",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 4,
+        "col_idx": 4,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1024,
+        "pixel_row_end": 1280,
+        "pixel_col_start": 1024,
+        "pixel_col_end": 1280,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.171652214021479,
+          0.0,
+          -8.983152841195215e-05,
+          55.47302428869812
+        ],
+        "bounds": [
+          5.171652214021479,
+          55.45002741742466,
+          5.194649085294938,
+          55.47302428869812
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.194649085294938,
+              55.45002741742466
+            ],
+            [
+              5.217645956568398,
+              55.45002741742466
+            ],
+            [
+              5.217645956568398,
+              55.47302428869812
+            ],
+            [
+              5.194649085294938,
+              55.47302428869812
+            ],
+            [
+              5.194649085294938,
+              55.45002741742466
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r004_c005",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 4,
+        "col_idx": 5,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1024,
+        "pixel_row_end": 1280,
+        "pixel_col_start": 1280,
+        "pixel_col_end": 1536,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.194649085294938,
+          0.0,
+          -8.983152841195215e-05,
+          55.47302428869812
+        ],
+        "bounds": [
+          5.194649085294938,
+          55.45002741742466,
+          5.217645956568398,
+          55.47302428869812
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.217645956568398,
+              55.45002741742466
+            ],
+            [
+              5.2406428278418575,
+              55.45002741742466
+            ],
+            [
+              5.2406428278418575,
+              55.47302428869812
+            ],
+            [
+              5.217645956568398,
+              55.47302428869812
+            ],
+            [
+              5.217645956568398,
+              55.45002741742466
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r004_c006",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 4,
+        "col_idx": 6,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1024,
+        "pixel_row_end": 1280,
+        "pixel_col_start": 1536,
+        "pixel_col_end": 1792,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.217645956568398,
+          0.0,
+          -8.983152841195215e-05,
+          55.47302428869812
+        ],
+        "bounds": [
+          5.217645956568398,
+          55.45002741742466,
+          5.2406428278418575,
+          55.47302428869812
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.2406428278418575,
+              55.45002741742466
+            ],
+            [
+              5.263639699115317,
+              55.45002741742466
+            ],
+            [
+              5.263639699115317,
+              55.47302428869812
+            ],
+            [
+              5.2406428278418575,
+              55.47302428869812
+            ],
+            [
+              5.2406428278418575,
+              55.45002741742466
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r004_c007",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 4,
+        "col_idx": 7,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1024,
+        "pixel_row_end": 1280,
+        "pixel_col_start": 1792,
+        "pixel_col_end": 2048,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.2406428278418575,
+          0.0,
+          -8.983152841195215e-05,
+          55.47302428869812
+        ],
+        "bounds": [
+          5.2406428278418575,
+          55.45002741742466,
+          5.263639699115317,
+          55.47302428869812
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.079664728927639,
+              55.4270305461512
+            ],
+            [
+              5.102661600201099,
+              55.4270305461512
+            ],
+            [
+              5.102661600201099,
+              55.45002741742466
+            ],
+            [
+              5.079664728927639,
+              55.45002741742466
+            ],
+            [
+              5.079664728927639,
+              55.4270305461512
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r005_c000",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 5,
+        "col_idx": 0,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1280,
+        "pixel_row_end": 1536,
+        "pixel_col_start": 0,
+        "pixel_col_end": 256,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.079664728927639,
+          0.0,
+          -8.983152841195215e-05,
+          55.45002741742466
+        ],
+        "bounds": [
+          5.079664728927639,
+          55.4270305461512,
+          5.102661600201099,
+          55.45002741742466
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.102661600201099,
+              55.4270305461512
+            ],
+            [
+              5.1256584714745586,
+              55.4270305461512
+            ],
+            [
+              5.1256584714745586,
+              55.45002741742466
+            ],
+            [
+              5.102661600201099,
+              55.45002741742466
+            ],
+            [
+              5.102661600201099,
+              55.4270305461512
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r005_c001",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 5,
+        "col_idx": 1,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1280,
+        "pixel_row_end": 1536,
+        "pixel_col_start": 256,
+        "pixel_col_end": 512,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.102661600201099,
+          0.0,
+          -8.983152841195215e-05,
+          55.45002741742466
+        ],
+        "bounds": [
+          5.102661600201099,
+          55.4270305461512,
+          5.1256584714745586,
+          55.45002741742466
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.1256584714745586,
+              55.4270305461512
+            ],
+            [
+              5.148655342748018,
+              55.4270305461512
+            ],
+            [
+              5.148655342748018,
+              55.45002741742466
+            ],
+            [
+              5.1256584714745586,
+              55.45002741742466
+            ],
+            [
+              5.1256584714745586,
+              55.4270305461512
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r005_c002",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 5,
+        "col_idx": 2,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1280,
+        "pixel_row_end": 1536,
+        "pixel_col_start": 512,
+        "pixel_col_end": 768,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.1256584714745586,
+          0.0,
+          -8.983152841195215e-05,
+          55.45002741742466
+        ],
+        "bounds": [
+          5.1256584714745586,
+          55.4270305461512,
+          5.148655342748018,
+          55.45002741742466
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.148655342748018,
+              55.4270305461512
+            ],
+            [
+              5.171652214021479,
+              55.4270305461512
+            ],
+            [
+              5.171652214021479,
+              55.45002741742466
+            ],
+            [
+              5.148655342748018,
+              55.45002741742466
+            ],
+            [
+              5.148655342748018,
+              55.4270305461512
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r005_c003",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 5,
+        "col_idx": 3,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1280,
+        "pixel_row_end": 1536,
+        "pixel_col_start": 768,
+        "pixel_col_end": 1024,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.148655342748018,
+          0.0,
+          -8.983152841195215e-05,
+          55.45002741742466
+        ],
+        "bounds": [
+          5.148655342748018,
+          55.4270305461512,
+          5.171652214021479,
+          55.45002741742466
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.171652214021479,
+              55.4270305461512
+            ],
+            [
+              5.194649085294938,
+              55.4270305461512
+            ],
+            [
+              5.194649085294938,
+              55.45002741742466
+            ],
+            [
+              5.171652214021479,
+              55.45002741742466
+            ],
+            [
+              5.171652214021479,
+              55.4270305461512
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r005_c004",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 5,
+        "col_idx": 4,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1280,
+        "pixel_row_end": 1536,
+        "pixel_col_start": 1024,
+        "pixel_col_end": 1280,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.171652214021479,
+          0.0,
+          -8.983152841195215e-05,
+          55.45002741742466
+        ],
+        "bounds": [
+          5.171652214021479,
+          55.4270305461512,
+          5.194649085294938,
+          55.45002741742466
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.194649085294938,
+              55.4270305461512
+            ],
+            [
+              5.217645956568398,
+              55.4270305461512
+            ],
+            [
+              5.217645956568398,
+              55.45002741742466
+            ],
+            [
+              5.194649085294938,
+              55.45002741742466
+            ],
+            [
+              5.194649085294938,
+              55.4270305461512
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r005_c005",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 5,
+        "col_idx": 5,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1280,
+        "pixel_row_end": 1536,
+        "pixel_col_start": 1280,
+        "pixel_col_end": 1536,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.194649085294938,
+          0.0,
+          -8.983152841195215e-05,
+          55.45002741742466
+        ],
+        "bounds": [
+          5.194649085294938,
+          55.4270305461512,
+          5.217645956568398,
+          55.45002741742466
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.217645956568398,
+              55.4270305461512
+            ],
+            [
+              5.2406428278418575,
+              55.4270305461512
+            ],
+            [
+              5.2406428278418575,
+              55.45002741742466
+            ],
+            [
+              5.217645956568398,
+              55.45002741742466
+            ],
+            [
+              5.217645956568398,
+              55.4270305461512
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r005_c006",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 5,
+        "col_idx": 6,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1280,
+        "pixel_row_end": 1536,
+        "pixel_col_start": 1536,
+        "pixel_col_end": 1792,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.217645956568398,
+          0.0,
+          -8.983152841195215e-05,
+          55.45002741742466
+        ],
+        "bounds": [
+          5.217645956568398,
+          55.4270305461512,
+          5.2406428278418575,
+          55.45002741742466
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.2406428278418575,
+              55.4270305461512
+            ],
+            [
+              5.263639699115317,
+              55.4270305461512
+            ],
+            [
+              5.263639699115317,
+              55.45002741742466
+            ],
+            [
+              5.2406428278418575,
+              55.45002741742466
+            ],
+            [
+              5.2406428278418575,
+              55.4270305461512
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r005_c007",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 5,
+        "col_idx": 7,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1280,
+        "pixel_row_end": 1536,
+        "pixel_col_start": 1792,
+        "pixel_col_end": 2048,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.2406428278418575,
+          0.0,
+          -8.983152841195215e-05,
+          55.45002741742466
+        ],
+        "bounds": [
+          5.2406428278418575,
+          55.4270305461512,
+          5.263639699115317,
+          55.45002741742466
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.079664728927639,
+              55.40403367487774
+            ],
+            [
+              5.102661600201099,
+              55.40403367487774
+            ],
+            [
+              5.102661600201099,
+              55.4270305461512
+            ],
+            [
+              5.079664728927639,
+              55.4270305461512
+            ],
+            [
+              5.079664728927639,
+              55.40403367487774
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r006_c000",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 6,
+        "col_idx": 0,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1536,
+        "pixel_row_end": 1792,
+        "pixel_col_start": 0,
+        "pixel_col_end": 256,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.079664728927639,
+          0.0,
+          -8.983152841195215e-05,
+          55.4270305461512
+        ],
+        "bounds": [
+          5.079664728927639,
+          55.40403367487774,
+          5.102661600201099,
+          55.4270305461512
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.102661600201099,
+              55.40403367487774
+            ],
+            [
+              5.1256584714745586,
+              55.40403367487774
+            ],
+            [
+              5.1256584714745586,
+              55.4270305461512
+            ],
+            [
+              5.102661600201099,
+              55.4270305461512
+            ],
+            [
+              5.102661600201099,
+              55.40403367487774
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r006_c001",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 6,
+        "col_idx": 1,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1536,
+        "pixel_row_end": 1792,
+        "pixel_col_start": 256,
+        "pixel_col_end": 512,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.102661600201099,
+          0.0,
+          -8.983152841195215e-05,
+          55.4270305461512
+        ],
+        "bounds": [
+          5.102661600201099,
+          55.40403367487774,
+          5.1256584714745586,
+          55.4270305461512
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.1256584714745586,
+              55.40403367487774
+            ],
+            [
+              5.148655342748018,
+              55.40403367487774
+            ],
+            [
+              5.148655342748018,
+              55.4270305461512
+            ],
+            [
+              5.1256584714745586,
+              55.4270305461512
+            ],
+            [
+              5.1256584714745586,
+              55.40403367487774
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r006_c002",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 6,
+        "col_idx": 2,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1536,
+        "pixel_row_end": 1792,
+        "pixel_col_start": 512,
+        "pixel_col_end": 768,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.1256584714745586,
+          0.0,
+          -8.983152841195215e-05,
+          55.4270305461512
+        ],
+        "bounds": [
+          5.1256584714745586,
+          55.40403367487774,
+          5.148655342748018,
+          55.4270305461512
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.148655342748018,
+              55.40403367487774
+            ],
+            [
+              5.171652214021479,
+              55.40403367487774
+            ],
+            [
+              5.171652214021479,
+              55.4270305461512
+            ],
+            [
+              5.148655342748018,
+              55.4270305461512
+            ],
+            [
+              5.148655342748018,
+              55.40403367487774
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r006_c003",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 6,
+        "col_idx": 3,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1536,
+        "pixel_row_end": 1792,
+        "pixel_col_start": 768,
+        "pixel_col_end": 1024,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.148655342748018,
+          0.0,
+          -8.983152841195215e-05,
+          55.4270305461512
+        ],
+        "bounds": [
+          5.148655342748018,
+          55.40403367487774,
+          5.171652214021479,
+          55.4270305461512
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.171652214021479,
+              55.40403367487774
+            ],
+            [
+              5.194649085294938,
+              55.40403367487774
+            ],
+            [
+              5.194649085294938,
+              55.4270305461512
+            ],
+            [
+              5.171652214021479,
+              55.4270305461512
+            ],
+            [
+              5.171652214021479,
+              55.40403367487774
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r006_c004",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 6,
+        "col_idx": 4,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1536,
+        "pixel_row_end": 1792,
+        "pixel_col_start": 1024,
+        "pixel_col_end": 1280,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.171652214021479,
+          0.0,
+          -8.983152841195215e-05,
+          55.4270305461512
+        ],
+        "bounds": [
+          5.171652214021479,
+          55.40403367487774,
+          5.194649085294938,
+          55.4270305461512
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.194649085294938,
+              55.40403367487774
+            ],
+            [
+              5.217645956568398,
+              55.40403367487774
+            ],
+            [
+              5.217645956568398,
+              55.4270305461512
+            ],
+            [
+              5.194649085294938,
+              55.4270305461512
+            ],
+            [
+              5.194649085294938,
+              55.40403367487774
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r006_c005",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 6,
+        "col_idx": 5,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1536,
+        "pixel_row_end": 1792,
+        "pixel_col_start": 1280,
+        "pixel_col_end": 1536,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.194649085294938,
+          0.0,
+          -8.983152841195215e-05,
+          55.4270305461512
+        ],
+        "bounds": [
+          5.194649085294938,
+          55.40403367487774,
+          5.217645956568398,
+          55.4270305461512
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.217645956568398,
+              55.40403367487774
+            ],
+            [
+              5.2406428278418575,
+              55.40403367487774
+            ],
+            [
+              5.2406428278418575,
+              55.4270305461512
+            ],
+            [
+              5.217645956568398,
+              55.4270305461512
+            ],
+            [
+              5.217645956568398,
+              55.40403367487774
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r006_c006",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 6,
+        "col_idx": 6,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1536,
+        "pixel_row_end": 1792,
+        "pixel_col_start": 1536,
+        "pixel_col_end": 1792,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.217645956568398,
+          0.0,
+          -8.983152841195215e-05,
+          55.4270305461512
+        ],
+        "bounds": [
+          5.217645956568398,
+          55.40403367487774,
+          5.2406428278418575,
+          55.4270305461512
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.2406428278418575,
+              55.40403367487774
+            ],
+            [
+              5.263639699115317,
+              55.40403367487774
+            ],
+            [
+              5.263639699115317,
+              55.4270305461512
+            ],
+            [
+              5.2406428278418575,
+              55.4270305461512
+            ],
+            [
+              5.2406428278418575,
+              55.40403367487774
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r006_c007",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 6,
+        "col_idx": 7,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1536,
+        "pixel_row_end": 1792,
+        "pixel_col_start": 1792,
+        "pixel_col_end": 2048,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.2406428278418575,
+          0.0,
+          -8.983152841195215e-05,
+          55.4270305461512
+        ],
+        "bounds": [
+          5.2406428278418575,
+          55.40403367487774,
+          5.263639699115317,
+          55.4270305461512
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.079664728927639,
+              55.38103680360428
+            ],
+            [
+              5.102661600201099,
+              55.38103680360428
+            ],
+            [
+              5.102661600201099,
+              55.40403367487774
+            ],
+            [
+              5.079664728927639,
+              55.40403367487774
+            ],
+            [
+              5.079664728927639,
+              55.38103680360428
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r007_c000",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 7,
+        "col_idx": 0,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1792,
+        "pixel_row_end": 2048,
+        "pixel_col_start": 0,
+        "pixel_col_end": 256,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.079664728927639,
+          0.0,
+          -8.983152841195215e-05,
+          55.40403367487774
+        ],
+        "bounds": [
+          5.079664728927639,
+          55.38103680360428,
+          5.102661600201099,
+          55.40403367487774
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.102661600201099,
+              55.38103680360428
+            ],
+            [
+              5.1256584714745586,
+              55.38103680360428
+            ],
+            [
+              5.1256584714745586,
+              55.40403367487774
+            ],
+            [
+              5.102661600201099,
+              55.40403367487774
+            ],
+            [
+              5.102661600201099,
+              55.38103680360428
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r007_c001",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 7,
+        "col_idx": 1,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1792,
+        "pixel_row_end": 2048,
+        "pixel_col_start": 256,
+        "pixel_col_end": 512,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.102661600201099,
+          0.0,
+          -8.983152841195215e-05,
+          55.40403367487774
+        ],
+        "bounds": [
+          5.102661600201099,
+          55.38103680360428,
+          5.1256584714745586,
+          55.40403367487774
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.1256584714745586,
+              55.38103680360428
+            ],
+            [
+              5.148655342748018,
+              55.38103680360428
+            ],
+            [
+              5.148655342748018,
+              55.40403367487774
+            ],
+            [
+              5.1256584714745586,
+              55.40403367487774
+            ],
+            [
+              5.1256584714745586,
+              55.38103680360428
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r007_c002",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 7,
+        "col_idx": 2,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1792,
+        "pixel_row_end": 2048,
+        "pixel_col_start": 512,
+        "pixel_col_end": 768,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.1256584714745586,
+          0.0,
+          -8.983152841195215e-05,
+          55.40403367487774
+        ],
+        "bounds": [
+          5.1256584714745586,
+          55.38103680360428,
+          5.148655342748018,
+          55.40403367487774
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.148655342748018,
+              55.38103680360428
+            ],
+            [
+              5.171652214021479,
+              55.38103680360428
+            ],
+            [
+              5.171652214021479,
+              55.40403367487774
+            ],
+            [
+              5.148655342748018,
+              55.40403367487774
+            ],
+            [
+              5.148655342748018,
+              55.38103680360428
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r007_c003",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 7,
+        "col_idx": 3,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1792,
+        "pixel_row_end": 2048,
+        "pixel_col_start": 768,
+        "pixel_col_end": 1024,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.148655342748018,
+          0.0,
+          -8.983152841195215e-05,
+          55.40403367487774
+        ],
+        "bounds": [
+          5.148655342748018,
+          55.38103680360428,
+          5.171652214021479,
+          55.40403367487774
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.171652214021479,
+              55.38103680360428
+            ],
+            [
+              5.194649085294938,
+              55.38103680360428
+            ],
+            [
+              5.194649085294938,
+              55.40403367487774
+            ],
+            [
+              5.171652214021479,
+              55.40403367487774
+            ],
+            [
+              5.171652214021479,
+              55.38103680360428
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r007_c004",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 7,
+        "col_idx": 4,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1792,
+        "pixel_row_end": 2048,
+        "pixel_col_start": 1024,
+        "pixel_col_end": 1280,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.171652214021479,
+          0.0,
+          -8.983152841195215e-05,
+          55.40403367487774
+        ],
+        "bounds": [
+          5.171652214021479,
+          55.38103680360428,
+          5.194649085294938,
+          55.40403367487774
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.194649085294938,
+              55.38103680360428
+            ],
+            [
+              5.217645956568398,
+              55.38103680360428
+            ],
+            [
+              5.217645956568398,
+              55.40403367487774
+            ],
+            [
+              5.194649085294938,
+              55.40403367487774
+            ],
+            [
+              5.194649085294938,
+              55.38103680360428
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r007_c005",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 7,
+        "col_idx": 5,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1792,
+        "pixel_row_end": 2048,
+        "pixel_col_start": 1280,
+        "pixel_col_end": 1536,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.194649085294938,
+          0.0,
+          -8.983152841195215e-05,
+          55.40403367487774
+        ],
+        "bounds": [
+          5.194649085294938,
+          55.38103680360428,
+          5.217645956568398,
+          55.40403367487774
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.217645956568398,
+              55.38103680360428
+            ],
+            [
+              5.2406428278418575,
+              55.38103680360428
+            ],
+            [
+              5.2406428278418575,
+              55.40403367487774
+            ],
+            [
+              5.217645956568398,
+              55.40403367487774
+            ],
+            [
+              5.217645956568398,
+              55.38103680360428
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r007_c006",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 7,
+        "col_idx": 6,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1792,
+        "pixel_row_end": 2048,
+        "pixel_col_start": 1536,
+        "pixel_col_end": 1792,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.217645956568398,
+          0.0,
+          -8.983152841195215e-05,
+          55.40403367487774
+        ],
+        "bounds": [
+          5.217645956568398,
+          55.38103680360428,
+          5.2406428278418575,
+          55.40403367487774
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.2406428278418575,
+              55.38103680360428
+            ],
+            [
+              5.263639699115317,
+              55.38103680360428
+            ],
+            [
+              5.263639699115317,
+              55.40403367487774
+            ],
+            [
+              5.2406428278418575,
+              55.40403367487774
+            ],
+            [
+              5.2406428278418575,
+              55.38103680360428
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "scene_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim",
+        "tile_id": "subset_2_of_S1A_IW_GRDH_1SDV_20180803T172551_20180803T172608_023085_0281B1_DB30_Orb_NR_Cal_Spk_TC_dB.dim_r007_c007",
+        "acquisition_time": "2018-08-03T17:25:54.809128Z",
+        "crs": "EPSG:4326",
+        "pixel_resolution": [
+          8.983152841195215e-05,
+          8.983152841195215e-05
+        ],
+        "bands": [
+          "VV",
+          "VH"
+        ],
+        "polarization_order": [
+          "VV",
+          "VH"
+        ],
+        "unit": "dB",
+        "dtype": "float32",
+        "tile_dimensions": [
+          256,
+          256
+        ],
+        "scene_dimensions": [
+          2048,
+          2048
+        ],
+        "row_idx": 7,
+        "col_idx": 7,
+        "is_padded": false,
+        "valid_region": [
+          0,
+          256,
+          0,
+          256
+        ],
+        "pixel_row_start": 1792,
+        "pixel_row_end": 2048,
+        "pixel_col_start": 1792,
+        "pixel_col_end": 2048,
+        "transform": [
+          8.983152841195215e-05,
+          0.0,
+          5.2406428278418575,
+          0.0,
+          -8.983152841195215e-05,
+          55.40403367487774
+        ],
+        "bounds": [
+          5.2406428278418575,
+          55.38103680360428,
+          5.263639699115317,
+          55.40403367487774
+        ]
+      }
+    }
+  ]
+}
