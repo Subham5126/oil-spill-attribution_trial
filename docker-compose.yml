@@ -1,0 +1,90 @@
+version: "3.9"
+
+services:
+  # PostgreSQL 16 with PostGIS 3.4
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: oiltrace-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: oiltrace
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d oiltrace"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Celery task broker and result store
+  redis:
+    image: redis:7-alpine
+    container_name: oiltrace-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # OilTrace FastAPI Backend Application
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: oiltrace-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - APP_ENV=production
+      - DEMO_MODE=true
+      - DATABASE_URL=postgresql+psycopg://postgres:postgrespassword@db:5432/oiltrace
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./demo:/app/demo
+
+  # Celery Background Worker
+  celery_worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: oiltrace-celery
+    restart: unless-stopped
+    command: celery -A backend.workers.celery_app worker --loglevel=info
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - APP_ENV=production
+      - DEMO_MODE=true
+      - DATABASE_URL=postgresql+psycopg://postgres:postgrespassword@db:5432/oiltrace
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./data:/app/data
+      - ./demo:/app/demo
+
+volumes:
+  pgdata:
+  redisdata:

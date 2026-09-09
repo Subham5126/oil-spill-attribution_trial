@@ -1,0 +1,263 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "EPSG:4326"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "SAR-20250101-IND-0042",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              72.465,
+              18.512
+            ],
+            [
+              72.478,
+              18.515
+            ],
+            [
+              72.492,
+              18.525
+            ],
+            [
+              72.501,
+              18.532
+            ],
+            [
+              72.496,
+              18.536
+            ],
+            [
+              72.482,
+              18.53
+            ],
+            [
+              72.471,
+              18.522
+            ],
+            [
+              72.462,
+              18.516
+            ],
+            [
+              72.465,
+              18.512
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "layer_type": "oil_spill",
+        "spill_id": "SAR-20250101-IND-0042",
+        "detection_timestamp": "2025-01-01T05:00:00+00:00",
+        "source_sensor": "Sentinel-1 SAR C-Band (IW)",
+        "confidence": 0.94,
+        "area_sq_m": 3927470.14,
+        "area_sq_km": 3.9275,
+        "perimeter_m": 9963.0,
+        "perimeter_km": 9.963,
+        "compactness": 0.4972,
+        "centroid": {
+          "longitude": 72.481513,
+          "latitude": 18.523598
+        },
+        "stroke": true,
+        "color": "#d90429",
+        "weight": 2,
+        "opacity": 1.0,
+        "fill": true,
+        "fillColor": "#ef233c",
+        "fillOpacity": 0.6,
+        "mission": "Sentinel-1B",
+        "polarization": "VV+VH",
+        "resolution_meters": 10.0,
+        "analyst_notes": "Continuous linear sheen with heavy core patch offshore Mumbai shipping corridor.",
+        "popup_html": "<b>Oil Spill:</b> SAR-20250101-IND-0042<br/><b>Sensor:</b> Sentinel-1 SAR C-Band (IW)<br/><b>Detected:</b> 2025-01-01 05:00:00 UTC<br/><b>Confidence:</b> 94.0%<br/><b>Area:</b> 3.927 km\u00b2<br/><b>Perimeter:</b> 9.963 km"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              72.462,
+              18.512
+            ],
+            [
+              72.501,
+              18.512
+            ],
+            [
+              72.501,
+              18.536
+            ],
+            [
+              72.462,
+              18.536
+            ],
+            [
+              72.462,
+              18.512
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "layer_type": "bounding_box",
+        "label": "Spill Bounding Box",
+        "bbox": [
+          72.462,
+          18.512,
+          72.501,
+          18.536
+        ],
+        "stroke": true,
+        "color": "#2b2d42",
+        "weight": 1,
+        "opacity": 0.7,
+        "fill": true,
+        "fillColor": "#8d99ae",
+        "fillOpacity": 0.1,
+        "dashArray": "4, 4",
+        "popup_html": "<b>Spill Bounding Box</b><br/>Bounds: (72.462, 18.512, 72.501, 18.536)"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "vessel_211888002",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            72.54425,
+            18.56436
+          ],
+          [
+            72.54491666666667,
+            18.55336
+          ],
+          [
+            72.54558333333335,
+            18.54236
+          ],
+          [
+            72.54625,
+            18.53136
+          ],
+          [
+            72.54691666666668,
+            18.52036
+          ],
+          [
+            72.54758333333334,
+            18.50936
+          ],
+          [
+            72.54825,
+            18.49836
+          ]
+        ]
+      },
+      "properties": {
+        "layer_type": "vessel_track",
+        "mmsi": 211888002,
+        "vessel_name": "Vessel 211888002",
+        "stroke": true,
+        "color": "#0077b6",
+        "weight": 3,
+        "opacity": 0.9,
+        "fill": false,
+        "fillColor": "#0077b6",
+        "fillOpacity": 0.0,
+        "attribution_score": 0.885,
+        "rank": 2,
+        "popup_html": "<b>Vessel:</b> Vessel 211888002 (MMSI: 211888002)<br/><b>Attribution Score:</b> 0.885"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "vessel_413999001",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            72.48325,
+            18.57136
+          ],
+          [
+            72.48691666666667,
+            18.563693333333333
+          ],
+          [
+            72.49058333333335,
+            18.556026666666664
+          ],
+          [
+            72.49425,
+            18.54836
+          ],
+          [
+            72.49791666666667,
+            18.54136
+          ],
+          [
+            72.50158333333334,
+            18.53436
+          ],
+          [
+            72.50525,
+            18.52736
+          ],
+          [
+            72.50891666666666,
+            18.520026666666666
+          ],
+          [
+            72.51258333333334,
+            18.512693333333335
+          ],
+          [
+            72.51625,
+            18.50536
+          ],
+          [
+            72.51991666666666,
+            18.498026666666668
+          ],
+          [
+            72.52358333333333,
+            18.490693333333333
+          ],
+          [
+            72.52725,
+            18.48336
+          ]
+        ]
+      },
+      "properties": {
+        "layer_type": "vessel_track",
+        "mmsi": 413999001,
+        "vessel_name": "Vessel 413999001",
+        "stroke": true,
+        "color": "#0077b6",
+        "weight": 3,
+        "opacity": 0.9,
+        "fill": false,
+        "fillColor": "#0077b6",
+        "fillOpacity": 0.0,
+        "attribution_score": 0.9536,
+        "rank": 1,
+        "popup_html": "<b>Vessel:</b> Vessel 413999001 (MMSI: 413999001)<br/><b>Attribution Score:</b> 0.954"
+      }
+    }
+  ]
+}
