@@ -39,7 +39,7 @@ redis
 requests
 tqdm
 pyyaml
-zstandard
+zstandard>=0.22.0
 
 # Testing
 pytest
