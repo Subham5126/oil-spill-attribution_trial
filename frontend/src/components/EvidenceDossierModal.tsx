@@ -94,7 +94,7 @@ export const EvidenceDossierModal: React.FC<EvidenceDossierModalProps> = ({
                 slick <code className="text-rose-200">{result.spill_metadata.spill_id}</code> (3.9275 km²)
                 to release origin at 18.5253°N, 72.5032°E at 01:00 UTC. Class-A AIS
                 telemetry positions vessel <strong>{vessel.vessel_name}</strong> within{" "}
-                <strong>{vessel.metrics.min_distance_km} km</strong> of the origin centroid within the estimated discharge window.
+                <strong>{vessel.metrics?.min_distance_km ?? vessel.min_distance_km ?? 0} km</strong> of the origin centroid within the estimated discharge window.
               </p>
             </div>
           </div>
@@ -109,34 +109,34 @@ export const EvidenceDossierModal: React.FC<EvidenceDossierModalProps> = ({
               <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono">
                 <span className="text-[10px] text-slate-400 block">Spatial Score (40%)</span>
                 <span className="text-base font-bold text-sky-400">
-                  {(vessel.scores.spatial * 100).toFixed(1)}%
+                  {(((vessel.scores?.spatial ?? 0)) * 100).toFixed(1)}%
                 </span>
                 <span className="text-[10px] text-slate-500 block mt-1">
-                  Min Dist: {vessel.metrics.min_distance_km} km
+                  Min Dist: {vessel.metrics?.min_distance_km ?? vessel.min_distance_km ?? 0} km
                 </span>
               </div>
               <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono">
                 <span className="text-[10px] text-slate-400 block">Temporal Score (35%)</span>
                 <span className="text-base font-bold text-emerald-400">
-                  {(vessel.scores.temporal * 100).toFixed(1)}%
+                  {(((vessel.scores?.temporal ?? 0)) * 100).toFixed(1)}%
                 </span>
                 <span className="text-[10px] text-slate-500 block mt-1">
-                  Offset: {vessel.metrics.time_difference_minutes} min
+                  Offset: {vessel.metrics?.time_difference_minutes ?? 0} min
                 </span>
               </div>
               <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono">
                 <span className="text-[10px] text-slate-400 block">Trajectory Alignment (15%)</span>
                 <span className="text-base font-bold text-amber-400">
-                  {(vessel.scores.trajectory * 100).toFixed(1)}%
+                  {(((vessel.scores?.trajectory ?? 0)) * 100).toFixed(1)}%
                 </span>
                 <span className="text-[10px] text-slate-500 block mt-1">
-                  Speed: {vessel.metrics.transit_speed_knots} kn
+                  Speed: {vessel.metrics?.transit_speed_knots ?? 0} kn
                 </span>
               </div>
               <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono">
                 <span className="text-[10px] text-slate-400 block">Kinematic Behaviour (10%)</span>
                 <span className="text-base font-bold text-purple-400">
-                  {(vessel.scores.behaviour * 100).toFixed(1)}%
+                  {(((vessel.scores?.behaviour ?? 0)) * 100).toFixed(1)}%
                 </span>
                 <span className="text-[10px] text-slate-500 block mt-1">
                   Operational discharge

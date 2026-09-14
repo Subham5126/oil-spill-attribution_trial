@@ -22,9 +22,10 @@ import {
 interface VesselAnalysisPageProps {
   onNavigate: (path: NavPath) => void;
   onOpenDossier?: () => void;
+  activeInvestigationId?: string | null;
 }
 
-export function VesselAnalysisPage({ onNavigate, onOpenDossier }: VesselAnalysisPageProps) {
+export function VesselAnalysisPage({ onNavigate, onOpenDossier, activeInvestigationId }: VesselAnalysisPageProps) {
   const [pipelineData, setPipelineData] = useState<EndToEndResult>(BASELINE_DEMO_RESULT);
   const [selectedVessel, setSelectedVessel] = useState<CandidateVessel | null>(
     BASELINE_DEMO_RESULT.primary_suspect
@@ -32,13 +33,17 @@ export function VesselAnalysisPage({ onNavigate, onOpenDossier }: VesselAnalysis
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    getActivePipelineResult().then((data) => {
+    getActivePipelineResult(activeInvestigationId || undefined).then((data) => {
       setPipelineData(data);
       if (data.primary_suspect) {
         setSelectedVessel(data.primary_suspect);
+      } else if (data.candidate_vessels && data.candidate_vessels.length > 0) {
+        setSelectedVessel(data.candidate_vessels[0]);
+      } else {
+        setSelectedVessel(null);
       }
     });
-  }, []);
+  }, [activeInvestigationId]);
 
   const candidates = pipelineData.candidate_vessels || [];
 
@@ -124,94 +129,130 @@ export function VesselAnalysisPage({ onNavigate, onOpenDossier }: VesselAnalysis
               />
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left font-mono text-xs text-on-surface">
-                <thead>
-                  <tr className="border-b border-surface-container-low text-secondary text-[11px] uppercase">
-                    <th className="py-2.5 px-2">Rank</th>
-                    <th className="py-2.5 px-2">Vessel Details</th>
-                    <th className="py-2.5 px-2 text-center">Overall Score</th>
-                    <th className="py-2.5 px-2 text-center">Min Distance</th>
-                    <th className="py-2.5 px-2 text-center">Time Offset</th>
-                    <th className="py-2.5 px-2 text-center">Speed</th>
-                    <th className="py-2.5 px-2 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-surface-container-low">
-                  {filteredCandidates.map((c) => {
-                    const isSelected = selectedVessel?.mmsi === c.mmsi;
-                    const isPrimary = c.rank === 1;
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-mono text-xs text-on-surface">
+                  <thead>
+                    <tr className="border-b border-surface-container-low text-secondary text-[11px] uppercase">
+                      <th className="py-2.5 px-2">Rank</th>
+                      <th className="py-2.5 px-2">Vessel Details</th>
+                      <th className="py-2.5 px-2">Type</th>
+                      <th className="py-2.5 px-2 text-center">Distance</th>
+                      <th className="py-2.5 px-2 text-center">Time Offset</th>
+                      <th className="py-2.5 px-2 text-center">Attribution Confidence</th>
+                      <th className="py-2.5 px-2 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-surface-container-low">
+                    {filteredCandidates.map((c) => {
+                      const isSelected = selectedVessel?.mmsi === c.mmsi;
+                      const isPrimary = c.rank === 1;
+                      const confScore = Math.round(
+                        typeof c.confidence_score === "number"
+                          ? c.confidence_score
+                          : (c.scores?.overall ?? 0.5) * 100
+                      );
+                      const confLevel =
+                        c.confidence_level ||
+                        (confScore >= 90
+                          ? "VERY HIGH"
+                          : confScore >= 75
+                          ? "HIGH"
+                          : confScore >= 50
+                          ? "MODERATE"
+                          : confScore >= 25
+                          ? "LOW"
+                          : "VERY LOW");
 
-                    return (
-                      <tr
-                        key={c.mmsi}
-                        onClick={() => setSelectedVessel(c)}
-                        className={`cursor-pointer transition-colors ${
-                          isSelected
-                            ? "bg-primary-fixed/20 font-bold"
-                            : isPrimary
-                            ? "bg-rose-50/50 hover:bg-rose-50"
-                            : "hover:bg-surface-container-low"
-                        }`}
-                      >
-                        <td className="py-3 px-2">
-                          <span
-                            className={`w-6 h-6 rounded-full inline-flex items-center justify-center font-bold text-xs ${
-                              isPrimary ? "bg-rose-600 text-white" : "bg-slate-700 text-white"
-                            }`}
-                          >
-                            #{c.rank}
-                          </span>
-                        </td>
-                        <td className="py-3 px-2">
-                          <div className="font-bold text-sm text-on-surface font-sans flex items-center gap-1.5">
-                            {c.vessel_name}
-                            {isPrimary && (
-                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-100 text-rose-800 font-bold border border-rose-300">
-                                PRIMARY
+                      const levelColors: Record<string, string> = {
+                        "VERY HIGH": "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+                        "HIGH": "bg-sky-500/15 text-sky-700 border-sky-500/30",
+                        "MODERATE": "bg-amber-500/15 text-amber-700 border-amber-500/30",
+                        "LOW": "bg-orange-500/15 text-orange-700 border-orange-500/30",
+                        "VERY LOW": "bg-slate-500/15 text-slate-700 border-slate-500/30",
+                      };
+
+                      return (
+                        <tr
+                          key={c.mmsi}
+                          onClick={() => setSelectedVessel(c)}
+                          className={`cursor-pointer transition-colors ${
+                            isSelected
+                              ? "bg-primary-fixed/20 font-bold"
+                              : isPrimary
+                              ? "bg-rose-50/50 hover:bg-rose-50"
+                              : "hover:bg-surface-container-low"
+                          }`}
+                        >
+                          <td className="py-3 px-2">
+                            <span
+                              className={`w-6 h-6 rounded-full inline-flex items-center justify-center font-bold text-xs ${
+                                isPrimary ? "bg-rose-600 text-white" : "bg-slate-700 text-white"
+                              }`}
+                            >
+                              #{c.rank}
+                            </span>
+                          </td>
+                          <td className="py-3 px-2">
+                            <div className="font-bold text-sm text-on-surface font-sans flex items-center gap-1.5">
+                              {c.vessel_name}
+                              {isPrimary && (
+                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-100 text-rose-800 font-bold border border-rose-300">
+                                  PRIMARY
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-secondary">
+                              MMSI: {c.mmsi} • IMO: {c.imo}
+                            </div>
+                          </td>
+                          <td className="py-3 px-2 text-secondary font-sans text-xs">
+                            {c.vessel_type || "Commercial"}
+                          </td>
+                          <td className="py-3 px-2 text-center font-semibold text-on-surface">
+                            {(c.metrics?.min_distance_km ?? c.min_distance_km ?? c.distance_to_track_km ?? 0).toFixed(2)} km
+                          </td>
+                          <td className="py-3 px-2 text-center text-secondary">
+                            {(c.metrics?.time_difference_minutes ?? 0).toFixed(0)} min
+                          </td>
+                          <td className="py-3 px-2 text-center">
+                            <div className="inline-flex items-center gap-1.5">
+                              <span className="font-bold text-xs font-mono">{confScore}</span>
+                              <span
+                                className={`text-[10px] px-1.5 py-0.5 rounded font-bold border ${
+                                  levelColors[confLevel] || levelColors["MODERATE"]
+                                }`}
+                              >
+                                {confLevel}
                               </span>
-                            )}
-                          </div>
-                          <div className="text-[11px] text-secondary">
-                            MMSI: {c.mmsi} • IMO: {c.imo}
-                          </div>
-                        </td>
-                        <td className="py-3 px-2 text-center">
-                          <span
-                            className={`px-2 py-0.5 rounded font-bold ${
-                              isPrimary
-                                ? "bg-rose-600 text-white"
-                                : "bg-surface-container text-on-surface"
-                            }`}
-                          >
-                            {(c.scores.overall * 100).toFixed(1)}%
-                          </span>
-                        </td>
-                        <td className="py-3 px-2 text-center font-semibold text-on-surface">
-                          {c.metrics.min_distance_km.toFixed(3)} km
-                        </td>
-                        <td className="py-3 px-2 text-center text-secondary">
-                          {c.metrics.time_difference_minutes.toFixed(0)} min
-                        </td>
-                        <td className="py-3 px-2 text-center text-secondary">
-                          {c.metrics.transit_speed_knots.toFixed(1)} kn
-                        </td>
-                        <td className="py-3 px-2 text-right">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedVessel(c);
-                              onNavigate("vessel-detail");
-                            }}
-                            className="text-primary hover:underline font-sans font-semibold text-xs inline-flex items-center"
-                          >
-                            Details <ChevronRight className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                            </div>
+                          </td>
+                          <td className="py-3 px-2 text-right">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedVessel(c);
+                                onNavigate("vessel-detail");
+                              }}
+                              className="text-primary hover:underline font-sans font-semibold text-xs inline-flex items-center"
+                            >
+                              Details <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  {filteredCandidates.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-secondary">
+                        <Ship className="w-8 h-8 mx-auto mb-2 opacity-40 text-primary" />
+                        <p className="font-semibold text-xs text-on-surface">No Candidate Vessels Correlated</p>
+                        <p className="text-[11px] text-secondary mt-1 max-w-sm mx-auto">
+                          No maritime vessels were located within the spatial/temporal search window or external AIS correlation feed was not activated.
+                        </p>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -225,12 +266,12 @@ export function VesselAnalysisPage({ onNavigate, onOpenDossier }: VesselAnalysis
                 Kinematic Speed &amp; Closest Point of Approach (CPA) Profile
               </h3>
               <span className="font-data-mono-sm text-xs text-secondary">
-                Target: {selectedVessel?.vessel_name || "PACIFIC VOYAGER"}
+                Target: {selectedVessel?.vessel_name || "Under Evaluation"}
               </span>
             </div>
             <KinematicSpeedChart
-              vesselName={selectedVessel?.vessel_name}
-              speedKnots={selectedVessel?.metrics.transit_speed_knots}
+              vesselName={selectedVessel?.vessel_name || "Vessel Candidate"}
+              speedKnots={selectedVessel?.metrics?.transit_speed_knots || 0}
             />
           </div>
         </div>
@@ -268,6 +309,81 @@ export function VesselAnalysisPage({ onNavigate, onOpenDossier }: VesselAnalysis
                   Rank #{selectedVessel.rank}
                 </span>
               </div>
+
+              {/* Attribution Confidence Card */}
+              {(() => {
+                const confScore = Math.round(
+                  typeof selectedVessel.confidence_score === "number"
+                    ? selectedVessel.confidence_score
+                    : (selectedVessel.scores.overall ?? 0.5) * 100
+                );
+                const confLevel =
+                  selectedVessel.confidence_level ||
+                  (confScore >= 90
+                    ? "VERY HIGH"
+                    : confScore >= 75
+                    ? "HIGH"
+                    : confScore >= 50
+                    ? "MODERATE"
+                    : confScore >= 25
+                    ? "LOW"
+                    : "VERY LOW");
+
+                const levelColors: Record<string, string> = {
+                  "VERY HIGH": "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+                  "HIGH": "bg-sky-500/15 text-sky-700 border-sky-500/30",
+                  "MODERATE": "bg-amber-500/15 text-amber-700 border-amber-500/30",
+                  "LOW": "bg-orange-500/15 text-orange-700 border-orange-500/30",
+                  "VERY LOW": "bg-slate-500/15 text-slate-700 border-slate-500/30",
+                };
+
+                const supporting = selectedVessel.confidence_factors?.supporting || [
+                  "Spatial proximity consistent with release corridor",
+                  "Temporal presence aligned with drift timeline",
+                  "Trajectory compatible with hydrodynamic current forcing",
+                ];
+                const limitations = selectedVessel.confidence_factors?.limitations || [];
+
+                return (
+                  <div className="p-3 rounded-lg bg-surface-container-low border border-surface-container flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-secondary">
+                        Attribution Confidence
+                      </span>
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase border ${
+                          levelColors[confLevel] || levelColors["MODERATE"]
+                        }`}
+                      >
+                        {confLevel}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline gap-1.5 font-mono">
+                      <span className="text-2xl font-bold text-on-surface">{confScore}</span>
+                      <span className="text-xs text-secondary font-semibold">/ 100</span>
+                    </div>
+
+                    {/* Evidence Checklist */}
+                    <div className="mt-1 pt-2 border-t border-surface-container flex flex-col gap-1 text-[11px]">
+                      <span className="font-semibold text-secondary text-[10px] uppercase tracking-wider">
+                        Attribution Evidence:
+                      </span>
+                      {supporting.map((sup, idx) => (
+                        <div key={idx} className="flex items-start gap-1.5 text-emerald-700">
+                          <span className="font-bold shrink-0">✓</span>
+                          <span className="leading-snug text-on-surface">{sup}</span>
+                        </div>
+                      ))}
+                      {limitations.map((lim, idx) => (
+                        <div key={idx} className="flex items-start gap-1.5 text-amber-700">
+                          <span className="font-bold shrink-0">△</span>
+                          <span className="leading-snug text-secondary">{lim}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* 4 Score Bars */}
               <div className="space-y-2 text-xs font-mono">

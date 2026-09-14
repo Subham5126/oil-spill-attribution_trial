@@ -20,16 +20,27 @@ class DemoDataProvider:
 
     def __init__(self, demo_dir: Optional[Path] = None):
         self.demo_dir = demo_dir or settings.DEMO_OUTPUT_DIR
+        self.real_result_path = self.demo_dir / "real_end_to_end_result.json"
+        self.real_layers_path = self.demo_dir / "real_end_to_end_layers.geojson"
         self.result_json_path = self.demo_dir / "end_to_end_result.json"
         self.layers_geojson_path = self.demo_dir / "end_to_end_layers.geojson"
 
-    def load_latest_result(self) -> Dict[str, Any]:
-        """Load the authoritative demo end_to_end_result.json."""
+    def load_real_result(self) -> Dict[str, Any]:
+        """Load latest real pipeline result from disk if available."""
+        if self.real_result_path.exists():
+            try:
+                with open(self.real_result_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception as exc:
+                logger.error(f"Error parsing real result JSON at {self.real_result_path}: {exc}")
+        return {}
+
+    def load_demo_result(self) -> Dict[str, Any]:
+        """Load baseline demonstration fixture."""
         if self.result_json_path.exists():
             try:
                 with open(self.result_json_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    # Annotate provenance explicitly
                     if "provenance" not in data:
                         data["provenance"] = {
                             "data_source_mode": "DEMO",
@@ -42,33 +53,54 @@ class DemoDataProvider:
                         }
                     return data
             except Exception as exc:
-                logger.error(f"Error parsing demo result JSON: {exc}")
-
+                logger.error(f"Error parsing demo result JSON at {self.result_json_path}: {exc}")
         return {
             "status": "NO_DATA",
-            "message": f"Demo result not found at {self.result_json_path}. Run demo/end_to_end_oil_spill_demo.py to generate.",
+            "message": f"Pipeline result not found at {self.result_json_path}.",
         }
 
-    def load_latest_layers_geojson(self) -> Dict[str, Any]:
-        """Load the authoritative demo GeoJSON FeatureCollection."""
+    def load_latest_result(self, mode: Optional[str] = None) -> Dict[str, Any]:
+        """Load latest result based on explicit mode or configured DEMO_MODE."""
+        if mode == "real" or (not settings.DEMO_MODE and mode != "demo"):
+            real = self.load_real_result()
+            if real:
+                return real
+        return self.load_demo_result()
+
+    def load_real_layers_geojson(self) -> Dict[str, Any]:
+        """Load latest real GeoJSON FeatureCollection."""
+        if self.real_layers_path.exists():
+            try:
+                with open(self.real_layers_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception as exc:
+                logger.error(f"Error parsing real GeoJSON at {self.real_layers_path}: {exc}")
+        return {"type": "FeatureCollection", "features": []}
+
+    def load_demo_layers_geojson(self) -> Dict[str, Any]:
+        """Load baseline demonstration GeoJSON FeatureCollection."""
         if self.layers_geojson_path.exists():
             try:
                 with open(self.layers_geojson_path, "r", encoding="utf-8") as f:
                     return json.load(f)
             except Exception as exc:
-                logger.error(f"Error parsing demo GeoJSON: {exc}")
+                logger.error(f"Error parsing demo GeoJSON at {self.layers_geojson_path}: {exc}")
+        return {"type": "FeatureCollection", "features": []}
 
-        return {
-            "type": "FeatureCollection",
-            "features": [],
-        }
+    def load_latest_layers_geojson(self, mode: Optional[str] = None) -> Dict[str, Any]:
+        """Load latest GeoJSON FeatureCollection based on mode."""
+        if mode == "real" or (not settings.DEMO_MODE and mode != "demo"):
+            real = self.load_real_layers_geojson()
+            if real.get("features"):
+                return real
+        return self.load_demo_layers_geojson()
 
     def get_demo_investigations(self) -> List[Dict[str, Any]]:
         """Return standardized investigations list derived from demo data."""
-        res = self.load_latest_result()
+        res = self.load_demo_result()
         spill = res.get("spill_metadata", {})
         gis = res.get("gis_measurement", {})
-        suspect = res.get("primary_suspect", {})
+        suspect = res.get("primary_suspect") or {}
         centroid = gis.get("centroid", {"latitude": 18.523598, "longitude": 72.481513})
 
         inv1 = {
@@ -109,9 +141,9 @@ class DemoDataProvider:
 
     def get_demo_reports(self) -> List[Dict[str, Any]]:
         """Return standardized forensic dossier reports derived from demo data."""
-        res = self.load_latest_result()
+        res = self.load_demo_result()
         spill = res.get("spill_metadata", {})
-        suspect = res.get("primary_suspect", {})
+        suspect = res.get("primary_suspect") or {}
         score = round((suspect.get("scores", {}).get("overall", 0.9536) or 0.9536) * 100, 2)
 
         return [

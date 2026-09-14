@@ -44,9 +44,11 @@ class HindcastConfig(BaseModel):
 class OceanDriftResponse(BaseModel):
     model_type: str = "Lagrangian Forward/Backward Euler"
     particles_simulated: int = 40
-    forecast: ForecastConfig
-    hindcast: HindcastConfig
+    surface_velocity: Optional[Dict[str, Any]] = None
+    forecast: Optional[ForecastConfig] = None
+    hindcast: Optional[HindcastConfig] = None
     probable_origin: ProbableOriginSchema
+    forecast_endpoint: Optional[Dict[str, Any]] = None
     uncertainty: SpatialUncertaintySchema
 
 

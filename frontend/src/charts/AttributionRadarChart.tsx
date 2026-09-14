@@ -29,13 +29,13 @@ export const AttributionRadarChart: React.FC<AttributionRadarChartProps> = ({
     },
     radar: {
       indicator: [
-        { name: "Spatial Proximity (40%)", max: 1.0 },
-        { name: "Temporal Coincidence (35%)", max: 1.0 },
-        { name: "Trajectory Alignment (15%)", max: 1.0 },
-        { name: "Kinematic Behaviour (10%)", max: 1.0 },
+        { name: "Spatial (40%)", max: 1.0 },
+        { name: "Temporal (35%)", max: 1.0 },
+        { name: "Trajectory (15%)", max: 1.0 },
+        { name: "Behaviour (10%)", max: 1.0 },
       ],
-      radius: "65%",
-      center: ["50%", "45%"],
+      radius: "56%",
+      center: ["50%", "44%"],
       splitNumber: 4,
       axisName: {
         color: "#cbd5e1",
@@ -93,7 +93,7 @@ export const AttributionRadarChart: React.FC<AttributionRadarChartProps> = ({
   };
 
   return (
-    <div className="w-full h-64">
+    <div className="w-full h-52">
       <ReactECharts option={option} style={{ height: "100%", width: "100%" }} />
     </div>
   );

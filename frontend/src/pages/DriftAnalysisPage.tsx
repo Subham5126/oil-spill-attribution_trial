@@ -20,15 +20,16 @@ import {
 interface DriftAnalysisPageProps {
   onNavigate: (path: NavPath) => void;
   onOpenDossier?: () => void;
+  activeInvestigationId?: string | null;
 }
 
-export function DriftAnalysisPage({ onNavigate, onOpenDossier }: DriftAnalysisPageProps) {
+export function DriftAnalysisPage({ onNavigate, onOpenDossier, activeInvestigationId }: DriftAnalysisPageProps) {
   const [pipelineData, setPipelineData] = useState<EndToEndResult>(BASELINE_DEMO_RESULT);
   const [simOffsetHours, setSimOffsetHours] = useState<number>(-4);
 
   useEffect(() => {
-    getActivePipelineResult().then(setPipelineData);
-  }, []);
+    getActivePipelineResult(activeInvestigationId || undefined).then(setPipelineData);
+  }, [activeInvestigationId]);
 
   const { ocean_drift, gis_measurement, spill_metadata } = pipelineData;
   const { probable_origin, uncertainty } = ocean_drift;

@@ -18,19 +18,20 @@ import {
 interface SpillGeometryPageProps {
   onNavigate: (path: NavPath) => void;
   onOpenDossier?: () => void;
+  activeInvestigationId?: string | null;
 }
 
-export function SpillGeometryPage({ onNavigate, onOpenDossier }: SpillGeometryPageProps) {
+export function SpillGeometryPage({ onNavigate, onOpenDossier, activeInvestigationId }: SpillGeometryPageProps) {
   const [pipelineData, setPipelineData] = useState<EndToEndResult>(BASELINE_DEMO_RESULT);
 
   useEffect(() => {
-    getActivePipelineResult().then(setPipelineData);
-  }, []);
+    getActivePipelineResult(activeInvestigationId || undefined).then(setPipelineData);
+  }, [activeInvestigationId]);
 
   const { spill_metadata, gis_measurement } = pipelineData;
 
   const handleExportGeoJSON = () => {
-    window.open("/data/end_to_end_layers.geojson", "_blank");
+    window.open(`/api/investigations/${activeInvestigationId || spill_metadata.spill_id}/map`, "_blank");
   };
 
   return (
@@ -109,7 +110,7 @@ export function SpillGeometryPage({ onNavigate, onOpenDossier }: SpillGeometryPa
               <table className="w-full text-left font-mono text-xs text-on-surface">
                 <thead>
                   <tr className="border-b border-surface-container-low text-secondary text-[11px] uppercase">
-                    <th className="py-2">Vertex #</th>
+                    <th className="py-2">Coordinate Point</th>
                     <th className="py-2">Longitude</th>
                     <th className="py-2">Latitude</th>
                     <th className="py-2">Segment Classification</th>
@@ -117,28 +118,28 @@ export function SpillGeometryPage({ onNavigate, onOpenDossier }: SpillGeometryPa
                 </thead>
                 <tbody className="divide-y divide-surface-container-low text-[11px]">
                   <tr>
-                    <td className="py-2 font-bold text-primary">V-01 (Apex)</td>
-                    <td className="py-2">72.465000° E</td>
-                    <td className="py-2">18.512000° N</td>
-                    <td className="py-2 text-rose-600 font-semibold">Heavy Slick Edge</td>
+                    <td className="py-2 font-bold text-primary">Bounding Box NW</td>
+                    <td className="py-2">{gis_measurement.bounding_box?.min_lon?.toFixed(6) ?? gis_measurement.centroid.longitude.toFixed(6)}° E</td>
+                    <td className="py-2">{gis_measurement.bounding_box?.max_lat?.toFixed(6) ?? gis_measurement.centroid.latitude.toFixed(6)}° N</td>
+                    <td className="py-2 text-rose-600 font-semibold">Envelope Vertex NW</td>
                   </tr>
                   <tr>
-                    <td className="py-2 font-bold text-primary">V-02</td>
-                    <td className="py-2">72.478000° E</td>
-                    <td className="py-2">18.515000° N</td>
-                    <td className="py-2 text-rose-600 font-semibold">Continuous Slick Core</td>
+                    <td className="py-2 font-bold text-primary">Bounding Box NE</td>
+                    <td className="py-2">{gis_measurement.bounding_box?.max_lon?.toFixed(6) ?? gis_measurement.centroid.longitude.toFixed(6)}° E</td>
+                    <td className="py-2">{gis_measurement.bounding_box?.max_lat?.toFixed(6) ?? gis_measurement.centroid.latitude.toFixed(6)}° N</td>
+                    <td className="py-2 text-rose-600 font-semibold">Envelope Vertex NE</td>
                   </tr>
                   <tr>
-                    <td className="py-2 font-bold text-primary">V-03</td>
-                    <td className="py-2">72.492000° E</td>
-                    <td className="py-2">18.525000° N</td>
-                    <td className="py-2 text-amber-600 font-semibold">Emulsified Zone</td>
+                    <td className="py-2 font-bold text-primary">Bounding Box SE</td>
+                    <td className="py-2">{gis_measurement.bounding_box?.max_lon?.toFixed(6) ?? gis_measurement.centroid.longitude.toFixed(6)}° E</td>
+                    <td className="py-2">{gis_measurement.bounding_box?.min_lat?.toFixed(6) ?? gis_measurement.centroid.latitude.toFixed(6)}° N</td>
+                    <td className="py-2 text-amber-600 font-semibold">Envelope Vertex SE</td>
                   </tr>
                   <tr>
-                    <td className="py-2 font-bold text-primary">V-04 (Apex)</td>
-                    <td className="py-2">72.501000° E</td>
-                    <td className="py-2">18.532000° N</td>
-                    <td className="py-2 text-amber-600 font-semibold">Feathering Boundary</td>
+                    <td className="py-2 font-bold text-primary">Bounding Box SW</td>
+                    <td className="py-2">{gis_measurement.bounding_box?.min_lon?.toFixed(6) ?? gis_measurement.centroid.longitude.toFixed(6)}° E</td>
+                    <td className="py-2">{gis_measurement.bounding_box?.min_lat?.toFixed(6) ?? gis_measurement.centroid.latitude.toFixed(6)}° N</td>
+                    <td className="py-2 text-amber-600 font-semibold">Envelope Vertex SW</td>
                   </tr>
                   <tr>
                     <td className="py-2 font-bold text-primary">Centroid</td>
@@ -148,7 +149,7 @@ export function SpillGeometryPage({ onNavigate, onOpenDossier }: SpillGeometryPa
                     <td className="py-2 text-sky-600 font-bold">
                       {gis_measurement.centroid.latitude.toFixed(6)}° N
                     </td>
-                    <td className="py-2 text-sky-600 font-bold">Center of Mass</td>
+                    <td className="py-2 text-sky-600 font-bold">Center of Mass (EPSG:4326)</td>
                   </tr>
                 </tbody>
               </table>

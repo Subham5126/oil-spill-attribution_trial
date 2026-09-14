@@ -26,7 +26,7 @@ class SpillMetadataSchema(BaseModel):
     spill_id: str
     sensor: str
     source_sensor: Optional[str] = None
-    detection_timestamp: str
+    detection_timestamp: Optional[str] = None
     observation_time: Optional[str] = None
     confidence: float
     crs: str = "EPSG:4326"

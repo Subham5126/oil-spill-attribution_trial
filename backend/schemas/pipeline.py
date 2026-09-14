@@ -60,10 +60,10 @@ class EndToEndResultResponse(BaseModel):
     spill_metadata: SpillMetadataSchema
     gis_measurement: GisMeasurementSchema
     ocean_drift: OceanDriftResponse
-    ais_search: AISSearchSummary
+    ais_search: Optional[AISSearchSummary] = None
     candidate_vessels: List[CandidateVessel] = Field(default_factory=list)
     attribution_ranking: List[CandidateVessel] = Field(default_factory=list)
     primary_suspect: Optional[CandidateVessel] = None
-    gis_export: GisExportConfig
+    gis_export: Optional[GisExportConfig] = None
     pipeline_execution: PipelineExecutionStatus
     provenance: Optional[ProvenanceMetadata] = None

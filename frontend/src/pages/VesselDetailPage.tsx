@@ -26,16 +26,41 @@ interface VesselDetailPageProps {
 
 export function VesselDetailPage({ onNavigate, onOpenDossier }: VesselDetailPageProps) {
   const [pipelineData, setPipelineData] = useState<EndToEndResult>(BASELINE_DEMO_RESULT);
-  const [vessel, setVessel] = useState<CandidateVessel>(BASELINE_DEMO_RESULT.primary_suspect);
+  const [vessel, setVessel] = useState<CandidateVessel | null>(BASELINE_DEMO_RESULT.primary_suspect);
 
   useEffect(() => {
     getActivePipelineResult().then((data) => {
       setPipelineData(data);
       if (data.primary_suspect) {
         setVessel(data.primary_suspect);
+      } else if (data.candidate_vessels && data.candidate_vessels.length > 0) {
+        setVessel(data.candidate_vessels[0]);
+      } else {
+        setVessel(null);
       }
     });
   }, []);
+
+  if (!vessel) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+        <div className="p-4 rounded-full bg-surface-container-high mb-4">
+          <Ship className="w-12 h-12 text-amber-500" />
+        </div>
+        <h2 className="text-xl font-bold text-on-surface">NO AIS VESSEL ATTRIBUTED</h2>
+        <p className="text-sm text-on-surface-variant max-w-md mt-2">
+          No vessels were identified in the spatial and temporal window of the detected oil spill.
+        </p>
+        <button
+          type="button"
+          onClick={() => onNavigate("dashboard")}
+          className="mt-6 px-4 py-2 bg-primary text-on-primary rounded-lg font-semibold text-sm hover:bg-primary/90 transition-colors"
+        >
+          Return to Command Overview
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col w-full gap-space-lg">
@@ -96,7 +121,7 @@ export function VesselDetailPage({ onNavigate, onOpenDossier }: VesselDetailPage
             Closest Point of Approach
           </span>
           <div className="mt-1 font-headline-lg text-headline-lg font-bold text-rose-600 font-mono">
-            {vessel.metrics.min_distance_km.toFixed(3)} km
+            {(vessel.metrics?.min_distance_km ?? vessel.min_distance_km ?? vessel.distance_to_track_km ?? 0).toFixed(3)} km
           </div>
           <span className="text-[11px] text-on-surface-variant font-mono">
             Inside 95% dispersion radius (1.885 km)
@@ -108,7 +133,7 @@ export function VesselDetailPage({ onNavigate, onOpenDossier }: VesselDetailPage
             Temporal Coincidence
           </span>
           <div className="mt-1 font-headline-lg text-headline-lg font-bold text-emerald-600 font-mono">
-            {vessel.metrics.time_difference_minutes.toFixed(0)} min offset
+            {(vessel.metrics?.time_difference_minutes ?? 0).toFixed(0)} min offset
           </div>
           <span className="text-[11px] text-on-surface-variant font-mono">
             Concurrent with 01:00 UTC release window
@@ -120,7 +145,7 @@ export function VesselDetailPage({ onNavigate, onOpenDossier }: VesselDetailPage
             Transit Speed Profile
           </span>
           <div className="mt-1 font-headline-lg text-headline-lg font-bold text-sky-600 font-mono">
-            {vessel.metrics.transit_speed_knots.toFixed(1)} kn
+            {(vessel.metrics?.transit_speed_knots ?? 0).toFixed(1)} kn
           </div>
           <span className="text-[11px] text-on-surface-variant font-mono">
             Operational en-route transit speed
@@ -162,7 +187,7 @@ export function VesselDetailPage({ onNavigate, onOpenDossier }: VesselDetailPage
           </h3>
           <KinematicSpeedChart
             vesselName={vessel.vessel_name}
-            speedKnots={vessel.metrics.transit_speed_knots}
+            speedKnots={vessel.metrics?.transit_speed_knots ?? 0}
           />
         </div>
       </div>

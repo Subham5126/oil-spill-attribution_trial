@@ -9,22 +9,27 @@ import { Globe, Layers, Ship, Compass, Maximize2, ShieldCheck } from "lucide-rea
 interface LiveGISMapPageProps {
   onNavigate: (path: NavPath) => void;
   onOpenDossier?: () => void;
+  activeInvestigationId?: string | null;
 }
 
-export function LiveGISMapPage({ onNavigate, onOpenDossier }: LiveGISMapPageProps) {
+export function LiveGISMapPage({ onNavigate, onOpenDossier, activeInvestigationId }: LiveGISMapPageProps) {
   const [pipelineData, setPipelineData] = useState<EndToEndResult>(BASELINE_DEMO_RESULT);
   const [selectedVessel, setSelectedVessel] = useState<CandidateVessel | null>(
     BASELINE_DEMO_RESULT.primary_suspect
   );
 
   useEffect(() => {
-    getActivePipelineResult().then((data) => {
+    getActivePipelineResult(activeInvestigationId || undefined).then((data) => {
       setPipelineData(data);
       if (data.primary_suspect) {
         setSelectedVessel(data.primary_suspect);
+      } else if (data.candidate_vessels && data.candidate_vessels.length > 0) {
+        setSelectedVessel(data.candidate_vessels[0]);
+      } else {
+        setSelectedVessel(null);
       }
     });
-  }, []);
+  }, [activeInvestigationId]);
 
   return (
     <div className="flex flex-col w-full h-[calc(100vh-130px)] gap-space-sm">

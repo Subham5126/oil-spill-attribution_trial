@@ -1,9 +1,5 @@
-"""GIS Layers API Router."""
-
-from __future__ import annotations
-
-from typing import Any, Dict
-from fastapi import APIRouter, Depends
+from typing import Any, Dict, Optional
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
@@ -14,10 +10,13 @@ router = APIRouter(prefix="/layers", tags=["GIS Layers"])
 
 
 @router.get("/geojson")
-def get_latest_layers_geojson(db: Session = Depends(get_db)):
+def get_latest_layers_geojson(
+    mode: Optional[str] = Query(default=None, description="Run mode filter"),
+    db: Session = Depends(get_db),
+):
     """Serve the active multi-layer GeoJSON FeatureCollection for frontend MapLibre rendering."""
     service = LayerService(db)
-    return JSONResponse(content=service.get_latest_layers_geojson())
+    return JSONResponse(content=service.get_latest_layers_geojson(mode=mode))
 
 
 @router.get("/{investigation_id}")

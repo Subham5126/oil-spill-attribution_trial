@@ -15,7 +15,7 @@ class CurrentDataError(ValueError):
     """Raised when a current dataset cannot be used as surface-current input."""
 
 
-def load_currents(path: str | Path) -> xr.Dataset:
+def load_currents(path: str | Path, *, select_surface: bool = False) -> xr.Dataset:
     """Load validated Copernicus Marine surface-current data into memory.
 
     The returned dataset contains only eastward (``uo``) and northward (``vo``)
@@ -25,6 +25,8 @@ def load_currents(path: str | Path) -> xr.Dataset:
 
     Args:
         path: Path to a NetCDF file containing Copernicus Marine current data.
+        select_surface: If True and dataset contains multiple depth levels, selects
+            the uppermost surface layer (depth index 0) before validation.
 
     Raises:
         FileNotFoundError: If ``path`` does not exist or is not a file.
@@ -42,6 +44,9 @@ def load_currents(path: str | Path) -> xr.Dataset:
         raise CurrentDataError(
             f"Unable to open current NetCDF file '{file_path}': {error}"
         ) from error
+
+    if select_surface and "depth" in dataset.dims and dataset.sizes["depth"] > 1:
+        dataset = dataset.isel(depth=0, drop=True)
 
     _validate_dataset(dataset)
     dataset = _remove_singleton_depth(dataset)

@@ -18,10 +18,23 @@ class AttributionService:
 
     def get_attribution(self, investigation_id: str) -> Dict[str, Any]:
         """Fetch attribution ranking for an investigation."""
+        from backend.services.confidence_scoring import compute_vessel_confidence
+
         db_records = self.repo.get_attribution_results(investigation_id)
         if db_records:
             ranked = []
             for r in db_records:
+                conf = compute_vessel_confidence(
+                    spatial_score=r.spatial_score,
+                    temporal_score=r.temporal_score,
+                    trajectory_score=r.trajectory_score,
+                    behaviour_score=r.behaviour_score,
+                    overall_score=r.overall_score,
+                    min_distance_km=r.min_distance_km,
+                    time_difference_minutes=r.time_difference_minutes,
+                    vessel_type=r.vessel_type,
+                    transit_speed_knots=r.transit_speed_knots,
+                )
                 ranked.append({
                     "rank": r.rank,
                     "mmsi": r.mmsi,
@@ -40,6 +53,9 @@ class AttributionService:
                         "time_difference_minutes": r.time_difference_minutes,
                         "transit_speed_knots": r.transit_speed_knots or 12.0,
                     },
+                    "confidence_score": conf["confidence_score"],
+                    "confidence_level": conf["confidence_level"],
+                    "confidence_factors": conf["confidence_factors"],
                     "suspicious_flags": r.suspicious_flags_json or [],
                     "explanation": r.explanation_json or [],
                 })

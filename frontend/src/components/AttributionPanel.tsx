@@ -43,7 +43,19 @@ export const AttributionPanel: React.FC<AttributionPanelProps> = ({
 
       {/* Candidate List */}
       <div className="space-y-3 overflow-y-auto pr-1 flex-1">
-        {candidates.map((candidate) => {
+        {candidates.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-48 text-center px-4 py-6 border border-dashed border-slate-800 rounded-lg bg-slate-900/50">
+            <AlertOctagon className="w-8 h-8 text-amber-500 mb-2" />
+            <h4 className="text-sm font-semibold text-slate-200">NO AIS CANDIDATES</h4>
+            <p className="text-xs text-slate-400 mt-1">
+              No vessels found matching the spatial and temporal window of the detected spill.
+            </p>
+            <span className="mt-2 text-[11px] font-mono px-2 py-0.5 rounded bg-amber-950/40 text-amber-400 border border-amber-800/50">
+              STATUS: NO_DATA_FEED
+            </span>
+          </div>
+        ) : (
+          candidates.map((candidate) => {
           const isSelected = selectedVessel?.mmsi === candidate.mmsi;
           const isPrimary = candidate.rank === 1;
 
@@ -95,7 +107,7 @@ export const AttributionPanel: React.FC<AttributionPanelProps> = ({
                 </div>
 
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${badgeColor}`}>
-                  {(candidate.scores.overall * 100).toFixed(1)}% Score
+                  {(((candidate.scores?.overall ?? 0)) * 100).toFixed(1)}% Score
                 </span>
               </div>
 
@@ -103,7 +115,7 @@ export const AttributionPanel: React.FC<AttributionPanelProps> = ({
               <div className="mt-2.5 w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-800">
                 <div
                   className={`h-full ${progressColor}`}
-                  style={{ width: `${Math.min(100, candidate.scores.overall * 100)}%` }}
+                  style={{ width: `${Math.min(100, (candidate.scores?.overall ?? 0) * 100)}%` }}
                 />
               </div>
 
@@ -112,25 +124,25 @@ export const AttributionPanel: React.FC<AttributionPanelProps> = ({
                 <div className="bg-slate-950 p-1.5 rounded border border-slate-850">
                   <span className="text-slate-400 block text-[9px]">Spatial (40%)</span>
                   <span className="font-bold text-sky-400">
-                    {(candidate.scores.spatial * 100).toFixed(0)}%
+                    {(((candidate.scores?.spatial ?? 0)) * 100).toFixed(0)}%
                   </span>
                 </div>
                 <div className="bg-slate-950 p-1.5 rounded border border-slate-855">
                   <span className="text-slate-400 block text-[9px]">Temporal (35%)</span>
                   <span className="font-bold text-emerald-400">
-                    {(candidate.scores.temporal * 100).toFixed(0)}%
+                    {(((candidate.scores?.temporal ?? 0)) * 100).toFixed(0)}%
                   </span>
                 </div>
                 <div className="bg-slate-950 p-1.5 rounded border border-slate-855">
                   <span className="text-slate-400 block text-[9px]">Track (15%)</span>
                   <span className="font-bold text-amber-400">
-                    {(candidate.scores.trajectory * 100).toFixed(0)}%
+                    {(((candidate.scores?.trajectory ?? 0)) * 100).toFixed(0)}%
                   </span>
                 </div>
                 <div className="bg-slate-950 p-1.5 rounded border border-slate-855">
                   <span className="text-slate-400 block text-[9px]">Behaviour (10%)</span>
                   <span className="font-bold text-purple-400">
-                    {(candidate.scores.behaviour * 100).toFixed(0)}%
+                    {(((candidate.scores?.behaviour ?? 0)) * 100).toFixed(0)}%
                   </span>
                 </div>
               </div>
@@ -140,19 +152,19 @@ export const AttributionPanel: React.FC<AttributionPanelProps> = ({
                 <div>
                   Min Dist:{" "}
                   <strong className={isPrimary ? "text-rose-400" : "text-slate-200"}>
-                    {candidate.metrics.min_distance_km.toFixed(3)} km
+                    {(candidate.metrics?.min_distance_km ?? candidate.min_distance_km ?? candidate.distance_to_track_km ?? 0).toFixed(3)} km
                   </strong>
                 </div>
                 <div>
                   Offset:{" "}
                   <strong className="text-slate-200">
-                    {candidate.metrics.time_difference_minutes.toFixed(0)} min
+                    {(candidate.metrics?.time_difference_minutes ?? 0).toFixed(0)} min
                   </strong>
                 </div>
                 <div>
                   Speed:{" "}
                   <strong className="text-slate-200">
-                    {candidate.metrics.transit_speed_knots.toFixed(1)} kn
+                    {(candidate.metrics?.transit_speed_knots ?? 0).toFixed(1)} kn
                   </strong>
                 </div>
               </div>
@@ -173,7 +185,7 @@ export const AttributionPanel: React.FC<AttributionPanelProps> = ({
               </div>
             </div>
           );
-        })}
+        }))}
       </div>
     </div>
   );

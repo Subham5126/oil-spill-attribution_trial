@@ -46,16 +46,17 @@ def _get_list(key: str, default: List[str]) -> List[str]:
 class Settings:
     """Application settings with environment variable fallbacks."""
 
+    REPO_ROOT: Path = REPO_ROOT
     APP_NAME: str = os.getenv("APP_NAME", "OilTrace Attribution Backend")
     APP_ENV: str = os.getenv("APP_ENV", "development")
     DEBUG: bool = _get_bool("DEBUG", True)
     API_V1_PREFIX: str = "/api"
 
-    # Operational Mode: DEMO_MODE defaults to True if explicitly requested or if no external services
-    DEMO_MODE: bool = _get_bool("DEMO_MODE", True)
+    # Operational Mode: DEMO_MODE defaults to False for live data-driven pipeline
+    DEMO_MODE: bool = _get_bool("DEMO_MODE", False)
 
-    # Database
-    DATABASE_URL: Optional[str] = os.getenv("DATABASE_URL")
+    # Database: defaults to persistent local SQLite database if PostgreSQL is not specified
+    DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{REPO_ROOT / 'data' / 'oiltrace.db'}")
     DB_POOL_SIZE: int = int(os.getenv("DB_POOL_SIZE", "5"))
     DB_MAX_OVERFLOW: int = int(os.getenv("DB_MAX_OVERFLOW", "10"))
     DB_ECHO: bool = _get_bool("DB_ECHO", False)
@@ -72,6 +73,8 @@ class Settings:
     OCEAN_DATA_DIR: Path = Path(os.getenv("OCEAN_DATA_DIR", str(REPO_ROOT / "data" / "sample")))
     SATELLITE_DATA_DIR: Path = Path(os.getenv("SATELLITE_DATA_DIR", str(REPO_ROOT / "data" / "satellite")))
     DEMO_OUTPUT_DIR: Path = Path(os.getenv("DEMO_OUTPUT_DIR", str(REPO_ROOT / "demo" / "output")))
+    UPLOAD_DIR: Path = Path(os.getenv("UPLOAD_DIR", str(REPO_ROOT / "data" / "uploads" / "sentinel1")))
+    MAX_UPLOAD_SIZE_BYTES: int = int(os.getenv("MAX_UPLOAD_SIZE_BYTES", str(1024 * 1024 * 1024)))  # 1 GiB limit
 
     # CORS
     CORS_ORIGINS: List[str] = _get_list(
@@ -86,6 +89,9 @@ class Settings:
 
     # Security
     SECRET_KEY: str = os.getenv("SECRET_KEY", "oiltrace-development-insecure-secret-key-2026")
+
+    # Global Fishing Watch (GFW) API Configuration
+    GFW_API_TOKEN: Optional[str] = os.getenv("GFW_API_TOKEN")
 
 
 settings = Settings()

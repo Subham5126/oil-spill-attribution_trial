@@ -25,7 +25,7 @@ from ais.interpolation import (
     InterpolationResult,
     interpolate_trajectories,
 )
-from ais.providers import LocalAISProvider
+from ais.providers import GlobalFishingWatchAISProvider, LocalAISProvider
 from ais.providers.base import AISProvider
 from ais.trajectory import TrajectoryConfig, TrajectoryResult, reconstruct_trajectories
 from backend.core.config import settings
@@ -44,6 +44,8 @@ class AISAdapter:
         """Resolve AIS source: custom path/dataframe, configured directory, or demo fallback."""
         if isinstance(custom_path, (pd.DataFrame, AISProvider)):
             return custom_path
+        if isinstance(custom_path, str) and custom_path.lower() in ("gfw", "global_fishing_watch"):
+            return GlobalFishingWatchAISProvider(api_token=settings.GFW_API_TOKEN)
         if custom_path:
             p = Path(custom_path)
             if p.exists():

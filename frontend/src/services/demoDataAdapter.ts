@@ -261,6 +261,17 @@ export async function fetchEndToEndResult(): Promise<EndToEndResult> {
   if (cachedResult) return cachedResult;
 
   try {
+    const resReal = await fetch("/data/real_end_to_end_result.json");
+    if (resReal.ok) {
+      const data = await resReal.json();
+      cachedResult = data;
+      return data;
+    }
+  } catch (err) {
+    // Continue to demo
+  }
+
+  try {
     const res = await fetch("/data/end_to_end_result.json");
     if (res.ok) {
       const data = await res.json();
@@ -277,6 +288,17 @@ export async function fetchEndToEndResult(): Promise<EndToEndResult> {
 
 export async function fetchLayersGeoJSON(): Promise<GeoJSONFeatureCollection> {
   if (cachedLayers) return cachedLayers;
+
+  try {
+    const resReal = await fetch("/data/real_end_to_end_layers.geojson");
+    if (resReal.ok) {
+      const data = await resReal.json();
+      cachedLayers = data;
+      return data;
+    }
+  } catch (err) {
+    // Continue to demo
+  }
 
   try {
     const res = await fetch("/data/end_to_end_layers.geojson");

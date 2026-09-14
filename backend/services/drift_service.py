@@ -62,8 +62,17 @@ class DriftService:
             f"Simulating custom drift: mode={req.mode}, lat={req.lat}, lon={req.lon}, duration={req.durationHours}h"
         )
         try:
-            curr_ds, wind_ds = self.ocean_adapter.load_environmental_datasets()
-            start_time = datetime.now(timezone.utc)
+            curr_path = self.ocean_adapter.find_matching_currents(req.lat, req.lon)
+            curr_ds, wind_ds = self.ocean_adapter.load_environmental_datasets(nc_path=curr_path)
+
+            # Anchor start_time strictly to the environmental dataset temporal coordinate
+            if "time" in curr_ds and len(curr_ds["time"]) > 0:
+                t_min = pd.Timestamp(curr_ds["time"].min().values)
+                t_max = pd.Timestamp(curr_ds["time"].max().values)
+                mid_ts = t_min + (t_max - t_min) / 2
+                start_time = mid_ts.tz_localize("UTC").to_pydatetime() if mid_ts.tzinfo is None else mid_ts.to_pydatetime()
+            else:
+                start_time = datetime(2017, 3, 11, 2, 15, 11, tzinfo=timezone.utc)
 
             # Initialize a cluster of particles around query point
             n_part = req.particleCount or 20
@@ -72,7 +81,7 @@ class DriftService:
                 # Small dispersion around seed point
                 dx = (i % 5 - 2) * 0.002
                 dy = (i // 5 - 2) * 0.002
-                particles.append(Particle(latitude=req.lat + dy, longitude=req.lon + dx, id=i))
+                particles.append(Particle(latitude=req.lat + dy, longitude=req.lon + dx, particle_id=i))
 
             if req.mode == "forecast":
                 steps = max(int(req.durationHours * 3600 / req.timestepSeconds), 1)

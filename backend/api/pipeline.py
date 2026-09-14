@@ -1,9 +1,5 @@
-"""Pipeline Orchestration API Router."""
-
-from __future__ import annotations
-
-from typing import Any, Dict
-from fastapi import APIRouter, BackgroundTasks, Depends, status
+from typing import Any, Dict, Optional
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from backend.core.config import settings
@@ -24,10 +20,13 @@ router = APIRouter(prefix="/pipeline", tags=["Pipeline"])
 
 
 @router.get("/latest", response_model=EndToEndResultResponse)
-def get_latest_pipeline_result(db: Session = Depends(get_db)):
+def get_latest_pipeline_result(
+    mode: Optional[str] = Query(default=None, description="Pipeline run mode filter"),
+    db: Session = Depends(get_db),
+):
     """Retrieve the latest complete end-to-end attribution result for dashboard display."""
     service = PipelineService(db)
-    return service.get_latest_result()
+    return service.get_latest_result(mode=mode)
 
 
 @router.get("/{investigation_id}", response_model=EndToEndResultResponse)

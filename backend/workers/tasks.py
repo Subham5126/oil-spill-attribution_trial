@@ -8,8 +8,15 @@ from backend.core.logging import logger
 from backend.services.pipeline_service import PipelineService
 from backend.workers.celery_app import celery_app
 
+def _dummy_task_decorator(*args, **kwargs):
+    def decorator(fn):
+        return fn
+    return decorator
 
-@celery_app.task(bind=True, name="oiltrace.run_pipeline_task")
+task_decorator = celery_app.task if celery_app is not None else _dummy_task_decorator
+
+
+@task_decorator(bind=True, name="oiltrace.run_pipeline_task")
 def run_pipeline_task(
     self,
     investigation_id: Optional[str] = None,

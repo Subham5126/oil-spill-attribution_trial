@@ -11,11 +11,14 @@ from ais.providers.base import (
     AISProviderError,
     AISProviderNotFoundError,
 )
+from ais.providers.gfw import GFWAISProvider, GlobalFishingWatchAISProvider
 from ais.providers.local import LocalAISProvider
 
 __all__ = [
     "AISProvider",
     "LocalAISProvider",
+    "GlobalFishingWatchAISProvider",
+    "GFWAISProvider",
     "AISProviderError",
     "AISProviderNotFoundError",
     "AISProviderConfigError",

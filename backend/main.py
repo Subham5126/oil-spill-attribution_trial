@@ -33,6 +33,11 @@ async def lifespan(app: FastAPI):
     """Application startup and shutdown event handler."""
     logger.info(f"Starting {settings.APP_NAME} in [{settings.APP_ENV}] mode (DEMO_MODE={settings.DEMO_MODE})")
     logger.info(f"Allowed CORS origins: {settings.CORS_ORIGINS}")
+    try:
+        settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Sentinel-1 upload directory verified: {settings.UPLOAD_DIR}")
+    except Exception as e:
+        logger.warning(f"Could not verify upload directory {settings.UPLOAD_DIR}: {e}")
     yield
     logger.info(f"Shutting down {settings.APP_NAME}")
 
@@ -92,12 +97,20 @@ async def generic_exception_handler(request: Request, exc: Exception):
             "status": "FAILED",
             "error_code": "INTERNAL_SERVER_ERROR",
             "message": "An unexpected internal error occurred. Please consult server logs.",
+            "detail": "An unexpected internal error occurred. Please consult server logs.",
         },
     )
 
 
 # Mount Master API Router
 app.include_router(api_router)
+
+# Mount static files for pipeline image artifacts
+output_dir = settings.REPO_ROOT / "demo" / "output"
+if output_dir.exists():
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/static", StaticFiles(directory=str(output_dir)), name="static")
+
 
 
 # Standalone runner

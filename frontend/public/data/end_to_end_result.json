@@ -1,238 +1,174 @@
 {
   "spill_metadata": {
-    "spill_id": "SAR-20250101-IND-0042",
+    "spill_id": "SAR-00005",
     "sensor": "Sentinel-1 SAR C-Band (IW)",
-    "detection_timestamp": "2025-01-01T05:00:00+00:00",
-    "confidence": 0.94,
+    "detection_timestamp": "2026-09-10T11:08:13.762439+00:00",
+    "confidence": 0.9412,
     "crs": "EPSG:4326",
     "properties": {
-      "mission": "Sentinel-1B",
-      "polarization": "VV+VH",
-      "resolution_meters": 10.0,
-      "analyst_notes": "Continuous linear sheen with heavy core patch offshore Mumbai shipping corridor."
+      "source_file": "00005.tif",
+      "dimensions": [
+        2048,
+        2048
+      ],
+      "oil_pixels": 203,
+      "resolution_meters": 8.983152841195215e-05
     }
   },
   "gis_measurement": {
-    "spill_id": "SAR-20250101-IND-0042",
+    "spill_id": "SAR-00005",
     "crs": "EPSG:4326",
     "area": {
-      "sq_meters": 3927470.14,
-      "sq_kilometers": 3.9275
+      "sq_meters": 7714.13,
+      "sq_kilometers": 0.0077
     },
     "perimeter": {
-      "meters": 9963.0,
-      "kilometers": 9.963
+      "meters": 411.35,
+      "kilometers": 0.4113
     },
     "centroid": {
-      "longitude": 72.481513,
-      "latitude": 18.523598
+      "longitude": 5.836226,
+      "latitude": 55.061522
     },
     "bounding_box": {
-      "min_lon": 72.462,
-      "min_lat": 18.512,
-      "max_lon": 72.501,
-      "max_lat": 18.536,
-      "width_meters": 4111.93,
-      "height_meters": 2668.68
+      "min_lon": 5.835597,
+      "min_lat": 55.060967,
+      "max_lon": 5.836945,
+      "max_lat": 55.062045,
+      "width_meters": 87.83,
+      "height_meters": 87.83
     },
     "shape_characteristics": {
-      "aspect_ratio": 1.54,
-      "compactness": 0.4972
+      "aspect_ratio": 1.4,
+      "compactness": 0.45
     }
   },
   "ocean_drift": {
-    "model_type": "Lagrangian Forward/Backward Euler",
-    "particles_simulated": 40,
+    "model_type": "Lagrangian RK4 Solver (Unexecuted - No local ocean data for North Sea)",
+    "particles_simulated": 0,
     "forecast": {
-      "steps": 2,
+      "steps": 0,
       "timestep_seconds": 3600,
-      "duration_hours": 2.0
+      "duration_hours": 0.0
     },
     "hindcast": {
-      "duration_hours": 4.0,
+      "duration_hours": 0.0,
       "timestep_seconds": 3600,
-      "observation_time": "2025-01-01T05:00:00+00:00"
+      "observation_time": "NOT_AVAILABLE"
     },
     "probable_origin": {
-      "latitude": 18.525307,
-      "longitude": 72.503247,
-      "timestamp": "2025-01-01T01:00:00+00:00",
-      "relative_heuristic_score": 2.9981,
-      "drift_direction_deg": 270.0
+      "latitude": 55.061522,
+      "longitude": 5.836226,
+      "timestamp": "NOT_AVAILABLE",
+      "relative_heuristic_score": 0.0,
+      "drift_direction_deg": 0.0
     },
     "uncertainty": {
-      "radius_km": 1.885,
+      "radius_km": 0.0,
       "empirical_coverage_level": 0.95,
-      "dispersion_description": "95% empirical spatial dispersion estimate",
-      "spread_km": 0.955,
+      "dispersion_description": "NO OCEAN DATA FEED - Spatial domain mismatch (Arabian Sea NetCDF vs North Sea Spill)",
+      "spread_km": 0.0,
       "bounding_envelope": {
-        "min_lat": 18.513543,
-        "max_lat": 18.533653,
-        "min_lon": 72.484371,
-        "max_lon": 72.512971
+        "min_lat": 55.060967,
+        "max_lat": 55.062045,
+        "min_lon": 5.835597,
+        "max_lon": 5.836945
       }
     }
   },
   "ais_search": {
-    "data_mode": "DEMO / SYNTHETIC AIS",
+    "data_mode": "REAL AIS DATA (Spatial Mismatch: SF Bay vs North Sea)",
     "search_center": {
-      "latitude": 18.525307,
-      "longitude": 72.503247
+      "latitude": 55.061522,
+      "longitude": 5.836226
     },
-    "effective_radius_km": 9.385,
+    "effective_radius_km": 10.0,
     "search_window": {
-      "start_time": "2025-01-01T00:15:00+00:00",
-      "end_time": "2025-01-01T01:45:00+00:00"
+      "start_time": "NOT_AVAILABLE",
+      "end_time": "NOT_AVAILABLE"
     },
-    "raw_records_matched": 8,
-    "vessels_tracked": 2,
-    "vessels_surviving_filter": 2
+    "raw_records_matched": 0,
+    "vessels_tracked": 0,
+    "vessels_surviving_filter": 0,
+    "status": "NO_DATA_FEED",
+    "reason": "AIS dataset does not spatially overlap the detected spill/origin region. AIS coverage is Lat [36.68\u00b0, 38.52\u00b0], Lon [-125.01\u00b0, -123.10\u00b0] (California Coast / San Francisco Bay Area offshore), whereas detected spill is at Lat 55.0615\u00b0N, Lon 5.8362\u00b0E. TIFF metadata contains no observation timestamp for temporal correlation."
   },
-  "candidate_vessels": [
-    {
-      "rank": 1,
-      "mmsi": 413999001,
-      "vessel_name": "PACIFIC VOYAGER",
-      "imo": "IMO9384813",
-      "vessel_type": 80,
-      "scores": {
-        "overall": 0.9536,
-        "spatial": 1.0,
-        "temporal": 1.0,
-        "trajectory": 0.7404,
-        "behaviour": 0.925
-      },
-      "metrics": {
-        "min_distance_km": 0.572,
-        "time_difference_minutes": 0.0,
-        "transit_speed_knots": 12.2
-      },
-      "suspicious_flags": []
-    },
-    {
-      "rank": 2,
-      "mmsi": 211888002,
-      "vessel_name": "NORDIC TRADER",
-      "imo": "IMO9245172",
-      "vessel_type": 70,
-      "scores": {
-        "overall": 0.885,
-        "spatial": 0.871,
-        "temporal": 1.0,
-        "trajectory": 0.6272,
-        "behaviour": 0.925
-      },
-      "metrics": {
-        "min_distance_km": 4.866,
-        "time_difference_minutes": 10.0,
-        "transit_speed_knots": 13.8
-      },
-      "suspicious_flags": []
-    }
-  ],
-  "attribution_ranking": [
-    {
-      "rank": 1,
-      "mmsi": 413999001,
-      "vessel_name": "PACIFIC VOYAGER",
-      "imo": "IMO9384813",
-      "vessel_type": 80,
-      "scores": {
-        "overall": 0.9536,
-        "spatial": 1.0,
-        "temporal": 1.0,
-        "trajectory": 0.7404,
-        "behaviour": 0.925
-      },
-      "metrics": {
-        "min_distance_km": 0.572,
-        "time_difference_minutes": 0.0,
-        "transit_speed_knots": 12.2
-      },
-      "suspicious_flags": []
-    },
-    {
-      "rank": 2,
-      "mmsi": 211888002,
-      "vessel_name": "NORDIC TRADER",
-      "imo": "IMO9245172",
-      "vessel_type": 70,
-      "scores": {
-        "overall": 0.885,
-        "spatial": 0.871,
-        "temporal": 1.0,
-        "trajectory": 0.6272,
-        "behaviour": 0.925
-      },
-      "metrics": {
-        "min_distance_km": 4.866,
-        "time_difference_minutes": 10.0,
-        "transit_speed_knots": 13.8
-      },
-      "suspicious_flags": []
-    }
-  ],
-  "primary_suspect": {
-    "rank": 1,
-    "mmsi": 413999001,
-    "vessel_name": "PACIFIC VOYAGER",
-    "imo": "IMO9384813",
-    "vessel_type": 80,
-    "scores": {
-      "overall": 0.9536,
-      "spatial": 1.0,
-      "temporal": 1.0,
-      "trajectory": 0.7404,
-      "behaviour": 0.925
-    },
-    "metrics": {
-      "min_distance_km": 0.572,
-      "time_difference_minutes": 0.0,
-      "transit_speed_knots": 12.2
-    },
-    "suspicious_flags": []
-  },
+  "candidate_vessels": [],
+  "attribution_ranking": [],
+  "primary_suspect": null,
   "gis_export": {
     "map_view_config": {
       "center": [
-        18.52736,
-        72.50512499999999
+        55.061522,
+        5.836226
       ],
-      "zoom": 11,
+      "zoom": 11.5,
       "bounds": [
         [
-          18.48336,
-          72.462
+          55.060967,
+          5.835597
         ],
         [
-          18.57136,
-          72.54825
+          55.062045,
+          5.836945
         ]
       ]
     },
     "feature_collection_summary": {
-      "feature_count": 4,
+      "feature_count": 3,
       "layer_types": [
-        "vessel_track",
-        "bounding_box",
-        "oil_spill"
+        "oil_spill_detection",
+        "spill_centroid",
+        "scene_bounding_box"
       ]
     }
   },
   "pipeline_execution": {
-    "status": "PASS",
+    "status": "PARTIAL",
     "stage_statuses": {
-      "GIS \u2192 Ocean/Drift": "PASS",
-      "Ocean/Drift \u2192 AIS": "PASS",
-      "AIS \u2192 Attribution": "PASS",
-      "End-to-end workflow": "PASS"
+      "Sentinel-1 Input": "PASS",
+      "Satellite Preprocessing": "PASS",
+      "AI Segmentation": "PASS",
+      "GIS Geometry": "PASS",
+      "Ocean/Drift Analysis": "NO_DATA_FEED",
+      "AIS Trajectory Filtering": "NO_DATA_FEED",
+      "Attribution Scoring": "NO_CANDIDATES"
     },
     "notes": [
-      "Stage 1 completed: Spill measured (3.927 km\u00b2), 40 particles initialized, forward/backward drift, origin, and uncertainty computed.",
-      "Stage 2 completed: AIS queried (8 fixes), reconstructed, interpolated, and filtered.",
-      "Stage 3 completed: Attributed 2 candidate vessels with explanation report.",
-      "Stage 4 completed: Generated GIS FeatureCollection with 4 layers."
+      "Real Sentinel-1 C-SAR GeoTIFF (00005.tif) processed.",
+      "Real U-Net inference detected 203 oil pixels (max prob 0.9412).",
+      "Real M3 GIS geometry extracted geodesic area of 0.0077 km\u00b2.",
+      "M4: Spill location (55.0615\u00b0N, 5.8362\u00b0E) is outside local sample NetCDF domain [18.00\u00b0-19.00\u00b0N, 72.00\u00b0-73.00\u00b0E]. TIFF metadata contains no explicit acquisition timestamp for temporal ocean current lookup.",
+      "M5: AIS dataset does not spatially overlap the detected spill/origin region. AIS coverage is Lat [36.68\u00b0, 38.52\u00b0], Lon [-125.01\u00b0, -123.10\u00b0] (California Coast / San Francisco Bay Area offshore), whereas detected spill is at Lat 55.0615\u00b0N, Lon 5.8362\u00b0E. TIFF metadata contains no observation timestamp for temporal correlation.",
+      "Attribution: Zero candidate vessels found. Zero false demo vessels injected."
     ],
-    "execution_timestamp": "2026-09-08T16:31:30.808106+00:00"
+    "execution_timestamp": "2026-09-10T11:08:13.762485+00:00"
+  },
+  "provenance": {
+    "data_source_mode": "REAL_DATA_CHAIN",
+    "satellite_file": "00005.tif",
+    "satellite_path": "E:\\SIH26\\oil-spill-attribution\\01_Train_Val_Oil_Spill_images\\Oil\\00005.tif",
+    "satellite_crs": "EPSG:4326",
+    "satellite_bounds": [
+      5.679829170247891,
+      54.937448716306065,
+      5.863804140435569,
+      55.12142368649374
+    ],
+    "satellite_timestamp": "NOT_AVAILABLE",
+    "m1_model": "U-Net ResNet34",
+    "m1_checkpoint": "unet_best.pth",
+    "ocean_data_source": "NONE (Spill location (55.0615\u00b0N, 5.8362\u00b0E) is outside local sample NetCDF domain [18.00\u00b0-19.00\u00b0N, 72.00\u00b0-73.00\u00b0E]. TIFF metadata contains no explicit acquisition timestamp for temporal ocean current lookup.)",
+    "ais_data_source": "AIS_178895566328676923_4999-1788955663869.csv",
+    "ais_coverage": {
+      "dataset_file": "AIS_178895566328676923_4999-1788955663869.csv",
+      "region": "California Coast / San Francisco Bay Area offshore",
+      "min_lat": 36.6765,
+      "max_lat": 38.5233,
+      "min_lon": -125.0106,
+      "max_lon": -123.1037,
+      "time_start": "2024-12-31T00:00:03",
+      "time_end": "2025-05-31T23:59:26"
+    }
   }
 }
