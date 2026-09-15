@@ -38,3 +38,24 @@ def create_report(payload: ReportCreate, db: Session = Depends(get_db)):
         investigation_id=payload.investigation_id,
         author=payload.author or "Indian Coast Guard / Maritime Forensic Taskforce",
     )
+
+
+@router.get("/{report_id}/pdf")
+def download_report_pdf_by_id(report_id: str, db: Session = Depends(get_db)):
+    """Download forensic PDF report by report identifier."""
+    from fastapi import HTTPException, Response
+    service = ReportService(db)
+    try:
+        rep = service.get_report(report_id)
+        pdf_bytes = service.generate_report_pdf(rep["investigation_id"])
+        filename = f"OILTRACE_Report_{report_id}.pdf"
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": "application/pdf",
+            },
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Unable to generate forensic PDF.")

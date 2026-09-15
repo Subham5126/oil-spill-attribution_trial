@@ -26,6 +26,13 @@ from ocean.copernicus.exceptions import (
     SarAcquisitionTimeUnavailableError,
 )
 
+from ocean.copernicus.availability import (
+    CopernicusAvailabilityService,
+    CopernicusStatus,
+    CopernicusAvailabilityResult,
+    get_copernicus_availability_service,
+)
+
 __all__ = [
     "CopernicusDatasetDescriptor",
     "COPERNICUS_MULTIYEAR_DAILY",
@@ -36,6 +43,10 @@ __all__ = [
     "CachedDatasetMetadata",
     "CopernicusClient",
     "CopernicusAcquisitionResult",
+    "CopernicusAvailabilityService",
+    "CopernicusStatus",
+    "CopernicusAvailabilityResult",
+    "get_copernicus_availability_service",
     "CopernicusError",
     "SpatialUnavailableError",
     "TemporalUnavailableError",

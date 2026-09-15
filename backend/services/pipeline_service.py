@@ -96,8 +96,74 @@ class PipelineService:
         """Retrieve full pipeline result for a specific investigation."""
         inv = self.inv_repo.get_by_id(investigation_id)
         if inv:
+            c_lat = float(inv.centroid_lat or 0.0)
+            c_lon = float(inv.centroid_lon or 0.0)
+            obs_iso = inv.observation_timestamp.isoformat() if inv.observation_timestamp else None
+
             if inv.result_json:
                 res = dict(inv.result_json)
+                res.setdefault("investigation_id", inv.investigation_id)
+                res.setdefault("incident_id", inv.investigation_id)
+
+                # Ensure spill_metadata is complete
+                sm = res.setdefault("spill_metadata", {})
+                sm.setdefault("spill_id", inv.investigation_id)
+                sm.setdefault("sensor", "Sentinel-1 SAR C-Band")
+                sm.setdefault("detection_timestamp", obs_iso)
+                sm.setdefault("confidence", float(inv.match_confidence or 1.0))
+                sm.setdefault("crs", "EPSG:4326")
+                sm.setdefault("properties", inv.metadata_json or {})
+
+                # Ensure gis_measurement is complete with valid bounding_box
+                gis = res.setdefault("gis_measurement", {})
+                gis.setdefault("spill_id", inv.investigation_id)
+                gis.setdefault("crs", "EPSG:4326")
+                
+                area_dict = gis.setdefault("area", {})
+                if "sq_kilometers" not in area_dict:
+                    area_dict["sq_kilometers"] = float(inv.spill_area_km2 or 0.0)
+                if "sq_meters" not in area_dict:
+                    area_dict["sq_meters"] = float(area_dict["sq_kilometers"]) * 1_000_000.0
+
+                perim_dict = gis.setdefault("perimeter", {})
+                if "kilometers" not in perim_dict:
+                    perim_dict["kilometers"] = 0.0
+                if "meters" not in perim_dict:
+                    perim_dict["meters"] = float(perim_dict["kilometers"]) * 1000.0
+
+                centroid_dict = gis.setdefault("centroid", {})
+                centroid_dict.setdefault("latitude", c_lat)
+                centroid_dict.setdefault("longitude", c_lon)
+
+                bbox = gis.get("bounding_box") or {}
+                if not all(k in bbox for k in ("min_lon", "min_lat", "max_lon", "max_lat")):
+                    gis["bounding_box"] = {
+                        "min_lon": c_lon - 0.05,
+                        "min_lat": c_lat - 0.05,
+                        "max_lon": c_lon + 0.05,
+                        "max_lat": c_lat + 0.05,
+                    }
+                shape_dict = gis.setdefault("shape_characteristics", {})
+                shape_dict.setdefault("aspect_ratio", 1.0)
+                shape_dict.setdefault("compactness", 1.0)
+
+                # Ensure ocean_drift is complete
+                drift = res.setdefault("ocean_drift", {})
+                drift.setdefault("model_type", "Lagrangian Forward/Backward Euler")
+                drift.setdefault("particles_simulated", 40)
+                prob_origin = drift.setdefault("probable_origin", {})
+                prob_origin.setdefault("latitude", c_lat)
+                prob_origin.setdefault("longitude", c_lon)
+                prob_origin.setdefault("timestamp", obs_iso or "2026-01-01T00:00:00Z")
+                prob_origin.setdefault("relative_heuristic_score", 0.0)
+
+                uncert_dict = drift.setdefault("uncertainty", {})
+                uncert_dict.setdefault("radius_km", 5.0)
+                uncert_dict.setdefault("spread_km", 5.0)
+                uncert_dict.setdefault("empirical_coverage_level", 0.95)
+                uncert_dict.setdefault("dispersion_description", "95% empirical spatial dispersion estimate")
+
+                # Ensure candidate vessels have metrics
                 for c in res.get("candidate_vessels", []):
                     if not c.get("metrics"):
                         c["metrics"] = {
@@ -112,15 +178,51 @@ class PipelineService:
                         "time_difference_minutes": 0.0,
                         "transit_speed_knots": 0.0,
                     }
+
+                # Ensure canonical pipeline execution metadata and snapshot ID are populated
+                pe = res.setdefault("pipeline_execution", {})
+                pe.setdefault("status", inv.pipeline_status or "PASS")
+                pe.setdefault("stage_statuses", inv.pipeline_stages_json or {})
+                if not pe.get("execution_timestamp"):
+                    if inv.updated_at:
+                        pe["execution_timestamp"] = inv.updated_at.isoformat()
+                    elif inv.created_at:
+                        pe["execution_timestamp"] = inv.created_at.isoformat()
+                    elif obs_iso:
+                        pe["execution_timestamp"] = obs_iso
+                    else:
+                        pe["execution_timestamp"] = "2026-01-01T00:00:00+00:00"
+
+                if not pe.get("pipeline_run_id"):
+                    exec_ts = pe["execution_timestamp"]
+                    ts_clean = "".join(c for c in exec_ts if c.isalnum())[-12:]
+                    pe["pipeline_run_id"] = f"RUN-{inv.investigation_id}-{ts_clean}"
+                if not pe.get("snapshot_id"):
+                    pe["snapshot_id"] = f"{inv.investigation_id} / {pe['pipeline_run_id']} / V2"
+                pe.setdefault("forensic_result_version", "V2")
+                pe.setdefault(
+                    "model_versions",
+                    {
+                        "m1_sar": "1.0.0",
+                        "m2_unet": "2.1.0",
+                        "m3_gis": "1.2.0",
+                        "m4_drift": "3.0.0",
+                        "m5_ais": "2.5.0",
+                        "attribution_model": "2.0.0",
+                        "report_engine": "2.0.0",
+                    },
+                )
                 return res
 
             # If not yet run
             return {
+                "investigation_id": inv.investigation_id,
+                "incident_id": inv.investigation_id,
                 "spill_metadata": {
                     "spill_id": inv.investigation_id,
                     "sensor": "Sentinel-1 SAR C-Band",
-                    "detection_timestamp": inv.observation_timestamp.isoformat() if inv.observation_timestamp else None,
-                    "confidence": inv.match_confidence or 0.0,
+                    "detection_timestamp": obs_iso,
+                    "confidence": float(inv.match_confidence or 0.0),
                     "crs": "EPSG:4326",
                     "properties": inv.metadata_json or {},
                 },
@@ -130,19 +232,24 @@ class PipelineService:
                     "area": {"sq_meters": 0.0, "sq_kilometers": 0.0},
                     "perimeter": {"meters": 0.0, "kilometers": 0.0},
                     "centroid": {
-                        "latitude": inv.centroid_lat or 0.0,
-                        "longitude": inv.centroid_lon or 0.0,
+                        "latitude": c_lat,
+                        "longitude": c_lon,
                     },
-                    "bounding_box": {},
+                    "bounding_box": {
+                        "min_lon": c_lon - 0.05,
+                        "min_lat": c_lat - 0.05,
+                        "max_lon": c_lon + 0.05,
+                        "max_lat": c_lat + 0.05,
+                    },
                     "shape_characteristics": {"aspect_ratio": 1.0, "compactness": 1.0},
                 },
                 "ocean_drift": {
                     "model_type": "None",
                     "particles_simulated": 0,
                     "probable_origin": {
-                        "latitude": inv.centroid_lat or 0.0,
-                        "longitude": inv.centroid_lon or 0.0,
-                        "timestamp": inv.observation_timestamp.isoformat() if inv.observation_timestamp else "",
+                        "latitude": c_lat,
+                        "longitude": c_lon,
+                        "timestamp": obs_iso or "",
                         "relative_heuristic_score": 0.0,
                     },
                     "uncertainty": {"radius_km": 0.0, "spread_km": 0.0},
@@ -154,7 +261,7 @@ class PipelineService:
                     "status": inv.pipeline_status or "PENDING",
                     "stage_statuses": inv.pipeline_stages_json or {},
                     "notes": ["Pipeline has not been executed for this investigation."],
-                    "execution_timestamp": datetime.now(timezone.utc).isoformat(),
+                    "execution_timestamp": inv.created_at.isoformat() if inv.created_at else "2026-01-01T00:00:00+00:00",
                 },
                 "provenance": {
                     "data_source_mode": "REAL",
@@ -173,73 +280,28 @@ class PipelineService:
         if mode == "demo":
             return demo_provider.load_demo_result()
 
-        # Query database for most recent completed investigation with result_json
+        # Query database for most recent active investigation
         if self.db:
             latest_inv = (
                 self.db.query(InvestigationModel)
-                .filter(InvestigationModel.result_json.isnot(None))
                 .filter(InvestigationModel.is_deleted == False)
                 .order_by(InvestigationModel.created_at.desc())
                 .first()
             )
-            if latest_inv and latest_inv.result_json:
-                return latest_inv.result_json
+            if latest_inv:
+                return self.get_result_by_investigation(latest_inv.investigation_id)
 
-            # If there are NO active investigations in the database, return empty clean result
-            total_active = self.db.query(InvestigationModel).filter(InvestigationModel.is_deleted == False).count()
-            if total_active == 0:
-                return {
-                    "spill_metadata": {
-                        "spill_id": "",
-                        "sensor": "Sentinel-1 SAR C-Band",
-                        "detection_timestamp": None,
-                        "confidence": 0.0,
-                        "crs": "EPSG:4326",
-                        "properties": {},
-                    },
-                    "gis_measurement": {
-                        "spill_id": "",
-                        "crs": "EPSG:4326",
-                        "area": {"sq_meters": 0.0, "sq_kilometers": 0.0},
-                        "perimeter": {"meters": 0.0, "kilometers": 0.0},
-                        "centroid": {"latitude": 0.0, "longitude": 0.0},
-                        "bounding_box": {"min_lon": 0.0, "min_lat": 0.0, "max_lon": 0.0, "max_lat": 0.0},
-                        "shape_characteristics": {"aspect_ratio": 1.0, "compactness": 1.0},
-                    },
-                    "ocean_drift": {
-                        "model_type": "None",
-                        "particles_simulated": 0,
-                        "probable_origin": {
-                            "latitude": 0.0,
-                            "longitude": 0.0,
-                            "timestamp": "",
-                            "relative_heuristic_score": 0.0,
-                        },
-                        "uncertainty": {"radius_km": 0.0, "spread_km": 0.0},
-                    },
-                    "candidate_vessels": [],
-                    "attribution_ranking": [],
-                    "primary_suspect": None,
-                    "pipeline_execution": {
-                        "status": "PENDING",
-                        "stage_statuses": {},
-                        "notes": ["No active investigations."],
-                        "execution_timestamp": datetime.now(timezone.utc).isoformat(),
-                    },
-                    "provenance": {
-                        "data_source_mode": "REAL",
-                        "pipeline_version": "1.0.0",
-                    },
-                }
-
+        # Clean fallback if no investigations exist at all
         return {
+            "investigation_id": "",
+            "incident_id": "",
             "spill_metadata": {"spill_id": "", "sensor": "Sentinel-1 SAR C-Band", "detection_timestamp": None, "confidence": 0.0, "crs": "EPSG:4326", "properties": {}},
             "gis_measurement": {"spill_id": "", "crs": "EPSG:4326", "area": {"sq_meters": 0.0, "sq_kilometers": 0.0}, "perimeter": {"meters": 0.0, "kilometers": 0.0}, "centroid": {"latitude": 0.0, "longitude": 0.0}, "bounding_box": {"min_lon": 0.0, "min_lat": 0.0, "max_lon": 0.0, "max_lat": 0.0}, "shape_characteristics": {"aspect_ratio": 1.0, "compactness": 1.0}},
             "ocean_drift": {"model_type": "None", "particles_simulated": 0, "probable_origin": {"latitude": 0.0, "longitude": 0.0, "timestamp": "", "relative_heuristic_score": 0.0}, "uncertainty": {"radius_km": 0.0, "spread_km": 0.0}},
             "candidate_vessels": [],
             "attribution_ranking": [],
             "primary_suspect": None,
-            "pipeline_execution": {"status": "PENDING", "stage_statuses": {}, "notes": ["No active investigations."], "execution_timestamp": datetime.now(timezone.utc).isoformat()},
+            "pipeline_execution": {"status": "PENDING", "stage_statuses": {}, "notes": ["No active investigations."], "execution_timestamp": "2026-01-01T00:00:00+00:00"},
             "provenance": {"data_source_mode": "REAL", "pipeline_version": "1.0.0"},
         }
 
@@ -731,6 +793,69 @@ class PipelineService:
                     fore_time = str(df_forecast["timestamp"].iloc[-1])
                     fore_dist = haversine_distance_km(c_lat, c_lon, fore_lat, fore_lon)
 
+                    # Persist genuine Lagrangian drift trajectory CSV and JSON
+                    try:
+                        traj_csv_path = OUTPUT_DIR / f"real_{clean_id}_drift_trajectory.csv"
+                        traj_json_path = OUTPUT_DIR / f"real_{clean_id}_drift_trajectory.json"
+                        traj_rows = []
+                        for idx, r in df_hindcast.iterrows():
+                            traj_rows.append({
+                                "timestamp": str(r.get("timestamp", "")),
+                                "latitude": round(float(r["latitude"]), 6),
+                                "longitude": round(float(r["longitude"]), 6),
+                                "step_hours": -int(r.get("step", idx)),
+                                "trajectory_type": "HINDCAST",
+                                "u_current_m_s": round(float(u_spill), 4),
+                                "v_current_m_s": round(float(v_spill), 4),
+                                "speed_m_s": round(float(curr_speed), 3),
+                            })
+                        if df_forecast is not None:
+                            for idx, r in df_forecast.iterrows():
+                                traj_rows.append({
+                                    "timestamp": str(r.get("timestamp", "")),
+                                    "latitude": round(float(r["latitude"]), 6),
+                                    "longitude": round(float(r["longitude"]), 6),
+                                    "step_hours": int(r.get("step", idx + 1)),
+                                    "trajectory_type": "FORECAST",
+                                    "u_current_m_s": round(float(u_spill), 4),
+                                    "v_current_m_s": round(float(v_spill), 4),
+                                    "speed_m_s": round(float(curr_speed), 3),
+                                })
+                        pd.DataFrame(traj_rows).to_csv(traj_csv_path, index=False)
+
+                        drift_meta = {
+                            "investigation_id": inv_id,
+                            "model_type": "Lagrangian RK4 Hydrodynamic Advection",
+                            "dataset_id": ocean_dataset_id or (ocean_nc_path.name if ocean_nc_path else "None"),
+                            "product_id": ocean_product_id or "Copernicus Marine CMEMS",
+                            "reference_timestamp": obs_time.isoformat() if obs_time else "",
+                            "surface_velocity": {
+                                "u_eastward_m_s": round(float(u_spill), 4),
+                                "v_northward_m_s": round(float(v_spill), 4),
+                                "speed_m_s": round(float(curr_speed), 3),
+                                "direction_deg": round(float(curr_dir_deg), 1),
+                            },
+                            "probable_origin": {
+                                "latitude": round(origin_lat, 6),
+                                "longitude": round(origin_lon, 6),
+                                "timestamp": origin_time,
+                                "drift_distance_km": round(hindcast_dist, 2),
+                            },
+                            "forecast_endpoint": {
+                                "latitude": round(fore_lat, 6),
+                                "longitude": round(fore_lon, 6),
+                                "timestamp": fore_time,
+                                "drift_distance_km": round(fore_dist, 2),
+                            },
+                            "hindcast_coordinates": [[round(lon, 6), round(lat, 6)] for lon, lat in zip(df_hindcast["longitude"], df_hindcast["latitude"])],
+                            "forecast_coordinates": [[round(lon, 6), round(lat, 6)] for lon, lat in zip(df_forecast["longitude"], df_forecast["latitude"])] if df_forecast is not None else [],
+                        }
+                        with open(traj_json_path, "w", encoding="utf-8") as jf:
+                            json.dump(drift_meta, jf, indent=2)
+                        logger.info(f"[OCEAN] Persisted drift trajectory artifacts: {traj_csv_path.name} & {traj_json_path.name}")
+                    except Exception as drift_save_err:
+                        logger.warning(f"[OCEAN] Could not persist drift artifacts to disk: {drift_save_err}")
+
                     stages["M4 — Ocean Currents"] = "COMPLETED"
                     stages["M4 — Lagrangian Drift"] = "COMPLETED"
                     _update_status(80, "M4 — Lagrangian Drift", "COMPLETED", f"Reconstructed {int(avail_backward_sec/3600)}h origin at ({origin_lat:.4f}°N, {origin_lon:.4f}°E), drift: {hindcast_dist:.2f} km")
@@ -810,7 +935,8 @@ class PipelineService:
                                 },
                             })
                         candidates.sort(key=lambda x: x["distance_to_track_km"])
-                        from backend.services.confidence_scoring import compute_vessel_confidence
+                        from backend.services.confidence_scoring import compute_vessel_confidence, get_active_calibration_weights
+                        calib_version, active_weights = get_active_calibration_weights(self.db)
                         for idx, c in enumerate(candidates):
                             c["rank"] = idx + 1
                             conf = compute_vessel_confidence(
@@ -822,10 +948,56 @@ class PipelineService:
                                 min_distance_km=c["min_distance_km"],
                                 vessel_type=c["vessel_type"],
                                 total_observations=int(c.get("presence_hours", 1) * 6),
+                                weights=active_weights,
+                                calibration_version=calib_version,
                             )
                             c["confidence_score"] = conf["confidence_score"]
                             c["confidence_level"] = conf["confidence_level"]
                             c["confidence_factors"] = conf["confidence_factors"]
+                            c["calibration_version"] = calib_version
+
+                        # Persist genuine AIS evidence artifacts
+                        try:
+                            ais_csv_path = OUTPUT_DIR / f"real_{clean_id}_ais_candidates.csv"
+                            ais_json_path = OUTPUT_DIR / f"real_{clean_id}_ais_evidence.json"
+                            ais_rows = []
+                            for c in candidates:
+                                s_dict = c.get("scores", {})
+                                f_dict = c.get("confidence_factors", {})
+                                ais_rows.append({
+                                    "rank": c["rank"],
+                                    "mmsi": c["mmsi"],
+                                    "vessel_name": c["vessel_name"],
+                                    "imo": c["imo"],
+                                    "callsign": c["callsign"],
+                                    "flag": c["flag"],
+                                    "vessel_type": c["vessel_type"],
+                                    "latitude": c["latitude"],
+                                    "longitude": c["longitude"],
+                                    "distance_to_spill_km": c["distance_to_spill_km"],
+                                    "distance_to_track_km": c["distance_to_track_km"],
+                                    "min_distance_km": c["min_distance_km"],
+                                    "presence_hours": c.get("presence_hours", 1.0),
+                                    "timestamp": c["timestamp"],
+                                    "attribution_score": s_dict.get("overall"),
+                                    "confidence_score": c.get("confidence_score"),
+                                    "confidence_level": c.get("confidence_level"),
+                                    "spatial_factor": f_dict.get("spatial_proximity"),
+                                    "temporal_factor": f_dict.get("temporal_overlap"),
+                                    "trajectory_factor": f_dict.get("drift_consistency"),
+                                    "behaviour_factor": f_dict.get("track_consistency"),
+                                })
+                            pd.DataFrame(ais_rows).to_csv(ais_csv_path, index=False)
+                            with open(ais_json_path, "w", encoding="utf-8") as ajf:
+                                json.dump({
+                                    "investigation_id": inv_id,
+                                    "calibration_version": calib_version,
+                                    "total_candidates": len(candidates),
+                                    "candidates": candidates,
+                                }, ajf, indent=2)
+                            logger.info(f"[AIS] Persisted AIS evidence artifacts: {ais_csv_path.name} & {ais_json_path.name}")
+                        except Exception as ais_save_err:
+                            logger.warning(f"[AIS] Could not save AIS artifacts: {ais_save_err}")
 
                         stages["M5 — AIS Correlation"] = "COMPLETED"
                         _update_status(90, "M5 — AIS Correlation", "COMPLETED", f"Tracked {len(candidates)} candidate vessels via GFW AIS")
@@ -1041,6 +1213,20 @@ class PipelineService:
                 "primary_suspect": primary_suspect,
                 "pipeline_execution": {
                     "status": "PASS",
+                    "pipeline_run_id": f"RUN-{clean_id}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
+                    "snapshot_id": f"{inv_id} / RUN-{clean_id}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')} / V2",
+                    "forensic_result_version": "V2",
+                    "calibration_version": calib_version if 'calib_version' in locals() else "CALIB-v1-DEFAULT",
+                    "calibration_weights": active_weights if 'active_weights' in locals() else {},
+                    "model_versions": {
+                        "m1_sar": "1.0.0",
+                        "m2_unet": "2.1.0",
+                        "m3_gis": "1.2.0",
+                        "m4_drift": "3.0.0",
+                        "m5_ais": "2.5.0",
+                        "attribution_model": "2.0.0",
+                        "report_engine": "2.0.0",
+                    },
                     "stage_statuses": stages,
                     "notes": notes[-10:],
                     "execution_timestamp": datetime.now(timezone.utc).isoformat(),

@@ -42,6 +42,7 @@ requests
 tqdm
 pyyaml
 zstandard>=0.22.0
+reportlab>=4.0.0
 
 # Testing
 pytest

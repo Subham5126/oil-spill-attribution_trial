@@ -14,6 +14,7 @@ from backend.api.notifications import router as notifications_router
 from backend.api.pipeline import router as pipeline_router
 from backend.api.profile import router as profile_router
 from backend.api.reports import router as reports_router
+from backend.api.settings import router as settings_router
 from backend.api.spills import router as spills_router
 from backend.api.vessels import router as vessels_router
 
@@ -31,3 +32,4 @@ api_router.include_router(attribution_router)
 api_router.include_router(layers_router)
 api_router.include_router(reports_router)
 api_router.include_router(profile_router)
+api_router.include_router(settings_router)

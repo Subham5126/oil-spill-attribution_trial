@@ -32,6 +32,8 @@ def _create_tables(engine):
         import backend.models.vessel
         import backend.models.profile
         import backend.models.notification
+        import backend.models.artifact
+        import backend.models.settings
         Base.metadata.create_all(bind=engine)
 
         # Non-destructive SQLite schema migration for newly added columns

@@ -3,12 +3,25 @@ import { NavPath } from "../components/Sidebar";
 import { Report } from "../types";
 import { getReports, getInvestigationReport, getReportDownloadUrl } from "../services/api";
 import { DEMO_REPORTS } from "../services/demoDataAdapter";
+import { ForensicPdfButton } from "../components/ForensicPdfButton";
 import { FileText, Download, Printer, ShieldCheck, Scale, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface ReportsPageProps {
   onNavigate: (path: NavPath) => void;
   onOpenDossier?: () => void;
   activeInvestigationId?: string | null;
+}
+
+function formatAcqTime(ts?: string): string {
+  if (!ts || ts === "N/A") return "N/A";
+  try {
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return ts;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
+  } catch {
+    return ts;
+  }
 }
 
 export function ReportsPage({ onNavigate, onOpenDossier, activeInvestigationId }: ReportsPageProps) {
@@ -86,14 +99,11 @@ export function ReportsPage({ onNavigate, onOpenDossier, activeInvestigationId }
             <Printer className="w-4 h-4" />
             <span>Print Report</span>
           </button>
-          <button
-            type="button"
-            onClick={handleDownloadReport}
-            className="flex items-center gap-space-xs px-space-lg py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-label-md text-label-md font-semibold cursor-pointer shadow-sm"
-          >
-            <Download className="w-4 h-4" />
-            <span>Download MARPOL Report (.md)</span>
-          </button>
+          <ForensicPdfButton
+            investigationId={targetId}
+            variant="primary"
+            showViewOption={true}
+          />
         </div>
       </div>
 
@@ -143,31 +153,273 @@ export function ReportsPage({ onNavigate, onOpenDossier, activeInvestigationId }
           </div>
         </div>
 
-        {/* 11 Sections or Narrative */}
+        {/* Executive Forensic Summary (Single Polished Section) */}
         <div className="space-y-4 text-xs leading-relaxed text-on-surface font-sans">
           <h3 className="font-bold text-sm text-on-surface border-b border-surface-container-low pb-1">
             Executive Forensic Summary
           </h3>
-          <p className="text-secondary text-justify">
-            {rep.summary || "Investigation conducted using calibrated Sentinel-1 C-Band SAR observation, automated U-Net segmentation, Member 3 GIS geodesic geometry measurements, Copernicus Marine hydrodynamic Lagrangian particle drift hindcasting, and historical AIS correlation."}
+          <p className="text-secondary text-justify leading-relaxed">
+            {rep.summary || rep.sections?.["1_executive_summary"] || "Investigation conducted using calibrated Sentinel-1 C-Band SAR observation, automated U-Net segmentation, Member 3 GIS geodesic geometry measurements, Copernicus Marine hydrodynamic Lagrangian particle drift hindcasting, and historical AIS correlation."}
           </p>
 
-          {rep.sections && (
-            <div className="mt-4 space-y-4 pt-2">
-              {Object.entries(rep.sections).map(([secKey, secContent]: [string, any]) => (
-                <div key={secKey} className="p-3.5 rounded-xl bg-surface-container-low border border-surface-container">
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-primary mb-2 font-mono">
-                    {secKey.replace(/_/g, " ")}
+          {/* 2. Incident Information (Clean Card Presentation) */}
+          {rep.sections?.["2_incident_information"] && (
+            <div className="p-4 rounded-xl bg-surface-container-low border border-surface-container space-y-2.5">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-primary font-mono flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5" />
+                <span>Incident Information</span>
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 font-mono text-xs">
+                {rep.sections["2_incident_information"].investigation_id && (
+                  <div className="p-2.5 rounded-lg bg-surface-container-lowest border border-surface-container">
+                    <span className="text-secondary block text-[10px] uppercase font-semibold">Investigation ID</span>
+                    <strong className="text-on-surface text-xs font-bold">{rep.sections["2_incident_information"].investigation_id}</strong>
+                  </div>
+                )}
+                {rep.sections["2_incident_information"].image_id && rep.sections["2_incident_information"].image_id !== "N/A" && (
+                  <div className="p-2.5 rounded-lg bg-surface-container-lowest border border-surface-container">
+                    <span className="text-secondary block text-[10px] uppercase font-semibold">SAR Image</span>
+                    <strong className="text-on-surface text-xs font-bold">{rep.sections["2_incident_information"].image_id}</strong>
+                  </div>
+                )}
+                {rep.sections["2_incident_information"].acquisition_time && rep.sections["2_incident_information"].acquisition_time !== "N/A" && (
+                  <div className="p-2.5 rounded-lg bg-surface-container-lowest border border-surface-container">
+                    <span className="text-secondary block text-[10px] uppercase font-semibold">Acquisition Time</span>
+                    <strong className="text-on-surface text-xs font-bold">
+                      {formatAcqTime(rep.sections["2_incident_information"].acquisition_time)}
+                    </strong>
+                  </div>
+                )}
+                {rep.sections["2_incident_information"].location && rep.sections["2_incident_information"].location !== "N/A" && (
+                  <div className="p-2.5 rounded-lg bg-surface-container-lowest border border-surface-container">
+                    <span className="text-secondary block text-[10px] uppercase font-semibold">Location</span>
+                    <strong className="text-on-surface text-xs font-bold">{rep.sections["2_incident_information"].location}</strong>
+                  </div>
+                )}
+                {rep.sections["2_incident_information"].region && (
+                  <div className="p-2.5 rounded-lg bg-surface-container-lowest border border-surface-container sm:col-span-2 md:col-span-2">
+                    <span className="text-secondary block text-[10px] uppercase font-semibold">Region</span>
+                    <strong className="text-on-surface text-xs font-bold">{rep.sections["2_incident_information"].region}</strong>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 3. Sentinel-1 SAR Evidence */}
+          {rep.sections?.["3_sentinel1_evidence"] && (
+            <div className="p-4 rounded-xl bg-surface-container-low border border-surface-container space-y-2">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-primary font-mono">
+                Sentinel-1 SAR Evidence
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+                {rep.sections["3_sentinel1_evidence"].sensor && (
+                  <div>
+                    <span className="text-secondary block text-[10px] uppercase">Sensor / Mode</span>
+                    <strong className="text-on-surface">{rep.sections["3_sentinel1_evidence"].sensor}</strong>
+                  </div>
+                )}
+                {rep.sections["3_sentinel1_evidence"].crs && (
+                  <div>
+                    <span className="text-secondary block text-[10px] uppercase">Coordinate System</span>
+                    <strong className="text-on-surface">{rep.sections["3_sentinel1_evidence"].crs}</strong>
+                  </div>
+                )}
+                {typeof rep.sections["3_sentinel1_evidence"].confidence === "number" && (
+                  <div>
+                    <span className="text-secondary block text-[10px] uppercase">Detection Confidence</span>
+                    <strong className="text-emerald-700 font-bold">
+                      {rep.sections["3_sentinel1_evidence"].confidence <= 1.0
+                        ? `${(rep.sections["3_sentinel1_evidence"].confidence * 100).toFixed(1)}%`
+                        : `${rep.sections["3_sentinel1_evidence"].confidence}%`}
+                    </strong>
+                  </div>
+                )}
+                {rep.sections["3_sentinel1_evidence"].resolution_meters && (
+                  <div>
+                    <span className="text-secondary block text-[10px] uppercase">Spatial Resolution</span>
+                    <strong className="text-on-surface">{rep.sections["3_sentinel1_evidence"].resolution_meters} m/px</strong>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 4. Spill Characterization */}
+          {rep.sections?.["4_spill_characterization"] && (
+            <div className="p-4 rounded-xl bg-surface-container-low border border-surface-container space-y-2">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-primary font-mono">
+                Spill Geometry & Delineation
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+                {typeof rep.sections["4_spill_characterization"].area_sq_km === "number" && (
+                  <div>
+                    <span className="text-secondary block text-[10px] uppercase">Delineated Area</span>
+                    <strong className="text-rose-600 font-bold">{rep.sections["4_spill_characterization"].area_sq_km.toFixed(4)} km²</strong>
+                  </div>
+                )}
+                {typeof rep.sections["4_spill_characterization"].perimeter_km === "number" && (
+                  <div>
+                    <span className="text-secondary block text-[10px] uppercase">Perimeter</span>
+                    <strong className="text-on-surface">{rep.sections["4_spill_characterization"].perimeter_km.toFixed(2)} km</strong>
+                  </div>
+                )}
+                {rep.sections["4_spill_characterization"].shape_characteristics?.aspect_ratio && (
+                  <div>
+                    <span className="text-secondary block text-[10px] uppercase">Aspect Ratio</span>
+                    <strong className="text-on-surface">{Number(rep.sections["4_spill_characterization"].shape_characteristics.aspect_ratio).toFixed(2)}</strong>
+                  </div>
+                )}
+                {rep.sections["4_spill_characterization"].shape_characteristics?.compactness && (
+                  <div>
+                    <span className="text-secondary block text-[10px] uppercase">Compactness</span>
+                    <strong className="text-on-surface">{Number(rep.sections["4_spill_characterization"].shape_characteristics.compactness).toFixed(3)}</strong>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 5. Oceanographic & Drift Analysis */}
+          {rep.sections?.["5_oceanographic_analysis"] && (
+            <div className="p-4 rounded-xl bg-surface-container-low border border-surface-container space-y-2.5">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-primary font-mono">
+                Oceanographic & Drift Analysis
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 font-mono text-xs">
+                {rep.sections["5_oceanographic_analysis"].dataset && rep.sections["5_oceanographic_analysis"].dataset !== "N/A" && (
+                  <div>
+                    <span className="text-secondary block text-[10px] uppercase">Copernicus Current Grid</span>
+                    <strong className="text-on-surface truncate block" title={rep.sections["5_oceanographic_analysis"].dataset}>
+                      {rep.sections["5_oceanographic_analysis"].dataset}
+                    </strong>
+                  </div>
+                )}
+                {rep.sections["5_oceanographic_analysis"].backward_drift_window && (
+                  <div>
+                    <span className="text-secondary block text-[10px] uppercase">Backward Drift Window</span>
+                    <strong className="text-on-surface">{rep.sections["5_oceanographic_analysis"].backward_drift_window}</strong>
+                  </div>
+                )}
+                {rep.sections["5_oceanographic_analysis"].probable_origin?.latitude && (
+                  <div>
+                    <span className="text-secondary block text-[10px] uppercase">Reconstructed Origin</span>
+                    <strong className="text-on-surface">
+                      {Number(rep.sections["5_oceanographic_analysis"].probable_origin.latitude).toFixed(4)}°N, {Number(rep.sections["5_oceanographic_analysis"].probable_origin.longitude).toFixed(4)}°E
+                    </strong>
+                  </div>
+                )}
+                {typeof rep.sections["5_oceanographic_analysis"].uncertainty_radius_km === "number" && (
+                  <div>
+                    <span className="text-secondary block text-[10px] uppercase">95% Spatial Dispersion</span>
+                    <strong className="text-on-surface">{rep.sections["5_oceanographic_analysis"].uncertainty_radius_km.toFixed(1)} km radius</strong>
+                  </div>
+                )}
+                {rep.sections["5_oceanographic_analysis"].sar_acquisition && (
+                  <div>
+                    <span className="text-secondary block text-[10px] uppercase">SAR Reference Time</span>
+                    <strong className="text-on-surface">{formatAcqTime(rep.sections["5_oceanographic_analysis"].sar_acquisition)}</strong>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 6. AIS Correlated Candidates */}
+          {rep.sections?.["6_ais_vessel_correlation"] && Array.isArray(rep.sections["6_ais_vessel_correlation"]) && rep.sections["6_ais_vessel_correlation"].length > 0 && (
+            <div className="p-4 rounded-xl bg-surface-container-low border border-surface-container space-y-3">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-primary font-mono">
+                Top Correlated AIS Vessels ({rep.sections["6_ais_vessel_correlation"].length})
+              </h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-mono text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-surface-container text-secondary text-[10px] uppercase">
+                      <th className="py-1.5 px-2">Vessel Name</th>
+                      <th className="py-1.5 px-2">MMSI</th>
+                      <th className="py-1.5 px-2">Type / Flag</th>
+                      <th className="py-1.5 px-2 text-right">Distance to Track</th>
+                      <th className="py-1.5 px-2 text-right">Confidence</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-surface-container-lowest">
+                    {rep.sections["6_ais_vessel_correlation"].slice(0, 5).map((v: any, idx: number) => (
+                      <tr key={v.mmsi || idx} className="hover:bg-surface-container-lowest/50">
+                        <td className="py-2 px-2 font-semibold text-on-surface">{v.vessel_name || "UNKNOWN"}</td>
+                        <td className="py-2 px-2 text-secondary">{v.mmsi || "N/A"}</td>
+                        <td className="py-2 px-2 text-secondary">{v.vessel_type || "N/A"} {v.flag ? `(${v.flag})` : ""}</td>
+                        <td className="py-2 px-2 text-right text-on-surface">
+                          {typeof v.distance_to_track_km === "number" ? `${v.distance_to_track_km.toFixed(2)} km` : "N/A"}
+                        </td>
+                        <td className="py-2 px-2 text-right font-bold text-rose-600">
+                          {typeof v.confidence_score === "number" ? `${v.confidence_score}%` : "N/A"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* 7. Evidence Assessment */}
+          {rep.sections?.["7_evidence_assessment"] && (
+            <div className="p-4 rounded-xl bg-surface-container-low border border-surface-container space-y-2">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-primary font-mono">
+                Evidence Assessment & Findings
+              </h4>
+              <div className="space-y-1.5 text-xs text-secondary leading-relaxed">
+                {rep.sections["7_evidence_assessment"].observed_evidence && (
+                  <p><strong className="text-on-surface">Physical Observation:</strong> {rep.sections["7_evidence_assessment"].observed_evidence}</p>
+                )}
+                {rep.sections["7_evidence_assessment"].derived_evidence && (
+                  <p><strong className="text-on-surface">Morphological Evidence:</strong> {rep.sections["7_evidence_assessment"].derived_evidence}</p>
+                )}
+                {rep.sections["7_evidence_assessment"].model_based_evidence && (
+                  <p><strong className="text-on-surface">Hydrodynamic Advection:</strong> {rep.sections["7_evidence_assessment"].model_based_evidence}</p>
+                )}
+                {rep.sections["7_evidence_assessment"].ais_correlation && (
+                  <p><strong className="text-on-surface">AIS Telemetry Correlation:</strong> {rep.sections["7_evidence_assessment"].ais_correlation}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 8. Candidate Vessel Assessment & Disclaimer */}
+          {rep.sections?.["8_candidate_vessel_assessment"]?.attribution_disclaimer && (
+            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs">
+              <span className="font-bold block mb-1 uppercase tracking-wider text-[10px]">Attribution Notice & Legal Disclaimer</span>
+              <p className="leading-relaxed">{rep.sections["8_candidate_vessel_assessment"].attribution_disclaimer}</p>
+            </div>
+          )}
+
+          {/* 9 & 10. Limitations and Recommendations */}
+          {((rep.sections?.["9_limitations"] && rep.sections["9_limitations"].length > 0) || (rep.sections?.["10_recommended_next_steps"] && rep.sections["10_recommended_next_steps"].length > 0)) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {rep.sections?.["9_limitations"] && rep.sections["9_limitations"].length > 0 && (
+                <div className="p-4 rounded-xl bg-surface-container-low border border-surface-container space-y-2">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-secondary font-mono">
+                    Methodological Limitations
                   </h4>
-                  {typeof secContent === "string" ? (
-                    <p className="text-secondary leading-relaxed">{secContent}</p>
-                  ) : (
-                    <pre className="text-[11px] font-mono text-secondary overflow-x-auto whitespace-pre-wrap">
-                      {JSON.stringify(secContent, null, 2)}
-                    </pre>
-                  )}
+                  <ul className="list-disc list-inside space-y-1 text-xs text-secondary">
+                    {rep.sections["9_limitations"].map((lim: string, idx: number) => (
+                      <li key={idx} className="leading-relaxed">{lim}</li>
+                    ))}
+                  </ul>
                 </div>
-              ))}
+              )}
+              {rep.sections?.["10_recommended_next_steps"] && rep.sections["10_recommended_next_steps"].length > 0 && (
+                <div className="p-4 rounded-xl bg-surface-container-low border border-surface-container space-y-2">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-primary font-mono">
+                    Recommended Next Steps
+                  </h4>
+                  <ol className="list-decimal list-inside space-y-1 text-xs text-secondary">
+                    {rep.sections["10_recommended_next_steps"].map((step: string, idx: number) => (
+                      <li key={idx} className="leading-relaxed">{step}</li>
+                    ))}
+                  </ol>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -69,6 +69,27 @@ def resolve_confidence_level(score: float) -> str:
     return "VERY LOW"
 
 
+def get_active_calibration_weights(db: Optional[Any] = None) -> Tuple[str, Dict[str, float]]:
+    """Retrieve active calibration version and weights from database, with robust fallback."""
+    default_weights = {
+        "spatial_proximity": 0.35,
+        "temporal_overlap": 0.25,
+        "drift_consistency": 0.15,
+        "track_consistency": 0.10,
+        "vessel_type_relevance": 0.08,
+        "ais_quality": 0.07,
+    }
+    if db is not None:
+        try:
+            from backend.models.settings import AttributionCalibrationModel
+            active = db.query(AttributionCalibrationModel).filter_by(is_active=True).first()
+            if active:
+                return active.version, active.to_weights_dict()
+        except Exception:
+            pass
+    return "CALIB-v1-DEFAULT", default_weights
+
+
 def compute_vessel_confidence(
     spatial_score: Optional[float] = None,
     temporal_score: Optional[float] = None,
@@ -83,6 +104,8 @@ def compute_vessel_confidence(
     max_gap_minutes: float = 0.0,
     total_observations: Optional[int] = None,
     origin_uncertainty_radius_km: Optional[float] = None,
+    weights: Optional[Dict[str, float]] = None,
+    calibration_version: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Derive evidence-grounded Attribution Confidence Score (0-100) and factor breakdown.
 
@@ -183,7 +206,7 @@ def compute_vessel_confidence(
     else:
         factors["ais_quality"] = 0.85  # Default nominal assumption if count not reported
 
-    # Standard analytical component weights
+    # Analytical component weights (use dynamic calibrated weights if supplied)
     base_weights = {
         "spatial_proximity": 0.35,
         "temporal_overlap": 0.25,
@@ -192,13 +215,14 @@ def compute_vessel_confidence(
         "vessel_type_relevance": 0.08,
         "ais_quality": 0.07,
     }
+    active_weights = weights or base_weights
 
     # Normalize weights across available (non-None) factors
     valid_factors = {k: v for k, v in factors.items() if v is not None}
-    weight_sum = sum(base_weights[k] for k in valid_factors)
+    weight_sum = sum(active_weights.get(k, 0.0) for k in valid_factors)
 
     if weight_sum > 0:
-        composite_ratio = sum(valid_factors[k] * base_weights[k] for k in valid_factors) / weight_sum
+        composite_ratio = sum(valid_factors[k] * active_weights.get(k, 0.0) for k in valid_factors) / weight_sum
     elif overall_score is not None:
         composite_ratio = float(overall_score)
     else:
@@ -216,6 +240,8 @@ def compute_vessel_confidence(
     return {
         "confidence_score": final_score,
         "confidence_level": level,
+        "calibration_version": calibration_version or "CALIB-v1-DEFAULT",
+        "weights_used": {k: round(active_weights.get(k, 0.0), 4) for k in valid_factors},
         "confidence_factors": {
             "spatial_proximity": factors.get("spatial_proximity"),
             "temporal_overlap": factors.get("temporal_overlap"),

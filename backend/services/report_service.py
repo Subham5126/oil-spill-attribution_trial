@@ -54,6 +54,11 @@ class ReportService:
         """Fetch a specific report by report_id."""
         rec = self.repo.get_report_by_id(report_id)
         if rec:
+            sections = (rec.metadata_json or {}).get("sections")
+            if not sections and rec.investigation_id:
+                # If report record didn't persist sections in metadata_json, generate fresh
+                return self.generate_report(rec.investigation_id)
+
             return {
                 "id": rec.report_id,
                 "investigation_id": rec.investigation_id,
@@ -69,6 +74,7 @@ class ReportService:
                 "marpol_violation_risk": rec.marpol_violation_risk,
                 "sha256_hash": rec.sha256_hash,
                 "jurisdiction": rec.jurisdiction,
+                "sections": sections or {},
             }
 
         raise ReportNotFoundError(f"Report '{report_id}' not found", stage="REPORT_LOOKUP")
@@ -137,7 +143,11 @@ class ReportService:
         target_name = primary.get("vessel_name", "None Attributed") if primary else "None Attributed"
         target_mmsi = primary.get("mmsi", 0) if primary else 0
         target_imo = primary.get("imo", "N/A") if primary else "N/A"
-        top_score = primary.get("scores", {}).get("overall", 0.0) if primary else 0.0
+        top_score = (
+            (primary["confidence_score"] / 100.0)
+            if (primary and primary.get("confidence_score") is not None)
+            else (primary.get("scores", {}).get("overall", 0.0) if primary else 0.0)
+        )
 
         summary = (
             f"Forensic investigation {inv.investigation_id} based on Sentinel-1 SAR imagery ({inv.image_id or 'Scene'}). "
@@ -161,16 +171,31 @@ class ReportService:
         raw_evidence = f"{inv.investigation_id}:{area_km2}:{target_mmsi}:{centroid['latitude']}:{centroid['longitude']}"
         sha_hash = hashlib.sha256(raw_evidence.encode("utf-8")).hexdigest()
 
+        # Resolve authoritative SAR acquisition timestamp
+        raw_acq = spill.get("detection_timestamp")
+        if not raw_acq and inv.observation_timestamp:
+            raw_acq = inv.observation_timestamp.isoformat()
+        if not raw_acq:
+            acq_time = "N/A"
+        else:
+            acq_time = str(raw_acq)
+            if acq_time.endswith("+00:00"):
+                acq_time = acq_time[:-6] + "Z"
+            elif not acq_time.endswith("Z") and "T" in acq_time and "+" not in acq_time:
+                acq_time = acq_time + "Z"
+
+        inv_info = {
+            "investigation_id": inv.investigation_id,
+            "image_id": inv.image_id or spill.get("properties", {}).get("image_id", "N/A"),
+            "acquisition_time": acq_time,
+            "location": f"{centroid['latitude']:.4f}°N, {centroid['longitude']:.4f}°E",
+            "region": inv.region,
+        }
+
         # Structured sections
         structured_sections = {
             "1_executive_summary": summary,
-            "2_incident_information": {
-                "investigation_id": inv.investigation_id,
-                "image_id": inv.image_id or spill.get("properties", {}).get("image_id", "N/A"),
-                "acquisition_time": spill.get("detection_timestamp", inv.observation_timestamp.isoformat() if inv.observation_timestamp else "N/A"),
-                "location": f"{centroid['latitude']:.4f}°N, {centroid['longitude']:.4f}°E",
-                "region": inv.region,
-            },
+            "2_incident_information": inv_info,
             "3_sentinel1_evidence": {
                 "sensor": spill.get("sensor", "Sentinel-1 SAR C-Band"),
                 "crs": spill.get("crs", "EPSG:4326"),
@@ -249,6 +274,7 @@ class ReportService:
             marpol_violation_risk="High" if top_score > 0.7 else "Moderate" if top_score > 0.4 else "Low",
             sha256_hash=sha_hash,
             jurisdiction="UNCLOS / IMO MARPOL 73/78 Annex I Evidentiary Protocol",
+            metadata_json={"sections": structured_sections},
         )
         self.repo.create_report(rep)
 
@@ -269,6 +295,13 @@ class ReportService:
             "jurisdiction": rep.jurisdiction,
             "sections": structured_sections,
         }
+
+    def generate_report_pdf(self, investigation_id: str) -> bytes:
+        """Generate authoritative forensic PDF report bytes using PDFReportService."""
+        from backend.services.pdf_report_service import PDFReportService
+
+        pdf_service = PDFReportService(self.db)
+        return pdf_service.generate_pdf_bytes(investigation_id)
 
     def generate_report_markdown(self, investigation_id: str) -> str:
         """Render the complete report as professional formatted Markdown."""

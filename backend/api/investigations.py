@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, Response, UploadFile, status
 from fastapi.responses import FileResponse, PlainTextResponse
@@ -9,6 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend.core.database import get_db
+from backend.core.logging import logger
 from backend.schemas.investigation import (
     InvestigationCreate,
     InvestigationResponse,
@@ -264,6 +266,205 @@ def get_investigation_evidence(investigation_id: str, db: Session = Depends(get_
     return service.get_evidence_library(investigation_id)
 
 
+@router.get("/{investigation_id}/artifacts/{artifact_type}/download")
+@router.get("/{investigation_id}/artifacts/{artifact_type}")
+def download_investigation_artifact(
+    investigation_id: str,
+    artifact_type: str,
+    db: Session = Depends(get_db),
+):
+    """Download a specific verified forensic artifact belonging to an investigation."""
+    from pathlib import Path
+    from backend.services.storage_service import storage
+
+    # 1. Verify investigation exists
+    inv_service = InvestigationService(db)
+    inv = inv_service.repo.get_by_id(investigation_id, include_deleted=True)
+    if not inv:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Investigation '{investigation_id}' not found")
+
+    # 2. Compile canonical artifacts and match type
+    artifacts = inv_service.get_evidence_library(investigation_id)
+    target = None
+    clean_type = artifact_type.upper().replace("-", "_")
+
+    # Map possible aliases
+    alias_map = {
+        "DETECTION_OVERLAY": "SAR_DETECTION_OVERLAY",
+        "SEGMENTATION_MASK": "SEGMENTATION_MASK_PNG",
+        "SOURCE_TIFF": "SOURCE_SAR_TIFF",
+        "MASK_TIFF": "GEOREFERENCED_MASK_TIFF",
+        "DRIFT_CSV": "DRIFT_TRAJECTORY_CSV",
+        "DRIFT_JSON": "DRIFT_TRAJECTORY_JSON",
+        "AIS_MATRIX": "AIS_ATTRIBUTION_JSON",
+        "AIS_CSV": "AIS_CANDIDATES_CSV",
+        "REPORT_PDF": "FORENSIC_REPORT_PDF",
+    }
+    resolved_type = alias_map.get(clean_type, clean_type)
+
+    for art in artifacts:
+        if art.get("artifact_type") == resolved_type:
+            target = art
+            break
+
+    if not target or target.get("status") != "AVAILABLE" or not target.get("file_path"):
+        reason = target.get("unavailable_reason") if target else f"Artifact '{artifact_type}' not available for this investigation"
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Artifact unavailable: {reason}",
+        )
+
+    file_path = Path(target["file_path"])
+    if not file_path.exists() or not file_path.is_file() or file_path.stat().st_size == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Physical artifact file missing or 0 bytes on disk: {file_path.name}",
+        )
+
+    meta = storage.get_file_metadata(file_path)
+    file_name = target.get("file_name") or file_path.name
+    headers = {
+        "Content-Disposition": f'attachment; filename="{file_name}"',
+        "X-Investigation-ID": investigation_id,
+        "X-Artifact-Type": resolved_type,
+        "X-Artifact-SHA256": meta.get("sha256") or "",
+    }
+    if meta.get("byte_size"):
+        headers["Content-Length"] = str(meta["byte_size"])
+
+    return FileResponse(
+        path=str(file_path),
+        media_type=meta.get("mime_type", "application/octet-stream"),
+        filename=file_name,
+        headers=headers,
+    )
+
+
+@router.get("/{investigation_id}/evidence/bundle")
+def download_evidence_bundle(
+    investigation_id: str,
+    db: Session = Depends(get_db),
+):
+    """Download complete forensic evidence package as a structured ZIP archive with manifest.json."""
+    from backend.services.storage_service import storage
+
+    inv_service = InvestigationService(db)
+    inv = inv_service.repo.get_by_id(investigation_id, include_deleted=True)
+    if not inv:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Investigation '{investigation_id}' not found")
+
+    artifacts = inv_service.get_evidence_library(investigation_id)
+    available_artifacts = [a for a in artifacts if a.get("status") == "AVAILABLE" and a.get("file_path")]
+
+    if not available_artifacts:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No completed evidence artifacts available to bundle for this investigation",
+        )
+
+    # Compile manifest
+    manifest = {
+        "investigation_id": investigation_id,
+        "title": inv.title,
+        "region": inv.region,
+        "pipeline_status": inv.pipeline_status,
+        "observation_timestamp": inv.observation_timestamp.isoformat() if inv.observation_timestamp else None,
+        "primary_suspect": inv.suspect_vessel,
+        "bundled_at": datetime.now(timezone.utc).isoformat(),
+        "total_files": len(available_artifacts),
+        "artifacts": [
+            {
+                "artifact_type": a.get("artifact_type"),
+                "name": a.get("name"),
+                "category": a.get("category"),
+                "file_name": a.get("file_name"),
+                "byte_size": a.get("file_size_bytes"),
+                "sha256": a.get("sha256"),
+                "mime_type": a.get("mime_type"),
+                "provenance": a.get("provenance_source"),
+            }
+            for a in available_artifacts
+        ],
+        "disclaimer": "OFFICIAL EVIDENCE DOSSIER — MARPOL 73/78 ANNEX I INVESTIGATION CUSTODY CHAIN. GENERATED BY OILTRACE FORENSIC ENGINE.",
+    }
+
+    zip_buffer = storage.create_evidence_bundle(
+        investigation_id=investigation_id,
+        artifacts=available_artifacts,
+        manifest=manifest,
+    )
+
+    filename = f"OILTRACE_{investigation_id}_Evidence_Bundle.zip"
+    return Response(
+        content=zip_buffer.getvalue(),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Type": "application/zip",
+            "Content-Length": str(len(zip_buffer.getvalue())),
+            "X-Investigation-ID": investigation_id,
+            "X-Bundle-Artifacts-Count": str(len(available_artifacts)),
+        },
+    )
+
+
+@router.post("/{investigation_id}/artifacts/{artifact_type}/verify")
+def verify_artifact_integrity_endpoint(
+    investigation_id: str,
+    artifact_type: str,
+    db: Session = Depends(get_db),
+):
+    """Verify disk presence, non-zero length, and cryptographic SHA-256 integrity of an artifact."""
+    from pathlib import Path
+    from backend.services.storage_service import storage
+
+    inv_service = InvestigationService(db)
+    artifacts = inv_service.get_evidence_library(investigation_id)
+
+    clean_type = artifact_type.upper().replace("-", "_")
+    alias_map = {
+        "DETECTION_OVERLAY": "SAR_DETECTION_OVERLAY",
+        "SEGMENTATION_MASK": "SEGMENTATION_MASK_PNG",
+        "SOURCE_TIFF": "SOURCE_SAR_TIFF",
+        "MASK_TIFF": "GEOREFERENCED_MASK_TIFF",
+        "DRIFT_CSV": "DRIFT_TRAJECTORY_CSV",
+        "DRIFT_JSON": "DRIFT_TRAJECTORY_JSON",
+        "AIS_MATRIX": "AIS_ATTRIBUTION_JSON",
+        "AIS_CSV": "AIS_CANDIDATES_CSV",
+        "REPORT_PDF": "FORENSIC_REPORT_PDF",
+    }
+    resolved_type = alias_map.get(clean_type, clean_type)
+
+    target = next((a for a in artifacts if a.get("artifact_type") == resolved_type), None)
+    if not target or not target.get("file_path"):
+        return {
+            "status": "UNAVAILABLE",
+            "message": target.get("unavailable_reason") if target else "Artifact not found",
+            "verified": False,
+        }
+
+    file_path = Path(target["file_path"])
+    meta = storage.get_file_metadata(file_path)
+
+    if not meta["exists"] or meta["byte_size"] == 0:
+        return {
+            "status": "CORRUPTED",
+            "message": "Physical file is 0 bytes or missing from storage volume",
+            "verified": False,
+        }
+
+    return {
+        "status": "AVAILABLE",
+        "verified": True,
+        "artifact_type": resolved_type,
+        "file_name": file_path.name,
+        "byte_size": meta["byte_size"],
+        "sha256": meta["sha256"],
+        "mime_type": meta["mime_type"],
+        "message": f"Cryptographic integrity verified (SHA-256: {meta['sha256'][:12]}...)",
+    }
+
+
 @router.get("/{investigation_id}/status")
 def get_investigation_status(investigation_id: str, db: Session = Depends(get_db)):
     """Retrieve processing lifecycle status and stage-level progress of an investigation."""
@@ -314,8 +515,9 @@ def run_investigation_pipeline(
 
 
 @router.get("/{investigation_id}/result")
+@router.get("/{investigation_id}/attribution")
 def get_investigation_result(investigation_id: str, db: Session = Depends(get_db)):
-    """Retrieve complete end-to-end attribution result for an investigation."""
+    """Retrieve complete canonical end-to-end attribution result for an investigation."""
     pipeline_service = PipelineService(db)
     return pipeline_service.get_result_by_investigation(investigation_id)
 
@@ -351,18 +553,47 @@ def get_investigation_report(investigation_id: str, db: Session = Depends(get_db
     return report_service.get_report_by_investigation(investigation_id)
 
 
+@router.get("/{investigation_id}/report/pdf")
 @router.get("/{investigation_id}/report/download")
-def download_investigation_report(investigation_id: str, db: Session = Depends(get_db)):
-    """Download full 11-section MARPOL investigation report as Markdown."""
-    report_service = ReportService(db)
-    md_content = report_service.generate_report_markdown(investigation_id)
-    filename = f"OILTRACE_Report_{investigation_id}.md"
+def download_investigation_report_pdf(investigation_id: str, db: Session = Depends(get_db)):
+    """Generate and download authoritative forensic PDF report."""
+    try:
+        report_service = ReportService(db)
+        pdf_bytes = report_service.generate_report_pdf(investigation_id)
+        filename = f"OILTRACE_{investigation_id}_Forensic_Report.pdf"
 
-    return Response(
-        content=md_content,
-        media_type="text/markdown",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": "application/pdf",
+            },
+        )
+    except Exception as e:
+        logger.error(f"[PDF_DOWNLOAD] Failed to generate PDF for {investigation_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Unable to generate forensic PDF.")
+
+
+@router.get("/{investigation_id}/report/pdf/view")
+def view_investigation_report_pdf(investigation_id: str, db: Session = Depends(get_db)):
+    """View authoritative forensic PDF report inline in browser."""
+    try:
+        report_service = ReportService(db)
+        pdf_bytes = report_service.generate_report_pdf(investigation_id)
+        filename = f"OILTRACE_{investigation_id}_Forensic_Report.pdf"
+
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'inline; filename="{filename}"',
+                "Content-Type": "application/pdf",
+            },
+        )
+    except Exception as e:
+        logger.error(f"[PDF_VIEW] Failed to render inline PDF for {investigation_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Unable to generate forensic PDF.")
 
 
 @router.get("/{investigation_id}/reconstruction")

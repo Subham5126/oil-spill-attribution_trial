@@ -21,6 +21,12 @@ class PipelineExecutionStatus(BaseModel):
     stage_statuses: Dict[str, str] = Field(default_factory=dict)
     notes: List[str] = Field(default_factory=list)
     execution_timestamp: str
+    pipeline_run_id: Optional[str] = None
+    snapshot_id: Optional[str] = None
+    forensic_result_version: Optional[str] = None
+    calibration_version: Optional[str] = None
+    calibration_weights: Optional[Dict[str, float]] = None
+    model_versions: Optional[Dict[str, str]] = None
 
 
 class PipelineRunRequest(BaseModel):
@@ -57,6 +63,8 @@ class PipelineStatusResponse(BaseModel):
 class EndToEndResultResponse(BaseModel):
     """The canonical end-to-end result consumed by frontend."""
 
+    investigation_id: Optional[str] = None
+    incident_id: Optional[str] = None
     spill_metadata: SpillMetadataSchema
     gis_measurement: GisMeasurementSchema
     ocean_drift: OceanDriftResponse

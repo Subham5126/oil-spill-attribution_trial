@@ -112,7 +112,7 @@ export function SystemStatusPage({ onNavigate }: SystemStatusPageProps) {
 
         <div className="flex items-center gap-2 font-mono text-xs text-secondary bg-surface-container-low px-3 py-2 rounded-lg border border-surface-container">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-          <span>FastAPI Backend: http://127.0.0.1:8000</span>
+          <span>Service Node: {(statusData as any)?.service_identity || "Production API Engine"} [{(statusData as any)?.environment || "Production"}]</span>
         </div>
       </div>
 

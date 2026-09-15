@@ -23,6 +23,7 @@ import {
   NotificationsResponse,
   UploadedSceneMetadata,
   TemporalAnchor,
+  AttributionCalibration,
 } from "../types";
 import {
   fetchEndToEndResult as loadDemoResult,
@@ -508,6 +509,45 @@ export async function getInvestigationEvidence(investigationId: string): Promise
 }
 
 /**
+ * Returns direct URL to download full forensic evidence bundle ZIP with manifest.json.
+ */
+export function getEvidenceBundleDownloadUrl(investigationId: string): string {
+  return `${API_BASE_URL}/api/investigations/${investigationId}/evidence/bundle`;
+}
+
+/**
+ * Returns direct URL to download an individual forensic artifact.
+ */
+export function getArtifactDownloadUrl(investigationId: string, artifactType: string): string {
+  return `${API_BASE_URL}/api/investigations/${investigationId}/artifacts/${artifactType}/download`;
+}
+
+/**
+ * Verifies disk presence, byte size, and cryptographic SHA-256 hash of an artifact.
+ */
+export async function verifyArtifactIntegrity(
+  investigationId: string,
+  artifactType: string
+): Promise<{
+  status: string;
+  verified: boolean;
+  sha256?: string;
+  expected_sha256?: string;
+  byte_size?: number;
+  message?: string;
+}> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/investigations/${investigationId}/artifacts/${artifactType}/verify`,
+    { method: "POST" }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Verification failed" }));
+    throw new Error(err.detail || `HTTP ${res.status}`);
+  }
+  return await res.json();
+}
+
+/**
  * Fetch aggregated cross-investigation vessel intelligence.
  */
 export async function getVesselIntelligence(): Promise<VesselIntelligenceItem[]> {
@@ -717,10 +757,17 @@ export async function getInvestigationReport(investigationId: string): Promise<R
 }
 
 /**
- * Get report download URL.
+ * Get forensic PDF download URL.
  */
 export function getReportDownloadUrl(investigationId: string): string {
-  return `${API_BASE_URL}/api/investigations/${investigationId}/report/download`;
+  return `${API_BASE_URL}/api/investigations/${investigationId}/report/pdf`;
+}
+
+/**
+ * Get forensic PDF inline view URL.
+ */
+export function getReportViewUrl(investigationId: string): string {
+  return `${API_BASE_URL}/api/investigations/${investigationId}/report/pdf/view`;
 }
 
 /**
@@ -1012,6 +1059,41 @@ export async function markAllNotificationsAsRead(): Promise<number> {
     console.warn("Failed to mark all notifications as read:", e);
   }
   return 0;
+}
+
+/**
+ * Fetch persisted attribution calibration settings and weights.
+ */
+export async function getAttributionCalibration(): Promise<AttributionCalibration> {
+  const res = await fetch(`${API_BASE_URL}/api/settings/attribution`);
+  if (!res.ok) {
+    throw new Error(`Failed to load attribution settings (${res.status})`);
+  }
+  return await res.json();
+}
+
+/**
+ * Persist updated attribution calibration weights (must sum to 100%).
+ */
+export async function updateAttributionCalibration(payload: {
+  spatial_proximity: number;
+  temporal_overlap: number;
+  drift_consistency: number;
+  track_consistency: number;
+  vessel_type_relevance?: number;
+  ais_quality?: number;
+  notes?: string;
+}): Promise<AttributionCalibration> {
+  const res = await fetch(`${API_BASE_URL}/api/settings/attribution`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || err.message || `Failed to save calibration (${res.status})`);
+  }
+  return await res.json();
 }
 
 

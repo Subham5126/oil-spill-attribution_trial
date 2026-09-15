@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NavPath } from "../components/Sidebar";
 import { PipelineSteps } from "../components/PipelineSteps";
+import { ForensicPdfButton } from "../components/ForensicPdfButton";
 import { EndToEndResult } from "../types";
 import {
   getActivePipelineResult,
@@ -325,15 +326,11 @@ export function AnalysisProcessPage({ onNavigate, activeInvestigationId }: Analy
           {activeInvestigationId && isDone && (
             <div className="pt-2 border-t border-surface-container-low flex items-center justify-between">
               <span className="text-xs text-secondary font-mono">11-Section Evidence Dossier:</span>
-              <a
-                href={getReportDownloadUrl(activeInvestigationId)}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition-colors shadow-sm"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Download Report (.md)</span>
-              </a>
+              <ForensicPdfButton
+                investigationId={activeInvestigationId}
+                variant="primary"
+                showViewOption={true}
+              />
             </div>
           )}
         </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { NavPath } from "../components/Sidebar";
 import { MapLibreGIS } from "../map/MapLibreGIS";
 import { ConfirmationModal } from "../components/ConfirmationModal";
+import { ForensicPdfButton } from "../components/ForensicPdfButton";
 import { useToast } from "../components/ToastNotification";
 import {
   EndToEndResult,
@@ -485,14 +486,11 @@ export const InvestigationDetailPage: React.FC<InvestigationDetailPageProps> = (
 
         {/* Header Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
-          <a
-            href={getReportDownloadUrl(investigation.id)}
-            download
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors text-xs font-semibold border border-surface-container shadow-xs cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5 text-secondary" />
-            <span>Forensic Report</span>
-          </a>
+          <ForensicPdfButton
+            investigationId={investigation.id}
+            variant="header"
+            showViewOption={true}
+          />
           <button
             type="button"
             onClick={() => onNavigate("live-map")}
@@ -1203,7 +1201,8 @@ export const InvestigationDetailPage: React.FC<InvestigationDetailPageProps> = (
                     <th className="pb-2 font-semibold">Vessel Name</th>
                     <th className="pb-2 font-semibold">MMSI / IMO</th>
                     <th className="pb-2 font-semibold">Flag</th>
-                    <th className="pb-2 font-semibold text-right">Min Dist</th>
+                    <th className="pb-2 font-semibold text-right" title="Closest perpendicular approach to backward drift corridor">Corridor Dist</th>
+                    <th className="pb-2 font-semibold text-right" title="Distance to detected SAR oil slick centroid">Slick Dist</th>
                     <th className="pb-2 font-semibold text-right">Score</th>
                   </tr>
                 </thead>
@@ -1248,7 +1247,10 @@ export const InvestigationDetailPage: React.FC<InvestigationDetailPageProps> = (
                         <td className="py-2.5 text-secondary text-[11px] font-mono">
                           {v.flag || "Unknown"}
                         </td>
-                        <td className="py-2.5 text-right font-mono text-on-surface">
+                        <td className="py-2.5 text-right font-mono text-on-surface" title="Closest approach to backward drift corridor">
+                          {((v as any).distance_to_track_km ?? v.min_distance_km) !== undefined ? `${((v as any).distance_to_track_km ?? v.min_distance_km)?.toFixed(2)} km` : "—"}
+                        </td>
+                        <td className="py-2.5 text-right font-mono text-secondary" title="Distance to detected SAR oil slick centroid">
                           {v.distance_to_spill_km ? `${v.distance_to_spill_km.toFixed(2)} km` : "—"}
                         </td>
                         <td className="py-2.5 text-right">
@@ -1406,9 +1408,8 @@ export const InvestigationDetailPage: React.FC<InvestigationDetailPageProps> = (
                 </div>
                 <div className="text-right text-[10px] font-mono text-secondary">
                   <div>MMSI: <strong className="text-on-surface">{selectedVessel.mmsi}</strong></div>
-                  {selectedVessel.distance_to_spill_km && (
-                    <div>Min Dist: <strong className="text-on-surface">{selectedVessel.distance_to_spill_km.toFixed(1)} km</strong></div>
-                  )}
+                  <div>Corridor Dist (Min): <strong className="text-on-surface">{(((selectedVessel as any).distance_to_track_km ?? selectedVessel.min_distance_km) !== undefined ? `${((selectedVessel as any).distance_to_track_km ?? selectedVessel.min_distance_km).toFixed(2)} km` : "—")}</strong></div>
+                  <div>Slick Centroid Dist: <strong className="text-on-surface">{selectedVessel.distance_to_spill_km ? `${selectedVessel.distance_to_spill_km.toFixed(2)} km` : "—"}</strong></div>
                 </div>
               </div>
 
@@ -1658,6 +1659,8 @@ export const InvestigationDetailPage: React.FC<InvestigationDetailPageProps> = (
 
             {provenanceExpanded && (
               <div className="p-2.5 rounded bg-surface-container-low border border-surface-container space-y-1.5 text-[10px] text-secondary font-mono mt-1">
+                <div>Analysis Snapshot: <strong className="text-on-surface">{execution?.snapshot_id || `${investigation.id} / RUN-CANONICAL / V2`}</strong></div>
+                <div>Pipeline Run ID: <strong className="text-on-surface">{execution?.pipeline_run_id || "RUN-CANONICAL"}</strong></div>
                 <div>Pipeline Version: 1.0.0 (Research Forensic Edition)</div>
                 <div>Hash Verification: SHA-256 Validated</div>
                 <div>Execution Timestamp: {execution?.execution_timestamp || new Date().toISOString()}</div>
@@ -1681,14 +1684,11 @@ export const InvestigationDetailPage: React.FC<InvestigationDetailPageProps> = (
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <a
-            href={getReportDownloadUrl(investigation.id)}
-            download
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-on-primary hover:bg-primary/90 transition-colors text-xs font-bold shadow-xs cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Download Report (.md)</span>
-          </a>
+          <ForensicPdfButton
+            investigationId={investigation.id}
+            variant="primary"
+            showViewOption={true}
+          />
 
           <button
             type="button"

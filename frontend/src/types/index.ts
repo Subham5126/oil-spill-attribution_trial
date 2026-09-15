@@ -196,6 +196,9 @@ export interface GisExportConfig {
 
 export interface PipelineExecutionStatus {
   status: "PASS" | "FAIL" | "RUNNING";
+  pipeline_run_id?: string;
+  snapshot_id?: string;
+  forensic_result_version?: string;
   stage_statuses: Record<string, string>;
   notes: string[];
   execution_timestamp: string;
@@ -382,6 +385,7 @@ export interface TimelineEvent {
 }
 
 export interface EvidenceItem {
+  artifact_type?: string;
   name: string;
   category: "SATELLITE" | "SEGMENTATION" | "GIS" | "OCEAN_DRIFT" | "AIS_ATTRIBUTION" | "LEGAL_REPORT" | string;
   status: "AVAILABLE" | "GENERATING" | "UNAVAILABLE" | string;
@@ -392,6 +396,11 @@ export interface EvidenceItem {
   provenance_source: string;
   download_url?: string | null;
   preview_type: "image" | "json" | "geojson" | "text" | "table" | "none";
+  sha256?: string | null;
+  mime_type?: string;
+  unavailable_reason?: string | null;
+  expected_storage_path?: string | null;
+  can_regenerate?: boolean;
 }
 
 export interface VesselIncidentAppearance {
@@ -618,6 +627,30 @@ export interface AppNotification {
 export interface NotificationsResponse {
   items: AppNotification[];
   unread_count: number;
+}
+
+export interface AttributionCalibration {
+  version: string;
+  is_active: boolean;
+  notes?: string;
+  weights: {
+    spatial_proximity: number;
+    temporal_overlap: number;
+    drift_consistency: number;
+    track_consistency: number;
+    vessel_type_relevance?: number;
+    ais_quality?: number;
+  };
+  percentages: {
+    spatial_proximity: number;
+    temporal_overlap: number;
+    drift_consistency: number;
+    track_consistency: number;
+    vessel_type_relevance?: number;
+    ais_quality?: number;
+  };
+  total_percentage: number;
+  updated_at: string;
 }
 
 
