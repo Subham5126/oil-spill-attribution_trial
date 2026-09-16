@@ -1,0 +1,50 @@
+﻿# ==============================================================================
+# OilTrace Lightweight API Requirements (Render Web Service Deployment)
+# Strictly excludes: torch, torchvision, segmentation-models-pytorch, CUDA
+# Memory footprint on startup: < 250 MB RSS (Fits within 512 MB Free Tier)
+# ==============================================================================
+
+# Core & Scientific Math (CPU only)
+numpy>=1.24.0,<2.0.0
+pandas>=2.0.0
+scipy>=1.10.0
+scikit-learn>=1.3.0
+
+# Geospatial & Environmental Data
+rasterio>=1.3.0
+shapely>=2.0.0
+xarray>=2023.1.0
+netCDF4>=1.6.0
+h5py>=3.8.0
+
+# Backend & REST Framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+python-dotenv>=1.0.0
+python-multipart>=0.0.6
+requests>=2.31.0
+httpx>=0.26.0
+
+# Database & Storage
+sqlalchemy>=2.0.0
+alembic>=1.13.0
+geoalchemy2>=0.14.0
+psycopg[binary]>=3.1.0
+psycopg2-binary>=2.9.9; sys_platform != 'win32'
+
+# Background Queue (Graceful fallback if Redis offline)
+celery>=5.3.0
+redis>=5.0.0
+
+# Utilities & Reporting
+pyyaml>=6.0.0
+zstandard>=0.22.0
+reportlab>=4.0.0
+tqdm>=4.66.0
+
+# Copernicus Marine Service SDK (Optional external query)
+copernicusmarine>=1.0.0
+
+# Testing
+pytest>=8.0.0
