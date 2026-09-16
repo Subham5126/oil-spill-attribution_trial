@@ -1,4 +1,4 @@
-﻿/**
+/**
  * OILTRACE System Feature Flags
  * Controls feature enablement and forensic display modes across the platform.
  */
@@ -6,10 +6,9 @@
 export const FEATURES = {
   /**
    * Incident Replay Animation Mode
-   * Paused to prioritize static GIS evidence, morphometry, ocean currents, and AIS attribution.
-   * When false, replay controls and procedural particle loops are cleanly bypassed.
+   * Enables interactive forensic playback and procedural particle loops.
    */
-  INCIDENT_REPLAY_ENABLED: false,
+  INCIDENT_REPLAY_ENABLED: true,
 } as const;
 
 export type FeatureKey = keyof typeof FEATURES;
