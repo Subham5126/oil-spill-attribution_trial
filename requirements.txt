@@ -28,13 +28,21 @@ python-multipart
 
 # Database
 sqlalchemy
-psycopg2-binary
+alembic
+geoalchemy2
+psycopg[binary]
+psycopg2-binary; sys_platform != 'win32'
+
+# Background Workers & Queue
+celery
+redis
 
 # Utilities
 requests
 tqdm
 pyyaml
 zstandard>=0.22.0
+reportlab>=4.0.0
 
 # Testing
 pytest

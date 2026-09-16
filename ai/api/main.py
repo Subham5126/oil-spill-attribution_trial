@@ -23,14 +23,31 @@ app = FastAPI(
 )
 
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
 def resolve_model_path(raw_path: str | None) -> Path:
+    if raw_path:
+        configured = Path(raw_path)
+        if configured.is_absolute() and configured.exists():
+            return configured
+        if (PROJECT_ROOT / configured).exists():
+            return (PROJECT_ROOT / configured).resolve()
+        if configured.exists():
+            return configured.resolve()
+
+    candidates = [
+        PROJECT_ROOT / "unet_best.pth",
+        PROJECT_ROOT / "models" / "unet_best.pth",
+        Path("unet_best.pth"),
+        Path("models/unet_best.pth"),
+    ]
+    for c in candidates:
+        if c.exists():
+            return c.resolve()
+
     default_path = Path("models/unet_best.pth")
-    configured = Path(raw_path) if raw_path else default_path
-
-    if configured.is_absolute():
-        return configured
-
-    return (PROJECT_ROOT / configured).resolve()
+    return (PROJECT_ROOT / default_path).resolve()
 
 
 MODEL_PATH = resolve_model_path(os.getenv("M1_MODEL_PATH"))

@@ -7,15 +7,59 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from dataclasses import dataclass
+from typing import Any
 import numpy as np
 import rasterio
 from rasterio.transform import Affine
 
-from satellite.sentinel1.pipeline import run_sentinel1_pipeline
+from satellite.preprocessing.pipeline import PreprocessingConfig, Sentinel1Preprocessor
+from satellite.preprocessing.tiling import SceneTiler, TilingConfig
+from satellite.preprocessing.ai_adapter import batch_for_model
 from satellite.preprocessing.m1_client import M1Client
 
-DEFAULT_TIFF = r"D:\sih_26_info\Oil\00009.tif"
+LOCAL_CANDIDATES = [
+    PROJECT_ROOT / "01_Train_Val_Oil_Spill_images" / "Oil" / "00009.tif",
+    PROJECT_ROOT / "01_Train_Val_Oil_Spill_images" / "Oil" / "00005.tif",
+]
+DEFAULT_TIFF = str(next((p for p in LOCAL_CANDIDATES if p.exists()), LOCAL_CANDIDATES[0]))
 BASE_OUTPUT_DIR = Path("data/processed/m1_smoke_test")
+
+
+@dataclass
+class Sentinel1PipelineResult:
+    """Encapsulates M2 preprocessing and tiling outputs."""
+    batch_images: np.ndarray
+    batch_metadata: list[dict[str, Any]]
+
+
+def run_sentinel1_pipeline(image_path: str | Path) -> Sentinel1PipelineResult:
+    """Execute the actual M2 Sentinel-1 preprocessing and tiling pipeline."""
+    path = Path(image_path)
+    with rasterio.open(path) as src:
+        image = src.read()
+        crs = str(src.crs) if src.crs else "EPSG:4326"
+        transform = tuple(src.transform)[:6]
+        scene_meta = {
+            "scene_id": path.stem,
+            "crs": crs,
+            "transform": transform,
+            "bands": ("VV", "VH"),
+            "polarization_order": ("VV", "VH"),
+            "dtype": "float32",
+        }
+
+    preprocessor = Sentinel1Preprocessor(PreprocessingConfig())
+    clean_image, report = preprocessor.process(image)
+
+    tiler = SceneTiler(TilingConfig(tile_size=256, stride=256))
+    tiles = tiler.tile_scene(clean_image, scene_metadata=scene_meta)
+    batched = batch_for_model(tiles)
+
+    return Sentinel1PipelineResult(
+        batch_images=batched["images"],
+        batch_metadata=batched["metadata"],
+    )
 
 
 def main():
