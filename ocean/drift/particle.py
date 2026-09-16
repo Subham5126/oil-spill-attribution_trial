@@ -15,6 +15,26 @@ class ParticleModelError(ValueError):
     pass
 
 
+class SpatialBoundaryConditionError(ParticleModelError):
+    """Raised when a particle trajectory reaches or exceeds environmental dataset spatial bounds."""
+
+    def __init__(
+        self,
+        message: str,
+        dimension: str = "latitude",
+        query_value: float = 0.0,
+        dataset_bounds: tuple[float, float] = (0.0, 0.0),
+        step: int = 0,
+        particle_id: int = 1,
+    ):
+        super().__init__(message)
+        self.dimension = dimension
+        self.query_value = query_value
+        self.dataset_bounds = dataset_bounds
+        self.step = step
+        self.particle_id = particle_id
+
+
 @dataclasses.dataclass
 class Particle:
     """Represents a simulated oil parcel."""
@@ -141,9 +161,21 @@ def simulate_particles(
                 v10 = np.array([v10])
                 
         except InterpolationError as e:
-            # Instead of failing the entire simulation for a single out-of-domain particle,
-            # the MVP policy is to raise a clear error to avoid silently continuing with incorrect physics,
-            # as requested: "For the MVP, prefer a clear exception for an invalid environmental query rather than silently continuing with incorrect physics."
+            err_msg = str(e)
+            if "outside the available dataset range" in err_msg:
+                dim = "latitude" if "latitude" in err_msg else ("longitude" if "longitude" in err_msg else "time")
+                if dim in ("latitude", "longitude"):
+                    bounds = (float(current_dataset[dim].min().values), float(current_dataset[dim].max().values))
+                    query_val = float(lats[active_idx][0]) if dim == "latitude" else float(lons[active_idx][0])
+                    p_id = int(ids[active_idx][0])
+                    raise SpatialBoundaryConditionError(
+                        f"Forward trajectory reached {dim} boundary: {err_msg}",
+                        dimension=dim,
+                        query_value=query_val,
+                        dataset_bounds=bounds,
+                        step=step,
+                        particle_id=p_id,
+                    ) from e
             raise ParticleModelError(f"Environmental interpolation failed: {e}") from e
 
         # Explicit forward Euler: oil_velocity = current + windage * wind

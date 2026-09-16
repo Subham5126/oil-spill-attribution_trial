@@ -45,6 +45,43 @@ class CopernicusAcquisitionResult:
     is_cached: bool = False
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
+    requested_aoi: Optional[Tuple[float, float, float, float]] = None  # (lat_min, lat_max, lon_min, lon_max)
+    dataset_bounds: Optional[Tuple[float, float, float, float]] = None
+
+
+def compute_adaptive_aoi(
+    lat: float,
+    lon: float,
+    hindcast_hours: int = 72,
+    forecast_hours: int = 24,
+    max_current_speed_m_s: float = 1.0,
+    safety_factor: float = 1.5,
+    min_buffer_deg: float = 0.75,
+) -> Tuple[float, float, float, float]:
+    """Compute an initial bounding box that encloses the expected drift envelope.
+
+    Accounts for duration, typical peak surface velocity, safety margins,
+    and geodesic longitude convergence.
+    """
+    import numpy as np
+    total_hours = max(1, hindcast_hours + forecast_hours)
+    # Maximum physical displacement in meters
+    max_disp_m = total_hours * 3600.0 * max_current_speed_m_s * safety_factor
+
+    # Geodesic conversions
+    m_per_deg_lat = 111139.0
+    safe_lat = float(np.clip(lat, -85.0, 85.0))
+    m_per_deg_lon = m_per_deg_lat * max(0.1, float(np.cos(np.radians(safe_lat))))
+
+    dlat = max(min_buffer_deg, max_disp_m / m_per_deg_lat)
+    dlon = max(min_buffer_deg, max_disp_m / m_per_deg_lon)
+
+    lat_min = round(max(-80.0, lat - dlat), 3)
+    lat_max = round(min(90.0, lat + dlat), 3)
+    lon_min = round(max(-180.0, lon - dlon), 3)
+    lon_max = round(min(180.0, lon + dlon), 3)
+
+    return (lat_min, lat_max, lon_min, lon_max)
 
 
 class CopernicusClient:
@@ -183,8 +220,19 @@ class CopernicusClient:
         hindcast_hours: int = 72,
         forecast_hours: int = 24,
         buffer_deg: float = 0.75,
+        spatial_bounds: Optional[Tuple[float, float, float, float]] = None,
     ) -> CopernicusAcquisitionResult:
-        """Acquire surface ocean currents covering the spatial AOI and simulation window."""
+        """Acquire surface ocean currents covering the spatial AOI and simulation window.
+
+        Args:
+            lat: Spill centroid latitude.
+            lon: Spill centroid longitude.
+            obs_time: SAR observation timestamp.
+            hindcast_hours: Backward integration hours.
+            forecast_hours: Forward integration hours.
+            buffer_deg: Fallback buffer in degrees around (lat, lon) if spatial_bounds is None.
+            spatial_bounds: Optional explicit (lat_min, lat_max, lon_min, lon_max) bounding box.
+        """
         t_obs = obs_time.astimezone(timezone.utc) if obs_time.tzinfo else obs_time.replace(tzinfo=timezone.utc)
         start_time = t_obs - timedelta(hours=hindcast_hours)
         end_time = t_obs + timedelta(hours=forecast_hours)
@@ -195,10 +243,20 @@ class CopernicusClient:
             f"{end_time.strftime('%Y-%m-%dT%H:%M:%SZ')}"
         )
 
-        lat_min = round(max(-80.0, lat - buffer_deg), 3)
-        lat_max = round(min(90.0, lat + buffer_deg), 3)
-        lon_min = round(max(-180.0, lon - buffer_deg), 3)
-        lon_max = round(min(180.0, lon + buffer_deg), 3)
+        if spatial_bounds is not None:
+            lat_min, lat_max, lon_min, lon_max = spatial_bounds
+            lat_min = round(max(-80.0, float(lat_min)), 3)
+            lat_max = round(min(90.0, float(lat_max)), 3)
+            lon_min = round(max(-180.0, float(lon_min)), 3)
+            lon_max = round(min(180.0, float(lon_max)), 3)
+        else:
+            lat_min = round(max(-80.0, lat - buffer_deg), 3)
+            lat_max = round(min(90.0, lat + buffer_deg), 3)
+            lon_min = round(max(-180.0, lon - buffer_deg), 3)
+            lon_max = round(min(180.0, lon + buffer_deg), 3)
+
+        requested_aoi = (lat_min, lat_max, lon_min, lon_max)
+        logger.info(f"[OCEAN] Requested Copernicus AOI: lat [{lat_min}..{lat_max}], lon [{lon_min}..{lon_max}]")
 
         # 1. Check local cache / sample datasets first
         cached_file = self.cache.find_cached_dataset(
@@ -213,7 +271,13 @@ class CopernicusClient:
         if cached_file is not None and cached_file.exists():
             try:
                 # Validate with load_currents
-                load_currents(cached_file, select_surface=True)
+                curr_ds = load_currents(cached_file, select_surface=True)
+                actual_bounds = (
+                    float(curr_ds.latitude.min().values),
+                    float(curr_ds.latitude.max().values),
+                    float(curr_ds.longitude.min().values),
+                    float(curr_ds.longitude.max().values),
+                )
                 dataset_desc = None
                 try:
                     dataset_desc = self.select_dataset(lat, lon, start_time, end_time)
@@ -221,6 +285,7 @@ class CopernicusClient:
                     pass
 
                 logger.info(f"[OCEAN] Using dataset: {cached_file.name} (Verified Cached Subset)")
+                logger.info(f"[OCEAN] Dataset coverage: lat [{actual_bounds[0]:.2f}..{actual_bounds[1]:.2f}], lon [{actual_bounds[2]:.2f}..{actual_bounds[3]:.2f}]")
                 logger.info("[OCEAN] Temporal compatibility: PASS")
                 logger.info("[OCEAN] Spatial compatibility: PASS")
 
@@ -232,6 +297,8 @@ class CopernicusClient:
                     is_cached=True,
                     start_time=start_time,
                     end_time=end_time,
+                    requested_aoi=requested_aoi,
+                    dataset_bounds=actual_bounds,
                 )
             except Exception as e:
                 logger.warning(f"Cached file {cached_file.name} failed validation: {e}")
@@ -248,6 +315,7 @@ class CopernicusClient:
                 message=err.message,
                 start_time=start_time,
                 end_time=end_time,
+                requested_aoi=requested_aoi,
             )
         except Exception as e:
             logger.error(f"Unexpected error during dataset selection: {e}")
@@ -258,6 +326,7 @@ class CopernicusClient:
                 message=str(e),
                 start_time=start_time,
                 end_time=end_time,
+                requested_aoi=requested_aoi,
             )
 
         # 3. Download subset via copernicusmarine
@@ -370,7 +439,13 @@ class CopernicusClient:
 
         # 4. Validate downloaded NetCDF
         try:
-            load_currents(dest_path, select_surface=True)
+            val_ds = load_currents(dest_path, select_surface=True)
+            dl_bounds = (
+                float(val_ds.latitude.min().values),
+                float(val_ds.latitude.max().values),
+                float(val_ds.longitude.min().values),
+                float(val_ds.longitude.max().values),
+            )
             self.cache.reindex()
             return CopernicusAcquisitionResult(
                 file_path=dest_path,
@@ -380,6 +455,8 @@ class CopernicusClient:
                 is_cached=False,
                 start_time=start_time,
                 end_time=end_time,
+                requested_aoi=requested_aoi,
+                dataset_bounds=dl_bounds,
             )
         except Exception as val_err:
             logger.error(f"Downloaded NetCDF failed validation: {val_err}")

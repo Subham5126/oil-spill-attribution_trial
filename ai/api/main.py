@@ -50,12 +50,13 @@ def resolve_model_path(raw_path: str | None) -> Path:
     return (PROJECT_ROOT / default_path).resolve()
 
 
-MODEL_PATH = resolve_model_path(os.getenv("M1_MODEL_PATH"))
+MODEL_PROVIDER = os.getenv("OILTRACE_MODEL_PROVIDER", "current")
+MODEL_PATH = resolve_model_path(os.getenv("OILTRACE_MODEL_PATH") or os.getenv("M1_MODEL_PATH"))
 
 
 # Load the model ONCE when the API starts.
 try:
-    predictor = OilSpillInference(MODEL_PATH)
+    predictor = OilSpillInference(MODEL_PATH, model_provider=MODEL_PROVIDER)
 except Exception as exc:
     predictor = None
     MODEL_LOAD_ERROR = str(exc)

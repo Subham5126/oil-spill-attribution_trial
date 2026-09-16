@@ -38,6 +38,7 @@ class OceanAdapter:
         hindcast_hours: int = 72,
         forecast_hours: int = 24,
         buffer_deg: float = 0.75,
+        spatial_bounds: Optional[Tuple[float, float, float, float]] = None,
     ) -> CopernicusAcquisitionResult:
         """Acquire verified ocean currents NetCDF for the requested coordinates and temporal window."""
         return self.client.acquire_currents(
@@ -47,6 +48,7 @@ class OceanAdapter:
             hindcast_hours=hindcast_hours,
             forecast_hours=forecast_hours,
             buffer_deg=buffer_deg,
+            spatial_bounds=spatial_bounds,
         )
 
     def find_matching_currents(

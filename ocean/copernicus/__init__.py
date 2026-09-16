@@ -12,7 +12,7 @@ from ocean.copernicus.catalog import (
     SUPPORTED_COPERNICUS_DATASETS,
 )
 from ocean.copernicus.cache import OceanDataCache, CachedDatasetMetadata
-from ocean.copernicus.client import CopernicusClient, CopernicusAcquisitionResult
+from ocean.copernicus.client import CopernicusClient, CopernicusAcquisitionResult, compute_adaptive_aoi
 from ocean.copernicus.exceptions import (
     CopernicusError,
     SpatialUnavailableError,
@@ -43,6 +43,7 @@ __all__ = [
     "CachedDatasetMetadata",
     "CopernicusClient",
     "CopernicusAcquisitionResult",
+    "compute_adaptive_aoi",
     "CopernicusAvailabilityService",
     "CopernicusStatus",
     "CopernicusAvailabilityResult",

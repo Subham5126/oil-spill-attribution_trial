@@ -93,5 +93,10 @@ class Settings:
     # Global Fishing Watch (GFW) API Configuration
     GFW_API_TOKEN: Optional[str] = os.getenv("GFW_API_TOKEN")
 
+    # AI / Model Configuration
+    OILTRACE_MODEL_PROVIDER: str = os.getenv("OILTRACE_MODEL_PROVIDER", "current")
+    OILTRACE_MODEL_PATH: Path = Path(os.getenv("OILTRACE_MODEL_PATH", str(REPO_ROOT / "unet_best.pth")))
+    M1_MODEL_PATH: Path = Path(os.getenv("M1_MODEL_PATH", str(REPO_ROOT / "ai" / "training" / "checkpoints" / "best_model.pth")))
+
 
 settings = Settings()

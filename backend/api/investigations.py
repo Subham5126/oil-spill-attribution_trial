@@ -495,16 +495,29 @@ def run_investigation_pipeline(
         )
         return {"investigation_id": investigation_id, "status": "COMPLETED", "result": result}
 
+    def _run_pipeline_bg(inv_id: str, im_id: Optional[str], im_path: Optional[str], oc_file: Optional[str], s_ais: bool, s_drift: bool):
+        try:
+            pipe_service.run_pipeline(
+                investigation_id=inv_id,
+                image_id=im_id,
+                image_path=im_path,
+                ocean_file=oc_file,
+                skip_ais=s_ais,
+                skip_drift=s_drift,
+            )
+        except Exception as bg_err:
+            logger.error(f"[PIPELINE-BG] Background pipeline execution caught error for [{inv_id}]: {bg_err}")
+
     # Run in background
     if background_tasks is not None:
         background_tasks.add_task(
-            pipe_service.run_pipeline,
-            investigation_id=investigation_id,
-            image_id=req.image_id,
-            image_path=req.image_path,
-            ocean_file=req.ocean_file,
-            skip_ais=req.skip_ais,
-            skip_drift=req.skip_drift,
+            _run_pipeline_bg,
+            inv_id=investigation_id,
+            im_id=req.image_id,
+            im_path=req.image_path,
+            oc_file=req.ocean_file,
+            s_ais=req.skip_ais,
+            s_drift=req.skip_drift,
         )
 
     return {

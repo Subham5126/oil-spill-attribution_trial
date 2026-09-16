@@ -30,6 +30,11 @@ class CachedDatasetMetadata:
     time_max: datetime
     variables: Tuple[str, ...]
 
+    @property
+    def spatial_area(self) -> float:
+        """Approximate bounding box area in square degrees."""
+        return max(0.0, self.lat_max - self.lat_min) * max(0.0, self.lon_max - self.lon_min)
+
     def contains(
         self,
         lat_min: float,
@@ -39,6 +44,7 @@ class CachedDatasetMetadata:
         time_min: datetime,
         time_max: datetime,
         required_vars: Tuple[str, ...] = ("uo", "vo"),
+        grid_tol: float = 0.05,
     ) -> bool:
         """Verify spatial, temporal, and variable containment with tolerance."""
         # Variable check
@@ -46,8 +52,7 @@ class CachedDatasetMetadata:
             if v not in self.variables:
                 return False
 
-        # Spatial check (allow grid spacing tolerance of 0.10 deg ~ 1 Copernicus grid cell)
-        grid_tol = 0.10
+        # Spatial check (strictly require dataset bounds to enclose requested bounds within half a grid cell ~0.05 deg)
         if (self.lat_min > lat_min + grid_tol) or (self.lat_max < lat_max - grid_tol):
             return False
         if (self.lon_min > lon_min + grid_tol) or (self.lon_max < lon_max - grid_tol):
@@ -151,18 +156,29 @@ class OceanDataCache:
         required_vars: Tuple[str, ...] = ("uo", "vo"),
     ) -> Optional[Path]:
         """Find an existing NetCDF that encloses the spatial extent and time window."""
-        # First check indexed entries
-        for meta in self._index:
-            if meta.contains(lat_min, lat_max, lon_min, lon_max, time_min, time_max, required_vars):
-                logger.info(f"Reusing cached Copernicus NetCDF: {meta.path.name}")
-                return meta.path
+        # Find all candidates enclosing the request
+        matches: List[CachedDatasetMetadata] = [
+            meta for meta in self._index
+            if meta.contains(lat_min, lat_max, lon_min, lon_max, time_min, time_max, required_vars)
+        ]
 
-        # If not found in index, perform a fresh reindex and check once more
-        self.reindex()
-        for meta in self._index:
-            if meta.contains(lat_min, lat_max, lon_min, lon_max, time_min, time_max, required_vars):
-                logger.info(f"Reusing newly indexed Copernicus NetCDF: {meta.path.name}")
-                return meta.path
+        if not matches:
+            # Reindex and search once more
+            self.reindex()
+            matches = [
+                meta for meta in self._index
+                if meta.contains(lat_min, lat_max, lon_min, lon_max, time_min, time_max, required_vars)
+            ]
+
+        if matches:
+            # Sort by spatial area descending to prioritize larger/more comprehensive coverage
+            matches.sort(key=lambda m: m.spatial_area, reverse=True)
+            chosen = matches[0]
+            logger.info(
+                f"Reusing cached Copernicus NetCDF: {chosen.path.name} "
+                f"[lat: {chosen.lat_min:.2f}..{chosen.lat_max:.2f}, lon: {chosen.lon_min:.2f}..{chosen.lon_max:.2f}]"
+            )
+            return chosen.path
 
         return None
 

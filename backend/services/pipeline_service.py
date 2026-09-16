@@ -42,13 +42,14 @@ from demo.end_to_end_real_workflow_demo import (
     run_m3_geometry,
 )
 from gis.geometry.geojson import to_geojson
+from ocean.copernicus.client import compute_adaptive_aoi
 from ocean.currents import load_currents
 from ocean.drift.hindcast import hindcast_particles
-from ocean.drift.particle import Particle, simulate_particles
+from ocean.drift.particle import Particle, ParticleModelError, SpatialBoundaryConditionError, simulate_particles
 from ocean.interpolation.environment import interpolate_currents
 
-MODEL_PATH = settings.REPO_ROOT / "unet_best.pth"
-OUTPUT_DIR = settings.REPO_ROOT / "demo" / "output"
+MODEL_PATH = settings.OILTRACE_MODEL_PATH
+OUTPUT_DIR = settings.DEMO_OUTPUT_DIR
 
 # In-memory execution cache for active pipeline status and results
 _pipeline_status_cache: Dict[str, Dict[str, Any]] = {}
@@ -596,7 +597,7 @@ class PipelineService:
             # -------------------------------------------------------------
             _update_status(25, "M2 — U-Net Segmentation", "RUNNING", "Running U-Net deep learning inference on SAR scene")
             import cv2
-            infer = OilSpillInference(MODEL_PATH)
+            infer = OilSpillInference(MODEL_PATH, model_provider=settings.OILTRACE_MODEL_PROVIDER)
             pred_res = infer.predict(tiff_path)
             binary_mask = pred_res["mask"]
             full_prob = pred_res["probability"]
@@ -690,179 +691,300 @@ class PipelineService:
                     ocean_status = "SAR_ACQUISITION_TIME_UNAVAILABLE"
                     ocean_status_message = "Cannot run ocean drift reconstruction because the Sentinel-1 acquisition timestamp could not be resolved."
                     logger.warning(f"[OCEAN] Pipeline [{inv_id}] {ocean_status}: {ocean_status_message}")
-                elif ocean_nc_path is None:
-                    _update_status(68, "M4 — Ocean Currents", "RUNNING", f"Selecting Copernicus dataset for ({c_lat:.4f}°N, {c_lon:.4f}°E) at {obs_time.strftime('%Y-%m-%d')}")
-                    acq_res = self.ocean_adapter.acquire_ocean_currents(
-                        c_lat, c_lon, obs_time, hindcast_hours=72, forecast_hours=24
-                    )
-                    if acq_res.status == "COMPLETED" and acq_res.file_path:
-                        ocean_nc_path = acq_res.file_path
-                        ocean_dataset_id = acq_res.dataset.dataset_id if acq_res.dataset else ocean_nc_path.name
-                        ocean_product_id = acq_res.dataset.product_id if acq_res.dataset else "Copernicus Marine CMEMS"
-                        if acq_res.start_time and acq_res.end_time:
-                            ocean_temporal_str = f"{acq_res.start_time.strftime('%Y-%m-%d %H:%M')} to {acq_res.end_time.strftime('%Y-%m-%d %H:%M')} UTC"
-                            ocean_cov_start = acq_res.start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
-                            ocean_cov_end = acq_res.end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
-                        ocean_is_cached = acq_res.is_cached
-                        ocean_status = "COMPLETED"
-                        ocean_status_message = acq_res.message
-                    else:
-                        ocean_status = acq_res.status
-                        ocean_status_message = acq_res.message
-                        if acq_res.dataset:
-                            ocean_dataset_id = acq_res.dataset.dataset_id
-                            ocean_product_id = acq_res.dataset.product_id
-
-            df_hindcast = None
-            df_forecast = None
-            hindcast_dist = 0.0
-            fore_dist = 0.0
-            origin_lat, origin_lon = c_lat, c_lon
-            origin_time = obs_time.isoformat() if obs_time else ""
-            fore_lat, fore_lon = c_lat, c_lon
-            fore_time = obs_time.isoformat() if obs_time else ""
-            u_spill, v_spill, curr_speed, curr_dir_deg = 0.0, 0.0, 0.0, 0.0
-
-            if not skip_drift and ocean_nc_path and ocean_nc_path.exists() and obs_time is not None:
-                currents_ds = load_currents(ocean_nc_path, select_surface=True)
-
-                # Validate observation timestamp against actual hydrodynamic dataset temporal boundaries
-                t_min = pd.Timestamp(currents_ds["time"].min().values)
-                t_max = pd.Timestamp(currents_ds["time"].max().values)
-                obs_ts = pd.Timestamp(obs_time)
-                if obs_ts.tzinfo:
-                    obs_ts = obs_ts.tz_convert(None)
-
-                # Daily margin tolerance (24h)
-                if obs_ts < t_min - pd.Timedelta(days=1) or obs_ts > t_max + pd.Timedelta(days=1):
-                    ocean_status = "TEMPORAL_UNAVAILABLE"
-                    ocean_status_message = (
-                        f"COPERNICUS DATA UNAVAILABLE: SAR observation time ({obs_time.strftime('%Y-%m-%d %H:%M UTC')}) "
-                        f"is outside dataset temporal coverage [{t_min.strftime('%Y-%m-%d')} to {t_max.strftime('%Y-%m-%d')}]."
-                    )
-                    stages["M4 — Ocean Currents"] = f"BLOCKED: {ocean_status_message}"
-                    stages["M4 — Lagrangian Drift"] = "BLOCKED: TEMPORAL_UNAVAILABLE"
-                    _update_status(80, "M4 — Lagrangian Drift", "BLOCKED", ocean_status_message)
                 else:
-                    _update_status(70, "M4 — Ocean Currents", "COMPLETED", f"Loaded Copernicus dataset {ocean_dataset_id or ocean_nc_path.name}")
-                    _update_status(72, "M4 — Lagrangian Drift", "RUNNING", "Simulating 72h backward Lagrangian drift hindcast")
+                    # Adaptive spatial coverage strategy with bounded retry loop (up to 3 attempts)
+                    max_expansion_attempts = 3
+                    expansion_attempt = 0
+                    current_bounds = None
+                    initial_aoi = None
+                    final_aoi = None
+                    hindcast_success = False
 
-                    # Clamp obs_ts to strictly within dataset time coordinate for interpolation
-                    clamp_obs_ts = max(t_min, min(obs_ts, t_max))
-                    u_spill, v_spill = interpolate_currents(currents_ds, c_lon, c_lat, clamp_obs_ts)
-                    curr_speed = float(np.sqrt(u_spill**2 + v_spill**2))
-                    curr_dir_deg = float(np.degrees(np.arctan2(u_spill, v_spill)) % 360)
+                    # If user didn't specify an explicit NetCDF, calculate initial adaptive envelope
+                    if ocean_nc_path is None:
+                        initial_aoi = compute_adaptive_aoi(c_lat, c_lon, hindcast_hours=72, forecast_hours=24)
+                        current_bounds = initial_aoi
 
-                    wind_ds = xr.Dataset(
-                        {
-                            "u10": (currents_ds["uo"].dims, np.zeros_like(currents_ds["uo"].values), {"units": "m/s"}),
-                            "v10": (currents_ds["vo"].dims, np.zeros_like(currents_ds["vo"].values), {"units": "m/s"}),
-                        },
-                        coords=currents_ds.coords,
-                    )
+                    while expansion_attempt < max_expansion_attempts and not hindcast_success:
+                        expansion_attempt += 1
+                        logger.info(
+                            f"[M4] Hindcast attempt {expansion_attempt}/{max_expansion_attempts} for [{inv_id}]"
+                        )
 
-                    # Compute 72h hindcast duration or clamped to dataset start
-                    avail_backward_sec = min(72 * 3600, max(3600, int((clamp_obs_ts - t_min).total_seconds())))
-                    df_hindcast = hindcast_particles(
-                        [Particle(particle_id=1, latitude=c_lat, longitude=c_lon)],
-                        currents_ds,
-                        wind_ds,
-                        clamp_obs_ts.to_pydatetime().replace(tzinfo=timezone.utc),
-                        avail_backward_sec,
-                        3600,
-                        windage=0.0,
-                    )
-                    origin_lat = float(df_hindcast["latitude"].iloc[-1])
-                    origin_lon = float(df_hindcast["longitude"].iloc[-1])
-                    origin_time = str(df_hindcast["timestamp"].iloc[-1])
-                    hindcast_dist = haversine_distance_km(c_lat, c_lon, origin_lat, origin_lon)
+                        # Acquire / expand Copernicus dataset if needed
+                        if ocean_nc_path is None or expansion_attempt > 1:
+                            _update_status(
+                                68,
+                                "M4 — Ocean Currents",
+                                "RUNNING",
+                                f"Acquiring Copernicus currents (Attempt {expansion_attempt}/{max_expansion_attempts})",
+                            )
+                            acq_res = self.ocean_adapter.acquire_ocean_currents(
+                                c_lat,
+                                c_lon,
+                                obs_time,
+                                hindcast_hours=72,
+                                forecast_hours=24,
+                                spatial_bounds=current_bounds,
+                            )
+                            if acq_res.status == "COMPLETED" and acq_res.file_path:
+                                ocean_nc_path = acq_res.file_path
+                                ocean_dataset_id = acq_res.dataset.dataset_id if acq_res.dataset else ocean_nc_path.name
+                                ocean_product_id = acq_res.dataset.product_id if acq_res.dataset else "Copernicus Marine CMEMS"
+                                if acq_res.start_time and acq_res.end_time:
+                                    ocean_temporal_str = f"{acq_res.start_time.strftime('%Y-%m-%d %H:%M')} to {acq_res.end_time.strftime('%Y-%m-%d %H:%M')} UTC"
+                                    ocean_cov_start = acq_res.start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+                                    ocean_cov_end = acq_res.end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+                                ocean_is_cached = acq_res.is_cached
+                                ocean_status = "COMPLETED"
+                                ocean_status_message = acq_res.message
+                                final_aoi = acq_res.requested_aoi or current_bounds
+                            else:
+                                ocean_status = acq_res.status
+                                ocean_status_message = acq_res.message
+                                if acq_res.dataset:
+                                    ocean_dataset_id = acq_res.dataset.dataset_id
+                                    ocean_product_id = acq_res.dataset.product_id
+                                # If dataset selection or download fails, do not loop
+                                break
 
-                    # Compute 24h forecast steps or clamped to dataset end
-                    avail_forward_hours = min(24, max(1, int((t_max - clamp_obs_ts).total_seconds() / 3600)))
-                    df_forecast = simulate_particles(
-                        [Particle(particle_id=1, latitude=c_lat, longitude=c_lon)],
-                        currents_ds,
-                        wind_ds,
-                        clamp_obs_ts.to_pydatetime().replace(tzinfo=timezone.utc),
-                        avail_forward_hours,
-                        3600,
-                        windage=0.0,
-                    )
-                    fore_lat = float(df_forecast["latitude"].iloc[-1])
-                    fore_lon = float(df_forecast["longitude"].iloc[-1])
-                    fore_time = str(df_forecast["timestamp"].iloc[-1])
-                    fore_dist = haversine_distance_km(c_lat, c_lon, fore_lat, fore_lon)
+                        if not ocean_nc_path or not ocean_nc_path.exists():
+                            break
 
-                    # Persist genuine Lagrangian drift trajectory CSV and JSON
-                    try:
-                        traj_csv_path = OUTPUT_DIR / f"real_{clean_id}_drift_trajectory.csv"
-                        traj_json_path = OUTPUT_DIR / f"real_{clean_id}_drift_trajectory.json"
-                        traj_rows = []
-                        for idx, r in df_hindcast.iterrows():
-                            traj_rows.append({
-                                "timestamp": str(r.get("timestamp", "")),
-                                "latitude": round(float(r["latitude"]), 6),
-                                "longitude": round(float(r["longitude"]), 6),
-                                "step_hours": -int(r.get("step", idx)),
-                                "trajectory_type": "HINDCAST",
-                                "u_current_m_s": round(float(u_spill), 4),
-                                "v_current_m_s": round(float(v_spill), 4),
-                                "speed_m_s": round(float(curr_speed), 3),
-                            })
-                        if df_forecast is not None:
-                            for idx, r in df_forecast.iterrows():
+                        currents_ds = load_currents(ocean_nc_path, select_surface=True)
+                        t_min = pd.Timestamp(currents_ds["time"].min().values)
+                        t_max = pd.Timestamp(currents_ds["time"].max().values)
+                        obs_ts = pd.Timestamp(obs_time)
+                        if obs_ts.tzinfo:
+                            obs_ts = obs_ts.tz_convert(None)
+
+                        # Daily margin tolerance (24h)
+                        if obs_ts < t_min - pd.Timedelta(days=1) or obs_ts > t_max + pd.Timedelta(days=1):
+                            ocean_status = "TEMPORAL_UNAVAILABLE"
+                            ocean_status_message = (
+                                f"COPERNICUS DATA UNAVAILABLE: SAR observation time ({obs_time.strftime('%Y-%m-%d %H:%M UTC')}) "
+                                f"is outside dataset temporal coverage [{t_min.strftime('%Y-%m-%d')} to {t_max.strftime('%Y-%m-%d')}]."
+                            )
+                            stages["M4 — Ocean Currents"] = f"BLOCKED: {ocean_status_message}"
+                            stages["M4 — Lagrangian Drift"] = "BLOCKED: TEMPORAL_UNAVAILABLE"
+                            _update_status(80, "M4 — Lagrangian Drift", "BLOCKED", ocean_status_message)
+                            break
+
+                        _update_status(70, "M4 — Ocean Currents", "COMPLETED", f"Loaded Copernicus dataset {ocean_dataset_id or ocean_nc_path.name}")
+                        _update_status(72, "M4 — Lagrangian Drift", "RUNNING", "Simulating 72h backward Lagrangian drift hindcast")
+
+                        # Preflight coverage check: ensure initial observation coordinate is inside dataset bounds
+                        ds_lat_min = float(currents_ds.latitude.min().values)
+                        ds_lat_max = float(currents_ds.latitude.max().values)
+                        ds_lon_min = float(currents_ds.longitude.min().values)
+                        ds_lon_max = float(currents_ds.longitude.max().values)
+
+                        logger.info(
+                            f"[M4] Dataset coverage: lat [{ds_lat_min:.3f}..{ds_lat_max:.3f}], lon [{ds_lon_min:.3f}..{ds_lon_max:.3f}]"
+                        )
+
+                        if not (ds_lat_min <= c_lat <= ds_lat_max and ds_lon_min <= c_lon <= ds_lon_max):
+                            logger.warning(f"[M4] Initial spill centroid ({c_lat:.4f}°N, {c_lon:.4f}°E) is outside dataset coverage.")
+                            # Expand bounds to encompass centroid with generous margin
+                            margin = 1.0 * expansion_attempt
+                            current_bounds = (
+                                min(ds_lat_min, c_lat - margin),
+                                max(ds_lat_max, c_lat + margin),
+                                min(ds_lon_min, c_lon - margin),
+                                max(ds_lon_max, c_lon + margin),
+                            )
+                            continue
+
+                        # Clamp obs_ts to strictly within dataset time coordinate for interpolation
+                        clamp_obs_ts = max(t_min, min(obs_ts, t_max))
+                        u_spill, v_spill = interpolate_currents(currents_ds, c_lon, c_lat, clamp_obs_ts)
+                        curr_speed = float(np.sqrt(u_spill**2 + v_spill**2))
+                        curr_dir_deg = float(np.degrees(np.arctan2(u_spill, v_spill)) % 360)
+
+                        wind_ds = xr.Dataset(
+                            {
+                                "u10": (currents_ds["uo"].dims, np.zeros_like(currents_ds["uo"].values), {"units": "m/s"}),
+                                "v10": (currents_ds["vo"].dims, np.zeros_like(currents_ds["vo"].values), {"units": "m/s"}),
+                            },
+                            coords=currents_ds.coords,
+                        )
+
+                        avail_backward_sec = min(72 * 3600, max(3600, int((clamp_obs_ts - t_min).total_seconds())))
+
+                        try:
+                            # Run 72h backward Lagrangian drift simulation from initial condition
+                            df_hindcast = hindcast_particles(
+                                [Particle(particle_id=1, latitude=c_lat, longitude=c_lon)],
+                                currents_ds,
+                                wind_ds,
+                                clamp_obs_ts.to_pydatetime().replace(tzinfo=timezone.utc),
+                                avail_backward_sec,
+                                3600,
+                                windage=0.0,
+                            )
+                            hindcast_success = True
+                            logger.info(f"[M4] Hindcast completed successfully on attempt {expansion_attempt}")
+                        except SpatialBoundaryConditionError as bound_err:
+                            logger.warning(
+                                f"[M4] Trajectory reached dataset boundary on attempt {expansion_attempt}: {bound_err}"
+                            )
+                            if expansion_attempt < max_expansion_attempts:
+                                # Directional + isotropic expansion: expand in direction of boundary exit
+                                exp_margin = 0.75 * (expansion_attempt + 1)
+                                if bound_err.dimension == "latitude":
+                                    if bound_err.query_value < bound_err.dataset_bounds[0]:
+                                        # Exited southward
+                                        new_lat_min = round(max(-80.0, bound_err.query_value - exp_margin), 3)
+                                        new_lat_max = round(min(90.0, ds_lat_max + 0.25), 3)
+                                    else:
+                                        # Exited northward
+                                        new_lat_min = round(max(-80.0, ds_lat_min - 0.25), 3)
+                                        new_lat_max = round(min(90.0, bound_err.query_value + exp_margin), 3)
+                                    new_lon_min = round(max(-180.0, ds_lon_min - 0.5), 3)
+                                    new_lon_max = round(min(180.0, ds_lon_max + 0.5), 3)
+                                else:
+                                    # Longitude exit
+                                    new_lat_min = round(max(-80.0, ds_lat_min - 0.5), 3)
+                                    new_lat_max = round(min(90.0, ds_lat_max + 0.5), 3)
+                                    if bound_err.query_value < bound_err.dataset_bounds[0]:
+                                        new_lon_min = round(max(-180.0, bound_err.query_value - exp_margin), 3)
+                                        new_lon_max = round(min(180.0, ds_lon_max + 0.25), 3)
+                                    else:
+                                        new_lon_min = round(max(-180.0, ds_lon_min - 0.25), 3)
+                                        new_lon_max = round(min(180.0, bound_err.query_value + exp_margin), 3)
+
+                                current_bounds = (new_lat_min, new_lat_max, new_lon_min, new_lon_max)
+                                logger.info(
+                                    f"[M4] Expanding Copernicus AOI to: lat [{new_lat_min}..{new_lat_max}], lon [{new_lon_min}..{new_lon_max}]"
+                                )
+                                continue
+                            else:
+                                ocean_status = "SPATIAL_UNAVAILABLE"
+                                ocean_status_message = (
+                                    f"Copernicus spatial coverage remained insufficient for the requested 72h hindcast "
+                                    f"after {max_expansion_attempts} bounded AOI expansion attempts (trajectory exited {bound_err.dimension} bounds at step {bound_err.step})."
+                                )
+                                logger.error(f"[M4] {ocean_status_message}")
+                                stages["M4 — Ocean Currents"] = f"BLOCKED: {ocean_status_message}"
+                                stages["M4 — Lagrangian Drift"] = f"BLOCKED: {ocean_status}"
+                                _update_status(80, "M4 — Lagrangian Drift", "BLOCKED", ocean_status_message)
+                                break
+                        except ParticleModelError as p_err:
+                            logger.error(f"[M4] Lagrangian drift simulation error: {p_err}")
+                            ocean_status = "DATA_QUALITY_ERROR"
+                            ocean_status_message = f"Environmental drift simulation failed: {p_err}"
+                            stages["M4 — Ocean Currents"] = f"BLOCKED: {ocean_status_message}"
+                            stages["M4 — Lagrangian Drift"] = f"BLOCKED: {ocean_status}"
+                            _update_status(80, "M4 — Lagrangian Drift", "BLOCKED", ocean_status_message)
+                            break
+
+                    if hindcast_success and df_hindcast is not None:
+                        origin_lat = float(df_hindcast["latitude"].iloc[-1])
+                        origin_lon = float(df_hindcast["longitude"].iloc[-1])
+                        origin_time = str(df_hindcast["timestamp"].iloc[-1])
+                        hindcast_dist = haversine_distance_km(c_lat, c_lon, origin_lat, origin_lon)
+
+                        # Compute 24h forecast steps or clamped to dataset end
+                        avail_forward_hours = min(24, max(1, int((t_max - clamp_obs_ts).total_seconds() / 3600)))
+                        try:
+                            df_forecast = simulate_particles(
+                                [Particle(particle_id=1, latitude=c_lat, longitude=c_lon)],
+                                currents_ds,
+                                wind_ds,
+                                clamp_obs_ts.to_pydatetime().replace(tzinfo=timezone.utc),
+                                avail_forward_hours,
+                                3600,
+                                windage=0.0,
+                            )
+                            fore_lat = float(df_forecast["latitude"].iloc[-1])
+                            fore_lon = float(df_forecast["longitude"].iloc[-1])
+                            fore_time = str(df_forecast["timestamp"].iloc[-1])
+                            fore_dist = haversine_distance_km(c_lat, c_lon, fore_lat, fore_lon)
+                        except Exception as f_err:
+                            logger.warning(f"[M4] Forward forecast encountered issue (hindcast origin preserved): {f_err}")
+                            df_forecast = None
+
+                        # Persist genuine Lagrangian drift trajectory CSV and JSON
+                        try:
+                            traj_csv_path = OUTPUT_DIR / f"real_{clean_id}_drift_trajectory.csv"
+                            traj_json_path = OUTPUT_DIR / f"real_{clean_id}_drift_trajectory.json"
+                            traj_rows = []
+                            for idx, r in df_hindcast.iterrows():
                                 traj_rows.append({
                                     "timestamp": str(r.get("timestamp", "")),
                                     "latitude": round(float(r["latitude"]), 6),
                                     "longitude": round(float(r["longitude"]), 6),
-                                    "step_hours": int(r.get("step", idx + 1)),
-                                    "trajectory_type": "FORECAST",
+                                    "step_hours": -int(r.get("step", idx)),
+                                    "trajectory_type": "HINDCAST",
                                     "u_current_m_s": round(float(u_spill), 4),
                                     "v_current_m_s": round(float(v_spill), 4),
                                     "speed_m_s": round(float(curr_speed), 3),
                                 })
-                        pd.DataFrame(traj_rows).to_csv(traj_csv_path, index=False)
+                            if df_forecast is not None:
+                                for idx, r in df_forecast.iterrows():
+                                    traj_rows.append({
+                                        "timestamp": str(r.get("timestamp", "")),
+                                        "latitude": round(float(r["latitude"]), 6),
+                                        "longitude": round(float(r["longitude"]), 6),
+                                        "step_hours": int(r.get("step", idx + 1)),
+                                        "trajectory_type": "FORECAST",
+                                        "u_current_m_s": round(float(u_spill), 4),
+                                        "v_current_m_s": round(float(v_spill), 4),
+                                        "speed_m_s": round(float(curr_speed), 3),
+                                    })
+                            pd.DataFrame(traj_rows).to_csv(traj_csv_path, index=False)
 
-                        drift_meta = {
-                            "investigation_id": inv_id,
-                            "model_type": "Lagrangian RK4 Hydrodynamic Advection",
-                            "dataset_id": ocean_dataset_id or (ocean_nc_path.name if ocean_nc_path else "None"),
-                            "product_id": ocean_product_id or "Copernicus Marine CMEMS",
-                            "reference_timestamp": obs_time.isoformat() if obs_time else "",
-                            "surface_velocity": {
-                                "u_eastward_m_s": round(float(u_spill), 4),
-                                "v_northward_m_s": round(float(v_spill), 4),
-                                "speed_m_s": round(float(curr_speed), 3),
-                                "direction_deg": round(float(curr_dir_deg), 1),
-                            },
-                            "probable_origin": {
-                                "latitude": round(origin_lat, 6),
-                                "longitude": round(origin_lon, 6),
-                                "timestamp": origin_time,
-                                "drift_distance_km": round(hindcast_dist, 2),
-                            },
-                            "forecast_endpoint": {
-                                "latitude": round(fore_lat, 6),
-                                "longitude": round(fore_lon, 6),
-                                "timestamp": fore_time,
-                                "drift_distance_km": round(fore_dist, 2),
-                            },
-                            "hindcast_coordinates": [[round(lon, 6), round(lat, 6)] for lon, lat in zip(df_hindcast["longitude"], df_hindcast["latitude"])],
-                            "forecast_coordinates": [[round(lon, 6), round(lat, 6)] for lon, lat in zip(df_forecast["longitude"], df_forecast["latitude"])] if df_forecast is not None else [],
-                        }
-                        with open(traj_json_path, "w", encoding="utf-8") as jf:
-                            json.dump(drift_meta, jf, indent=2)
-                        logger.info(f"[OCEAN] Persisted drift trajectory artifacts: {traj_csv_path.name} & {traj_json_path.name}")
-                    except Exception as drift_save_err:
-                        logger.warning(f"[OCEAN] Could not persist drift artifacts to disk: {drift_save_err}")
+                            drift_meta = {
+                                "investigation_id": inv_id,
+                                "model_type": "Lagrangian RK4 Hydrodynamic Advection",
+                                "dataset_id": ocean_dataset_id or (ocean_nc_path.name if ocean_nc_path else "None"),
+                                "product_id": ocean_product_id or "Copernicus Marine CMEMS",
+                                "reference_timestamp": obs_time.isoformat() if obs_time else "",
+                                "surface_velocity": {
+                                    "u_eastward_m_s": round(float(u_spill), 4),
+                                    "v_northward_m_s": round(float(v_spill), 4),
+                                    "speed_m_s": round(float(curr_speed), 3),
+                                    "direction_deg": round(float(curr_dir_deg), 1),
+                                },
+                                "probable_origin": {
+                                    "latitude": round(origin_lat, 6),
+                                    "longitude": round(origin_lon, 6),
+                                    "timestamp": origin_time,
+                                    "drift_distance_km": round(hindcast_dist, 2),
+                                },
+                                "forecast_endpoint": {
+                                    "latitude": round(fore_lat, 6),
+                                    "longitude": round(fore_lon, 6),
+                                    "timestamp": fore_time,
+                                    "drift_distance_km": round(fore_dist, 2),
+                                },
+                                "spatial_coverage": {
+                                    "initial_aoi": initial_aoi,
+                                    "final_aoi": final_aoi or current_bounds,
+                                    "expansion_attempts": expansion_attempt,
+                                    "dataset_bounds": (
+                                        float(currents_ds.latitude.min().values),
+                                        float(currents_ds.latitude.max().values),
+                                        float(currents_ds.longitude.min().values),
+                                        float(currents_ds.longitude.max().values),
+                                    ),
+                                },
+                                "hindcast_coordinates": [[round(lon, 6), round(lat, 6)] for lon, lat in zip(df_hindcast["longitude"], df_hindcast["latitude"])],
+                                "forecast_coordinates": [[round(lon, 6), round(lat, 6)] for lon, lat in zip(df_forecast["longitude"], df_forecast["latitude"])] if df_forecast is not None else [],
+                            }
+                            with open(traj_json_path, "w", encoding="utf-8") as jf:
+                                json.dump(drift_meta, jf, indent=2)
+                            logger.info(f"[OCEAN] Persisted drift trajectory artifacts: {traj_csv_path.name} & {traj_json_path.name}")
+                        except Exception as drift_save_err:
+                            logger.warning(f"[OCEAN] Could not persist drift artifacts to disk: {drift_save_err}")
 
-                    stages["M4 — Ocean Currents"] = "COMPLETED"
-                    stages["M4 — Lagrangian Drift"] = "COMPLETED"
-                    _update_status(80, "M4 — Lagrangian Drift", "COMPLETED", f"Reconstructed {int(avail_backward_sec/3600)}h origin at ({origin_lat:.4f}°N, {origin_lon:.4f}°E), drift: {hindcast_dist:.2f} km")
+                        stages["M4 — Ocean Currents"] = "COMPLETED"
+                        stages["M4 — Lagrangian Drift"] = "COMPLETED"
+                        _update_status(80, "M4 — Lagrangian Drift", "COMPLETED", f"Reconstructed {int(avail_backward_sec/3600)}h origin at ({origin_lat:.4f}°N, {origin_lon:.4f}°E), drift: {hindcast_dist:.2f} km (Attempts: {expansion_attempt})")
             else:
                 stages["M4 — Ocean Currents"] = f"BLOCKED: {ocean_status_message}"
                 stages["M4 — Lagrangian Drift"] = f"BLOCKED: {ocean_status}"
-                _update_status(80, "M4 — Lagrangian Drift", "BLOCKED", f"Ocean data unavailable: {ocean_status_message}")
+                _update_status(80, "M4 — Lagrangian Drift", "BLOCKED", f"Ocean drift skipped by configuration: {ocean_status_message}")
 
             # -------------------------------------------------------------
             # 5. M5: GFW AIS Ingestion & Attribution

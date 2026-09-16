@@ -7,7 +7,12 @@ import xarray as xr
 
 from ocean.time.synchronization import normalize_timestamp
 from ocean.interpolation.environment import interpolate_currents, interpolate_wind, InterpolationError
-from ocean.drift.particle import Particle, ParticleModelError, geographic_displacement
+from ocean.drift.particle import (
+    Particle,
+    ParticleModelError,
+    SpatialBoundaryConditionError,
+    geographic_displacement,
+)
 
 
 def hindcast_particles(
@@ -113,7 +118,22 @@ def hindcast_particles(
                 v10 = np.array([v10])
                 
         except InterpolationError as e:
-            # Fail clearly on out-of-domain rather than inventing physics, as requested by MVP
+            err_msg = str(e)
+            # Detect spatial boundary excursion vs temporal or data-quality failure
+            if "outside the available dataset range" in err_msg:
+                dim = "latitude" if "latitude" in err_msg else ("longitude" if "longitude" in err_msg else "time")
+                if dim in ("latitude", "longitude"):
+                    bounds = (float(current_dataset[dim].min().values), float(current_dataset[dim].max().values))
+                    query_val = float(lats[active_idx][0]) if dim == "latitude" else float(lons[active_idx][0])
+                    p_id = int(ids[active_idx][0])
+                    raise SpatialBoundaryConditionError(
+                        f"Trajectory reached {dim} boundary: {err_msg}",
+                        dimension=dim,
+                        query_value=query_val,
+                        dataset_bounds=bounds,
+                        step=step,
+                        particle_id=p_id,
+                    ) from e
             raise ParticleModelError(f"Environmental interpolation failed: {e}") from e
 
         # V_oil = V_current + windage * V_wind

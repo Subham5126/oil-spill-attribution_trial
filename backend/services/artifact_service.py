@@ -21,9 +21,9 @@ from backend.core.logging import logger
 from backend.repositories.investigations import InvestigationRepository
 from backend.services.image_service import ImageService
 
-OUTPUT_DIR = settings.REPO_ROOT / "demo" / "output"
+OUTPUT_DIR = settings.DEMO_OUTPUT_DIR
 IMAGES_DIR = settings.REPO_ROOT / "01_Train_Val_Oil_Spill_images" / "Oil"
-MODEL_PATH = settings.REPO_ROOT / "unet_best.pth"
+MODEL_PATH = settings.OILTRACE_MODEL_PATH
 
 
 class ArtifactService:
@@ -127,7 +127,7 @@ class ArtifactService:
                 logger.info(f"[ARTIFACT] Running U-Net inference on {source_path.name} to generate mask artifact...")
                 from ai.inference.infer import OilSpillInference
 
-                infer = OilSpillInference(MODEL_PATH)
+                infer = OilSpillInference(MODEL_PATH, model_provider=settings.OILTRACE_MODEL_PROVIDER)
                 res = infer.predict(source_path)
                 mask = res["mask"]
                 binary = (mask * 255).astype(np.uint8)
