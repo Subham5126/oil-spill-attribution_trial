@@ -37,38 +37,51 @@ function createGeoCircle(centerLon: number, centerLat: number, radiusKm: number,
   return coords;
 }
 
-// Create clean vector SVG vessel element for MapLibre Marker
-function createVesselMarkerElement(vesselName?: string, isReplay = false): HTMLElement {
+// Create clean vector SVG vessel element for MapLibre Marker with tactical selection halo
+function createVesselMarkerElement(vesselName?: string, isReplay = false, isSelected = false): HTMLElement {
   const el = document.createElement("div");
   el.className = isReplay ? "replay-vessel-marker" : "normal-vessel-marker";
-  const size = isReplay ? 24 : 16;
-  el.style.width = `${size + 8}px`;
-  el.style.height = `${size + 8}px`;
+  const size = isReplay ? 28 : (isSelected ? 24 : 18);
+  el.style.width = `${size + 14}px`;
+  el.style.height = `${size + 14}px`;
   el.style.display = "flex";
   el.style.flexDirection = "column";
   el.style.alignItems = "center";
   el.style.justifyContent = "center";
   el.style.pointerEvents = "none";
-  el.style.zIndex = isReplay ? "55" : "45";
+  el.style.zIndex = isReplay ? "55" : (isSelected ? "50" : "45");
   el.style.transition = "transform 0.06s linear";
 
-  const svgSize = isReplay ? 22 : 16;
+  const svgSize = isReplay ? 24 : (isSelected ? 22 : 18);
   el.innerHTML = `
     <div style="position: relative; width: ${svgSize}px; height: ${svgSize}px; display: flex; align-items: center; justify-content: center;">
-      <svg width="${svgSize}" height="${svgSize}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.85));">
+      ${isSelected ? `<div class="selected-vessel-halo"></div>` : ""}
+      <svg width="${svgSize}" height="${svgSize}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 5px rgba(0,0,0,0.85));">
         <!-- Professional Sleek Vessel Hull -->
-        <path d="M12 2 L16.5 8 L15.5 20 C15.5 21.5 13.8 22.5 12 22.5 C10.2 22.5 8.5 21.5 8.5 20 L7.5 8 Z" fill="#0284c7" stroke="#38bdf8" stroke-width="1.2"/>
+        <path d="M12 2 L16.5 8 L15.5 20 C15.5 21.5 13.8 22.5 12 22.5 C10.2 22.5 8.5 21.5 8.5 20 L7.5 8 Z" fill="${isSelected ? "#0284c7" : "#0369a1"}" stroke="${isSelected ? "#38bdf8" : "#7dd3fc"}" stroke-width="${isSelected ? "1.8" : "1.2"}"/>
         <!-- Bridge Structure -->
         <rect x="9.5" y="15" width="5" height="4.5" rx="1" fill="#0f172a" stroke="#7dd3fc" stroke-width="0.8"/>
-        <!-- Bow Indicator -->
-        <polygon points="12,3 13.5,6.5 10.5,6.5" fill="#facc15"/>
+        <!-- Bow Azimuth Heading Indicator -->
+        <polygon points="12,2.5 13.8,7 10.2,7" fill="${isSelected ? "#38bdf8" : "#facc15"}"/>
       </svg>
       ${
         vesselName
-          ? `<div style="position: absolute; bottom: ${isReplay ? "-14px" : "-11px"}; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: ${isReplay ? "8.5px" : "7.5px"}; font-weight: 600; background: rgba(2,6,23,0.88); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.45); padding: 0.5px 3.5px; border-radius: 3px; pointer-events: none; text-shadow: 0 1px 2px #000; letter-spacing: 0.02em;">${vesselName}</div>`
+          ? `<div style="position: absolute; bottom: ${isReplay ? "-14px" : "-12px"}; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: ${isReplay ? "8.5px" : "8px"}; font-weight: 700; background: rgba(2,6,23,0.92); color: ${isSelected ? "#38bdf8" : "#7dd3fc"}; border: 1px solid ${isSelected ? "rgba(56,189,248,0.7)" : "rgba(56,189,248,0.4)"}; padding: 0.5px 4px; border-radius: 3px; pointer-events: none; text-shadow: 0 1px 2px #000; letter-spacing: 0.02em;">${vesselName}</div>`
           : ""
       }
     </div>
+  `;
+  return el;
+}
+
+// Create tactical animated radar beacon element for probable origin
+function createOriginBeaconElement(): HTMLElement {
+  const el = document.createElement("div");
+  el.className = "origin-radar-beacon";
+  el.innerHTML = `
+    <div class="pulse-ring"></div>
+    <div class="pulse-ring-inner"></div>
+    <div class="origin-core-dot"></div>
   `;
   return el;
 }
@@ -135,11 +148,13 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
   const [replaySpeed, setReplaySpeed] = useState(1); // 0.5, 1, 2, 4
   const [reconstruction, setReconstruction] = useState<ForensicReconstruction | null>(null);
   const [replayLoading, setReplayLoading] = useState(false);
+  const [followVessel, setFollowVessel] = useState(false);
 
-  const particleEngine = useRef(new ReplayParticleEngine(180));
+  const particleEngine = useRef(new ReplayParticleEngine(320));
   const vesselMarker = useRef<maplibregl.Marker | null>(null);
   const normalVesselMarker = useRef<maplibregl.Marker | null>(null);
   const spillLabelMarker = useRef<maplibregl.Marker | null>(null);
+  const originBeaconMarker = useRef<maplibregl.Marker | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
 
@@ -574,6 +589,10 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         spillLabelMarker.current.remove();
         spillLabelMarker.current = null;
       }
+      if (originBeaconMarker.current) {
+        originBeaconMarker.current.remove();
+        originBeaconMarker.current = null;
+      }
 
       // Remove any open popups
       document.querySelectorAll(".maplibregl-popup").forEach((p) => p.remove());
@@ -824,17 +843,33 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       });
     }
 
-    // 5. AIS Vessels / Candidates (subtle 2.5px point dots for secondary vessels)
+    // 5. AIS Vessel Trajectory Lines (distinct electric blue navigation track)
+    if (!m.getLayer("ais-lines")) {
+      m.addLayer({
+        id: "ais-lines",
+        type: "line",
+        source: "ais-source",
+        filter: ["==", ["geometry-type"], "LineString"],
+        paint: {
+          "line-color": "#0284c7",
+          "line-width": 2.2,
+          "line-opacity": 0.85,
+        },
+      });
+    }
+
+    // 5b. AIS Vessels / Candidates Points (subtle 3.0px point dots for vessels)
     if (!m.getLayer("ais-tracks")) {
       m.addLayer({
         id: "ais-tracks",
         type: "circle",
         source: "ais-source",
+        filter: ["==", ["geometry-type"], "Point"],
         paint: {
-          "circle-radius": 2.5,
+          "circle-radius": 3.0,
           "circle-color": "#38bdf8",
-          "circle-opacity": 0.75,
-          "circle-stroke-width": 0.8,
+          "circle-opacity": 0.85,
+          "circle-stroke-width": 1.0,
           "circle-stroke-color": "#0f172a",
         },
       });
@@ -844,6 +879,7 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
     setSourceData("replay-vessel-track-future-source", { type: "FeatureCollection", features: [] });
     setSourceData("replay-vessel-track-traversed-source", { type: "FeatureCollection", features: [] });
     setSourceData("replay-drift-source", { type: "FeatureCollection", features: [] });
+    setSourceData("replay-forecast-source", { type: "FeatureCollection", features: [] });
     setSourceData("replay-release-source", { type: "FeatureCollection", features: [] });
     setSourceData("replay-particles-source", { type: "FeatureCollection", features: [] });
 
@@ -876,7 +912,7 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       });
     }
 
-    // 8. Replay Lagrangian Hydrodynamic Drift Trajectory
+    // 8. Replay Lagrangian Hydrodynamic Drift Trajectory (Hindcast cyan line)
     if (!m.getLayer("replay-drift-line")) {
       m.addLayer({
         id: "replay-drift-line",
@@ -884,6 +920,21 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         source: "replay-drift-source",
         paint: {
           "line-color": "#06b6d4",
+          "line-width": 1.8,
+          "line-dasharray": [4, 3],
+          "line-opacity": 0.80,
+        },
+      });
+    }
+
+    // 8b. Replay Forward Forecast Drift Trajectory (Predictive amber dashed line)
+    if (!m.getLayer("replay-forecast-line")) {
+      m.addLayer({
+        id: "replay-forecast-line",
+        type: "line",
+        source: "replay-forecast-source",
+        paint: {
+          "line-color": "#f59e0b",
           "line-width": 1.8,
           "line-dasharray": [4, 3],
           "line-opacity": 0.80,
@@ -917,7 +968,10 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
           "circle-radius": ["get", "size"],
           "circle-color": ["get", "color"],
           "circle-opacity": ["get", "opacity"],
-          "circle-blur": 0.25,
+          "circle-stroke-width": 0.5,
+          "circle-stroke-color": ["coalesce", ["get", "strokeColor"], "#52525b"],
+          "circle-stroke-opacity": ["coalesce", ["get", "strokeOpacity"], 0.45],
+          "circle-blur": 0.15,
         },
       });
     }
@@ -997,7 +1051,27 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       m.setPaintProperty("ais-tracks", "circle-color", "#38bdf8");
     }
 
-    // Render Normal Mode Primary Candidate Vessel Marker (16px vector tanker with heading rotation)
+    // Render Probable Origin Radar Beacon Marker
+    if (originBeaconMarker.current) {
+      originBeaconMarker.current.remove();
+      originBeaconMarker.current = null;
+    }
+
+    if (
+      origin?.latitude &&
+      origin?.longitude &&
+      (origin.latitude !== 0 || origin.longitude !== 0) &&
+      !isReplayMode &&
+      showOrigin
+    ) {
+      originBeaconMarker.current = new maplibregl.Marker({
+        element: createOriginBeaconElement(),
+      })
+        .setLngLat([origin.longitude, origin.latitude])
+        .addTo(m);
+    }
+
+    // Render Normal Mode Primary Candidate Vessel Marker with Tactical Halo
     const primaryVessel =
       selectedVessel ||
       result?.candidate_vessels?.find((v) => v.rank === 1) ||
@@ -1016,9 +1090,10 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       !isReplayMode &&
       showAIS
     ) {
+      const isSelected = selectedVessel?.mmsi === primaryVessel.mmsi;
       const heading = (primaryVessel as any).heading_deg ?? 45;
       normalVesselMarker.current = new maplibregl.Marker({
-        element: createVesselMarkerElement(primaryVessel.vessel_name, false),
+        element: createVesselMarkerElement(primaryVessel.vessel_name, false, isSelected),
         rotationAlignment: "map",
       })
         .setLngLat([primaryVessel.longitude, primaryVessel.latitude])
@@ -1066,41 +1141,73 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         const area = props.area_sq_km ?? props.area_km2 ?? 0;
         const perim = props.perimeter_km ?? 0;
         const conf = props.confidence ? (Number(props.confidence) * 100).toFixed(1) : null;
-        new maplibregl.Popup()
+        new maplibregl.Popup({ offset: [0, -10] })
           .setLngLat(e.lngLat)
           .setHTML(`
-            <div class="font-sans text-xs text-slate-100 p-2 min-w-[190px]">
-              <div class="font-bold text-rose-400 text-sm flex items-center gap-1.5 mb-1.5 pb-1 border-b border-slate-700/60">
-                <span class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-                Observed Spill Slick
+            <div class="font-sans text-xs text-slate-100 p-2.5 min-w-[210px]">
+              <div class="font-bold text-rose-400 text-xs flex items-center justify-between gap-1.5 mb-2 pb-1.5 border-b border-slate-700/80">
+                <span class="flex items-center gap-1.5">
+                  <span class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_6px_#f43f5e]"></span>
+                  <span>Observed Spill Slick</span>
+                </span>
+                <span class="font-mono text-[9px] px-1.5 py-0.2 bg-rose-950 text-rose-300 rounded border border-rose-800">SAR M3</span>
               </div>
-              <div class="space-y-1 font-mono text-[11px] text-slate-300">
-                <div>Sensor: <strong>Sentinel-1 SAR</strong></div>
-                <div>Area: <strong>${Number(area).toFixed(4)} km²</strong></div>
-                <div>Perimeter: <strong>${Number(perim).toFixed(2)} km</strong></div>
-                ${conf ? `<div>Confidence: <strong>${conf}%</strong></div>` : ""}
+              <div class="space-y-1.5 font-mono text-[11px] text-slate-300">
+                <div class="flex justify-between"><span>Sensor:</span> <strong class="text-slate-100">Sentinel-1 SAR</strong></div>
+                <div class="flex justify-between"><span>Area:</span> <strong class="text-rose-400">${Number(area).toFixed(4)} km²</strong></div>
+                <div class="flex justify-between"><span>Perimeter:</span> <strong class="text-slate-100">${Number(perim).toFixed(2)} km</strong></div>
+                ${conf ? `<div class="flex justify-between"><span>DL Confidence:</span> <strong class="text-emerald-400">${conf}%</strong></div>` : ""}
               </div>
             </div>
           `)
           .addTo(m);
       } else if (props.title === "Probable Spill Origin" || props.layer_type === "probable_origin") {
         onOriginClick?.();
-        new maplibregl.Popup()
+        new maplibregl.Popup({ offset: [0, -10] })
           .setLngLat(e.lngLat)
           .setHTML(`
-            <div class="font-sans text-xs text-slate-100 p-1">
-              <div class="font-bold text-emerald-400 text-sm">Probable Spill Origin</div>
-              <div class="mt-1 space-y-1 font-mono text-[11px] text-slate-300">
-                <div>Time: <strong>${(props.time || "").replace("T", " ").replace("+00:00", "")} UTC</strong></div>
-                <div>Coords: <strong>${e.lngLat.lat.toFixed(4)}°N, ${e.lngLat.lng.toFixed(4)}°E</strong></div>
-                <div>Confidence Score: <strong>${Number(props.score || 1).toFixed(3)}</strong></div>
+            <div class="font-sans text-xs text-slate-100 p-2.5 min-w-[220px]">
+              <div class="font-bold text-emerald-400 text-xs flex items-center justify-between gap-1.5 mb-2 pb-1.5 border-b border-slate-700/80">
+                <span class="flex items-center gap-1.5">
+                  <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]"></span>
+                  <span>Probable Spill Origin</span>
+                </span>
+                <span class="font-mono text-[9px] px-1.5 py-0.2 bg-emerald-950 text-emerald-300 rounded border border-emerald-800">M4 Hindcast</span>
+              </div>
+              <div class="space-y-1.5 font-mono text-[11px] text-slate-300">
+                <div class="flex justify-between"><span>Estimated Time:</span> <strong class="text-slate-100">${(props.time || "").replace("T", " ").replace("+00:00", "").substring(0, 19)} UTC</strong></div>
+                <div class="flex justify-between"><span>Coordinates:</span> <strong class="text-slate-100">${e.lngLat.lat.toFixed(4)}°N, ${e.lngLat.lng.toFixed(4)}°E</strong></div>
+                <div class="flex justify-between"><span>Origin Score:</span> <strong class="text-emerald-400">${Number(props.score || 1).toFixed(3)}</strong></div>
               </div>
             </div>
           `)
           .addTo(m);
-      } else if (props.mmsi && onSelectVessel && result?.candidate_vessels) {
-        const matching = result.candidate_vessels.find((c) => c.mmsi === props.mmsi);
-        if (matching) onSelectVessel(matching);
+      } else if (props.mmsi && result?.candidate_vessels) {
+        const matching = result.candidate_vessels.find((c) => String(c.mmsi) === String(props.mmsi));
+        if (matching) {
+          onSelectVessel?.(matching);
+          new maplibregl.Popup({ offset: [0, -12] })
+            .setLngLat(e.lngLat)
+            .setHTML(`
+              <div class="font-sans text-xs text-slate-100 p-2.5 min-w-[220px]">
+                <div class="font-bold text-sky-400 text-xs flex items-center justify-between gap-1.5 mb-2 pb-1.5 border-b border-slate-700/80">
+                  <span class="flex items-center gap-1.5">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-sky-500 shadow-[0_0_6px_#38bdf8]"></span>
+                    <span>${matching.vessel_name || "Vessel Track"}</span>
+                  </span>
+                  <span class="font-mono text-[9px] px-1.5 py-0.2 bg-sky-950 text-sky-300 rounded border border-sky-800">Rank #${matching.rank}</span>
+                </div>
+                <div class="space-y-1.5 font-mono text-[11px] text-slate-300">
+                  <div class="flex justify-between"><span>MMSI:</span> <strong class="text-slate-100">${matching.mmsi}</strong></div>
+                  ${matching.imo ? `<div class="flex justify-between"><span>IMO:</span> <strong class="text-slate-100">${matching.imo}</strong></div>` : ""}
+                  ${matching.flag ? `<div class="flex justify-between"><span>Flag:</span> <strong class="text-slate-100">${matching.flag}</strong></div>` : ""}
+                  <div class="flex justify-between"><span>Attribution Score:</span> <strong class="text-sky-400">${(matching.scores.overall * 100).toFixed(1)}%</strong></div>
+                  ${matching.distance_to_spill_km !== undefined ? `<div class="flex justify-between"><span>Slick Distance:</span> <strong class="text-slate-100">${matching.distance_to_spill_km.toFixed(2)} km</strong></div>` : ""}
+                </div>
+              </div>
+            `)
+            .addTo(m);
+        }
       }
     };
 
@@ -1138,6 +1245,7 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
     setVis("uncertainty-line", showUncertainty);
     setVis("hindcast-line", showHindcast);
     setVis("forecast-line", showForecast);
+    setVis("ais-lines", showAIS);
     setVis("ais-tracks", showAIS);
 
     if (normalVesselMarker.current) {
@@ -1145,6 +1253,9 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
     }
     if (spillLabelMarker.current) {
       spillLabelMarker.current.getElement().style.display = showSpill && !isReplayMode ? "flex" : "none";
+    }
+    if (originBeaconMarker.current) {
+      originBeaconMarker.current.getElement().style.display = showOrigin && !isReplayMode ? "flex" : "none";
     }
   }, [showSpill, showOrigin, showUncertainty, showHindcast, showForecast, showAIS, showSceneFootprint, mapLoaded, isReplayMode]);
 
@@ -1160,7 +1271,11 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         recon = await getInvestigationReconstruction(activeInvId);
         setReconstruction(recon);
       }
-      particleEngine.current.setReconstruction(recon);
+      const forecastEndpoint: [number, number] | null =
+        forecast?.longitude && forecast?.latitude
+          ? [forecast.longitude, forecast.latitude]
+          : null;
+      particleEngine.current.setReconstruction(recon, forecastEndpoint);
       setIsReplayMode(true);
       setReplayProgress(0);
       setReplayPlaying(true);
@@ -1174,6 +1289,10 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         spillLabelMarker.current.remove();
         spillLabelMarker.current = null;
       }
+      if (originBeaconMarker.current) {
+        originBeaconMarker.current.remove();
+        originBeaconMarker.current = null;
+      }
 
       const m = map.current;
       if (m && recon) {
@@ -1182,7 +1301,9 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
           if (s) s.setData(data);
         };
 
-        if (recon.drift_trajectory?.coordinates?.length) {
+        // Populate hindcast trajectory line strictly from particle engine's validated centerline
+        const hindCoords = particleEngine.current.getHindcastCoordinates();
+        if (hindCoords.length >= 2) {
           setSrc("replay-drift-source", {
             type: "FeatureCollection",
             features: [
@@ -1191,16 +1312,39 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
                 properties: { type: "drift_trajectory" },
                 geometry: {
                   type: "LineString",
-                  coordinates: recon.drift_trajectory.coordinates,
+                  coordinates: hindCoords,
                 },
               },
             ],
           });
+        } else {
+          setSrc("replay-drift-source", { type: "FeatureCollection", features: [] });
         }
 
-        const trackCoords = recon.ais_track?.coordinates || [];
+        // Populate forecast trajectory line strictly from particle engine's validated forecast path
+        const fwdCoords = particleEngine.current.getForecastCoordinates();
+        if (fwdCoords.length >= 2) {
+          setSrc("replay-forecast-source", {
+            type: "FeatureCollection",
+            features: [
+              {
+                type: "Feature",
+                properties: { type: "forecast_trajectory" },
+                geometry: {
+                  type: "LineString",
+                  coordinates: fwdCoords,
+                },
+              },
+            ],
+          });
+        } else {
+          setSrc("replay-forecast-source", { type: "FeatureCollection", features: [] });
+        }
+
+        const rawTrackCoords = recon.ais_track?.coordinates || [];
+        const trackCoords = [...rawTrackCoords].reverse();
         if (trackCoords.length >= 2) {
-          // Future route initially shows complete upcoming route
+          // Future route initially shows complete upcoming route along reversed replay path
           setSrc("replay-vessel-track-future-source", {
             type: "FeatureCollection",
             features: [
@@ -1228,13 +1372,12 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         }
 
         if (recon.vessel && trackCoords.length >= 1) {
-          const initCoord = trackCoords[0];
-          const initHdg = recon.ais_track?.waypoints?.[0]?.heading || recon.vessel.heading_deg || 45;
+          const [initLon, initLat, initHdg] = particleEngine.current.getVesselPositionAndHeadingAtProgress(0);
           vesselMarker.current = new maplibregl.Marker({
             element: createVesselMarkerElement(recon.vessel.vessel_name, true),
             rotationAlignment: "map",
           })
-            .setLngLat([initCoord[0], initCoord[1]])
+            .setLngLat([initLon, initLat])
             .setRotation(initHdg)
             .addTo(m);
         }
@@ -1309,6 +1452,7 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       setSrc("replay-particles-source");
       setSrc("replay-release-source");
       setSrc("replay-drift-source");
+      setSrc("replay-forecast-source");
       setSrc("replay-vessel-track-future-source");
       setSrc("replay-vessel-track-traversed-source");
 
@@ -1372,10 +1516,28 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
           .addTo(m);
       }
 
+      // Re-create normal mode probable origin beacon
+      if (originBeaconMarker.current) {
+        originBeaconMarker.current.remove();
+        originBeaconMarker.current = null;
+      }
+      if (
+        origin?.latitude &&
+        origin?.longitude &&
+        (origin.latitude !== 0 || origin.longitude !== 0) &&
+        showOrigin
+      ) {
+        originBeaconMarker.current = new maplibregl.Marker({
+          element: createOriginBeaconElement(),
+        })
+          .setLngLat([origin.longitude, origin.latitude])
+          .addTo(m);
+      }
+
       // Re-fit camera to evidence bounds on replay close
       fitBoundsToEvidence(fitMode, 700);
     }
-  }, [showSpill, showAIS, selectedVessel, result, centroid, fitMode, fitBoundsToEvidence]);
+  }, [showSpill, showOrigin, showAIS, selectedVessel, result, centroid, origin, fitMode, fitBoundsToEvidence]);
 
   // Reset replay and reset fitMode on investigation change
   useEffect(() => {
@@ -1440,10 +1602,12 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
     const p = replayProgress;
     const recon = reconstruction;
 
-    // 1. Update vessel position & heading along full AIS track & split route lines
+    // 1. Update vessel position & heading along reversed AIS track & split route lines
     if (recon?.vessel) {
-      const track = recon.ais_track?.coordinates || [];
-      if (track.length >= 2) {
+      const rawTrack = recon.ais_track?.coordinates || [];
+      if (rawTrack.length >= 2) {
+        // Reverse order so vessel sails away from probable origin in forward replay time
+        const track = [...rawTrack].reverse();
         const [vLon, vLat, vHdg] = particleEngine.current.getVesselPositionAndHeadingAtProgress(p);
 
         if (vesselMarker.current) {
@@ -1492,9 +1656,24 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
             ],
           });
         }
+        // If Follow Vessel is active, smoothly center camera on the vessel position
+        if (followVessel) {
+          m.easeTo({
+            center: [vLon, vLat],
+            duration: 120,
+            easing: (t) => t,
+          });
+        }
       } else if (recon.vessel.position && vesselMarker.current) {
         vesselMarker.current.setLngLat([recon.vessel.position.longitude, recon.vessel.position.latitude]);
         vesselMarker.current.setRotation(recon.vessel.heading_deg || 45);
+        if (followVessel) {
+          m.easeTo({
+            center: [recon.vessel.position.longitude, recon.vessel.position.latitude],
+            duration: 120,
+            easing: (t) => t,
+          });
+        }
       }
     }
 
@@ -1512,7 +1691,8 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         }
       }
 
-      if (p >= 0.25 && relCoords) {
+      const relProg = particleEngine.current.getReleaseProgress();
+      if (p >= relProg && relCoords) {
         relSrc.setData({
           type: "FeatureCollection",
           features: [
@@ -1538,7 +1718,7 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       partSrc.setData(partGeoJSON);
     }
 
-    // 4. Spill geometry reveal & smooth cross-fade at Stage 5
+    // 4. Spill geometry reveal & smooth cross-fade at Stage 5 (delicate translucent reference)
     if (m.getLayer("spill-fill")) {
       if (p < 0.80) {
         m.setLayoutProperty("spill-fill", "visibility", "none");
@@ -1547,11 +1727,11 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         const stageNorm = Math.min(1.0, (p - 0.80) / 0.15);
         m.setLayoutProperty("spill-fill", "visibility", "visible");
         m.setLayoutProperty("spill-line", "visibility", "visible");
-        m.setPaintProperty("spill-fill", "fill-opacity", 0.10 + stageNorm * 0.25);
+        m.setPaintProperty("spill-fill", "fill-opacity", 0.08 + stageNorm * 0.12);
         m.setPaintProperty("spill-line", "line-width", 1.2 + stageNorm * 0.4);
       }
     }
-  }, [isReplayMode, replayProgress, reconstruction]);
+  }, [isReplayMode, replayProgress, reconstruction, followVessel]);
 
   const handleRecenter = () => {
     if (!map.current) return;
@@ -1758,6 +1938,8 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
           onSpeedChange={(s) => setReplaySpeed(s)}
           onClose={closeReplay}
           onFitInvestigation={handleRecenter}
+          followVessel={followVessel}
+          onToggleFollowVessel={() => setFollowVessel(!followVessel)}
         />
       )}
 
@@ -1798,24 +1980,29 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         </div>
       )}
 
-      {/* Compact Map Legend */}
+      {/* Tactical Map Legend */}
       {!isReplayMode && (
-        <div className="absolute bottom-3 left-3 z-10 bg-slate-900/90 backdrop-blur border border-slate-800/80 rounded-md px-2.5 py-1 text-[10px] text-slate-300 flex items-center gap-3 shadow-md font-mono">
+        <div className="absolute bottom-3 left-3 z-10 bg-slate-950/92 backdrop-blur-md border border-slate-800/90 rounded-md px-2.5 py-1 text-[10px] text-slate-300 flex items-center gap-2.5 sm:gap-3.5 shadow-lg font-mono flex-wrap">
           {hasSpatialData ? (
             <>
               <div className="flex items-center gap-1">
-                <span className="w-2 h-2 bg-[#e11d48] rounded-xs inline-block" />
+                <span className="w-2 h-2 bg-[#e11d48] rounded-xs inline-block shadow-[0_0_4px_#f43f5e]" />
                 <span className="text-slate-200">Slick</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block shadow-[0_0_4px_#10b981]" />
                 <span className="text-slate-200">Origin</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="w-2.5 h-0.5 border-t border-dashed border-cyan-400 inline-block" />
+                <span className="w-2.5 h-0.5 border-t-2 border-dashed border-cyan-400 inline-block" />
                 <span className="text-slate-200">Hindcast</span>
               </div>
               <div className="flex items-center gap-1">
+                <span className="w-2.5 h-0.5 border-t-2 border-dashed border-amber-400 inline-block" />
+                <span className="text-slate-200">Forecast</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-0.5 bg-[#0284c7] inline-block" />
                 <span className="w-1.5 h-1.5 rounded-full bg-sky-400 inline-block" />
                 <span className="text-slate-200">AIS</span>
               </div>

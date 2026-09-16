@@ -151,7 +151,24 @@ class ReconstructionService:
             try:
                 with open(trajectory_csv, "r", encoding="utf-8") as f:
                     reader = csv.DictReader(f)
+                    hindcast_rows = []
                     for row in reader:
+                        ttype = row.get("trajectory_type", "").upper()
+                        if ttype == "FORECAST":
+                            continue
+                        hindcast_rows.append(row)
+
+                    # Chronological forward order: from release (-72h) to observation (0h)
+                    if hindcast_rows:
+                        try:
+                            s0 = float(hindcast_rows[0].get("step_hours", 0))
+                            s_last = float(hindcast_rows[-1].get("step_hours", 0))
+                            if s0 > s_last:
+                                hindcast_rows = list(reversed(hindcast_rows))
+                        except Exception:
+                            pass
+
+                    for row in hindcast_rows:
                         drift_points.append({
                             "timestamp": row.get("timestamp", ""),
                             "latitude": float(row["latitude"]),
@@ -166,6 +183,11 @@ class ReconstructionService:
             for f in geojson_layers.get("features", []):
                 if f.get("properties", {}).get("layer_type") in ("drift_hindcast", "drift_hindcast_track"):
                     coords = f.get("geometry", {}).get("coordinates", [])
+                    if coords and probable_origin:
+                        d0 = (coords[0][0] - probable_origin["longitude"])**2 + (coords[0][1] - probable_origin["latitude"])**2
+                        d_last = (coords[-1][0] - probable_origin["longitude"])**2 + (coords[-1][1] - probable_origin["latitude"])**2
+                        if d_last < d0:
+                            coords = list(reversed(coords))
                     for c in coords:
                         drift_points.append({
                             "timestamp": "",

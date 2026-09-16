@@ -38,6 +38,8 @@ interface SpillReplayControllerProps {
   onSpeedChange: (newSpeed: number) => void;
   onClose: () => void;
   onFitInvestigation: () => void;
+  followVessel?: boolean;
+  onToggleFollowVessel?: () => void;
 }
 
 export const SpillReplayController: React.FC<SpillReplayControllerProps> = ({
@@ -52,6 +54,8 @@ export const SpillReplayController: React.FC<SpillReplayControllerProps> = ({
   onSpeedChange,
   onClose,
   onFitInvestigation,
+  followVessel = false,
+  onToggleFollowVessel,
 }) => {
   const [isMinimized, setIsMinimized] = useState<boolean>(false);
 
@@ -115,6 +119,17 @@ export const SpillReplayController: React.FC<SpillReplayControllerProps> = ({
   const speeds = [0.5, 1, 2, 4];
   const currentUtc = formatUtcTime(progress);
 
+  // Forensic Stage Visual Hierarchy
+  const stageTheme = {
+    1: { name: "AIS Transit", color: "text-indigo-400", bg: "bg-indigo-950/70", border: "border-indigo-700/80", badge: "bg-indigo-950 text-indigo-300 border-indigo-700" },
+    2: { name: "Possible Release", color: "text-amber-400", bg: "bg-amber-950/70", border: "border-amber-700/80", badge: "bg-amber-950 text-amber-300 border-amber-700" },
+    3: { name: "Wake Dispersion", color: "text-cyan-400", bg: "bg-cyan-950/70", border: "border-cyan-700/80", badge: "bg-cyan-950 text-cyan-300 border-cyan-700" },
+    4: { name: "Drift Advection", color: "text-teal-400", bg: "bg-teal-950/70", border: "border-teal-700/80", badge: "bg-teal-950 text-teal-300 border-teal-700" },
+    5: { name: "Detected Slick", color: "text-rose-400", bg: "bg-rose-950/70", border: "border-rose-700/80", badge: "bg-rose-950 text-rose-300 border-rose-700" },
+  }[currentStage as 1 | 2 | 3 | 4 | 5] || {
+    name: "Forensic Analysis", color: "text-cyan-400", bg: "bg-cyan-950/70", border: "border-cyan-700/80", badge: "bg-cyan-950 text-cyan-300 border-cyan-700"
+  };
+
   if (isMinimized) {
     return (
       <div className="absolute top-3 left-3 z-30 flex items-center gap-2.5 bg-slate-950/95 backdrop-blur-md border border-slate-700/80 rounded-xl px-3 py-1.5 shadow-2xl text-slate-100 pointer-events-auto">
@@ -137,11 +152,11 @@ export const SpillReplayController: React.FC<SpillReplayControllerProps> = ({
         </button>
 
         <div className="flex items-center gap-1.5 border-l border-slate-800 pl-2">
-          <span className="text-[9px] uppercase font-mono px-1 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
+          <span className={`text-[9px] uppercase font-mono px-1.5 py-0.5 rounded border font-semibold ${stageTheme.badge}`}>
             S{currentStage}
           </span>
           <span className="text-[11px] font-semibold text-slate-200 hidden sm:inline">
-            {currentStageInfo.name}
+            {stageTheme.name}
           </span>
         </div>
 
@@ -166,6 +181,19 @@ export const SpillReplayController: React.FC<SpillReplayControllerProps> = ({
           )}
         </div>
 
+        {onToggleFollowVessel && (
+          <button
+            type="button"
+            onClick={onToggleFollowVessel}
+            title={followVessel ? "Unfollow Vessel Camera" : "Follow Vessel Camera"}
+            className={`p-1 rounded transition-colors cursor-pointer ${
+              followVessel ? "bg-sky-500 text-slate-950 font-bold" : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5" />
+          </button>
+        )}
+
         <div className="flex items-center gap-1 border-l border-slate-800 pl-2">
           <button
             type="button"
@@ -189,19 +217,34 @@ export const SpillReplayController: React.FC<SpillReplayControllerProps> = ({
   }
 
   return (
-    <div className="absolute top-2.5 left-2.5 right-2.5 sm:right-auto sm:w-[325px] z-30 flex flex-col gap-1.5 pointer-events-auto">
+    <div className="absolute top-2.5 left-2.5 right-2.5 sm:right-auto sm:w-[335px] z-30 flex flex-col gap-1.5 pointer-events-auto">
       {/* Main Glassmorphism Forensic Panel */}
-      <div className="bg-slate-950/92 backdrop-blur-md border border-slate-700/80 rounded-lg shadow-xl p-2 text-slate-100 flex flex-col gap-1.5">
+      <div className="bg-slate-950/92 backdrop-blur-md border border-slate-700/80 rounded-lg shadow-xl p-2.5 text-slate-100 flex flex-col gap-2">
         {/* Top Header Bar */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-1">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
           <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            <span className="text-[9.5px] font-mono uppercase tracking-wider text-cyan-400 font-semibold">
+            <div className={`w-2 h-2 rounded-full ${currentStage === 5 ? "bg-rose-400" : currentStage === 2 ? "bg-amber-400" : "bg-cyan-400"} animate-pulse`} />
+            <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-bold">
               Incident Replay
             </span>
           </div>
 
           <div className="flex items-center gap-1">
+            {onToggleFollowVessel && (
+              <button
+                type="button"
+                onClick={onToggleFollowVessel}
+                title={followVessel ? "Following Vessel: Click to Unlock" : "Follow Vessel"}
+                className={`px-1.5 py-0.5 rounded text-[9.5px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
+                  followVessel
+                    ? "bg-sky-500/25 text-sky-300 border border-sky-400/60 font-semibold shadow-xs"
+                    : "text-slate-400 hover:text-slate-200 border border-transparent"
+                }`}
+              >
+                <Compass className={`w-3 h-3 ${followVessel ? "animate-spin text-sky-400" : ""}`} style={{ animationDuration: "6s" }} />
+                <span>Follow</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={onFitInvestigation}
@@ -229,15 +272,15 @@ export const SpillReplayController: React.FC<SpillReplayControllerProps> = ({
           </div>
         </div>
 
-        {/* Current Stage Indicator */}
-        <div className="flex items-center justify-between bg-slate-900/80 border border-slate-800 rounded-md p-1.5">
+        {/* Current Stage Indicator with Thematic Hierarchy */}
+        <div className={`flex items-center justify-between ${stageTheme.bg} border ${stageTheme.border} rounded-md p-1.5 transition-colors`}>
           <div className="flex flex-col gap-0.5 min-w-0 pr-1">
             <div className="flex items-center gap-1.5">
-              <span className="text-[8.5px] uppercase font-mono px-1 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 shrink-0">
+              <span className={`text-[8.5px] uppercase font-mono px-1.5 py-0.2 rounded font-bold border ${stageTheme.badge} shrink-0`}>
                 S{currentStage}/5
               </span>
-              <span className="text-[11px] font-bold text-slate-100 tracking-tight truncate">
-                {currentStageInfo.name.toUpperCase()}
+              <span className={`text-[11px] font-bold ${stageTheme.color} tracking-tight truncate`}>
+                {stageTheme.name.toUpperCase()}
               </span>
             </div>
             <p className="text-[9.5px] text-slate-300 mt-0.5 leading-tight line-clamp-1">
@@ -299,16 +342,16 @@ export const SpillReplayController: React.FC<SpillReplayControllerProps> = ({
             step={0.002}
             value={progress}
             onChange={(e) => onSeek(parseFloat(e.target.value))}
-            className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400 hover:accent-cyan-300"
+            className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400 hover:accent-cyan-300"
           />
 
-          {/* Stage Progression Bar Marks */}
+          {/* Stage Progression Bar Marks with Thematic Visual Hierarchy */}
           <div className="grid grid-cols-5 gap-0.5 text-[8px] font-mono text-center text-slate-400">
             <button
               type="button"
               onClick={() => onSeek(0.05)}
               className={`py-0.5 px-0.5 rounded hover:bg-slate-800 transition-colors cursor-pointer truncate ${
-                currentStage === 1 ? "text-cyan-300 font-bold bg-cyan-950/70 border border-cyan-800" : ""
+                currentStage === 1 ? "text-indigo-300 font-bold bg-indigo-950/80 border border-indigo-700" : ""
               }`}
             >
               1. AIS
@@ -317,7 +360,7 @@ export const SpillReplayController: React.FC<SpillReplayControllerProps> = ({
               type="button"
               onClick={() => onSeek(0.30)}
               className={`py-0.5 px-0.5 rounded hover:bg-slate-800 transition-colors cursor-pointer truncate ${
-                currentStage === 2 ? "text-cyan-300 font-bold bg-cyan-950/70 border border-cyan-800" : ""
+                currentStage === 2 ? "text-amber-300 font-bold bg-amber-950/80 border border-amber-700" : ""
               }`}
             >
               2. Release
@@ -326,7 +369,7 @@ export const SpillReplayController: React.FC<SpillReplayControllerProps> = ({
               type="button"
               onClick={() => onSeek(0.50)}
               className={`py-0.5 px-0.5 rounded hover:bg-slate-800 transition-colors cursor-pointer truncate ${
-                currentStage === 3 ? "text-cyan-300 font-bold bg-cyan-950/70 border border-cyan-800" : ""
+                currentStage === 3 ? "text-cyan-300 font-bold bg-cyan-950/80 border border-cyan-700" : ""
               }`}
             >
               3. Wake
@@ -335,7 +378,7 @@ export const SpillReplayController: React.FC<SpillReplayControllerProps> = ({
               type="button"
               onClick={() => onSeek(0.72)}
               className={`py-0.5 px-0.5 rounded hover:bg-slate-800 transition-colors cursor-pointer truncate ${
-                currentStage === 4 ? "text-cyan-300 font-bold bg-cyan-950/70 border border-cyan-800" : ""
+                currentStage === 4 ? "text-teal-300 font-bold bg-teal-950/80 border border-teal-700" : ""
               }`}
             >
               4. Drift
@@ -344,7 +387,7 @@ export const SpillReplayController: React.FC<SpillReplayControllerProps> = ({
               type="button"
               onClick={() => onSeek(0.95)}
               className={`py-0.5 px-0.5 rounded hover:bg-slate-800 transition-colors cursor-pointer truncate ${
-                currentStage === 5 ? "text-emerald-300 font-bold bg-emerald-950/70 border border-emerald-800" : ""
+                currentStage === 5 ? "text-rose-300 font-bold bg-rose-950/80 border border-rose-700" : ""
               }`}
             >
               5. Slick
