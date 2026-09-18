@@ -37,6 +37,83 @@ const ENABLE_DEMO_FALLBACK = (import.meta as any).env?.VITE_ENABLE_DEMO_FALLBACK
 
 export type DataSourceOrigin = "BACKEND" | "DEMO_FALLBACK";
 
+// ── Auth API ──────────────────────────────────────────────────────────────────
+
+export interface AuthUser {
+  id: number;
+  email: string;
+  employee_id: string | null;
+  full_name: string;
+  role: "ADMIN" | "ANALYST" | "OPERATOR" | "VIEWER";
+  department: string | null;
+  last_login_at: string | null;
+}
+
+/**
+ * Authenticate with org email or employee ID + password.
+ * The server sets HTTP-only auth cookies on success.
+ * Returns the authenticated user profile.
+ */
+export async function loginUser(identifier: string, password: string): Promise<AuthUser> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ identifier, password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const error = new Error(err.detail || `Authentication failed (${res.status})`);
+    (error as any).status = res.status;
+    throw error;
+  }
+  return res.json();
+}
+
+/**
+ * Sign out. Clears the server-side HTTP-only cookies.
+ */
+export async function logoutUser(): Promise<void> {
+  await fetch(`${API_BASE_URL}/api/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+}
+
+/**
+ * Retrieve the currently authenticated user from the server cookie.
+ * Returns null if not authenticated (does not throw).
+ */
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      credentials: "include",
+    });
+    if (res.ok) return res.json();
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Attempt to silently refresh the access token using the refresh cookie.
+ * Called automatically by other API functions on 401.
+ */
+export async function refreshAuth(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 /**
  * Check backend liveness and health status.
  */

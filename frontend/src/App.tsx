@@ -4,6 +4,7 @@ import { Header } from "./components/Header";
 import { NotificationsModal } from "./components/NotificationsModal";
 import { DossierExportModal } from "./components/DossierExportModal";
 import { ToastProvider } from "./components/ToastNotification";
+import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { Investigation, UserProfile } from "./types";
 import { getInvestigations, getInvestigation, getUserProfile } from "./services/api";
 
@@ -30,8 +31,10 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { InvestigationDetailPage } from "./pages/InvestigationDetailPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { AdminUsersPage } from "./pages/AdminUsersPage";
 
 export function AppContent() {
+  const { isAuthenticated, isLoading: isAuthLoading, user: authUser, logout } = useAuth();
   const [currentPath, setCurrentPath] = useState<NavPath>("dashboard");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showDossierExport, setShowDossierExport] = useState(false);
@@ -49,6 +52,29 @@ export function AppContent() {
   useEffect(() => {
     getUserProfile().then((p) => setUserProfile(p)).catch(() => {});
   }, []);
+
+  // ── Auth guard ─────────────────────────────────────────────────────────────
+  // While the initial /api/auth/me call is in flight, show a neutral loading screen.
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-[#070f1a] flex items-center justify-center">
+        <div className="text-slate-500 font-mono text-sm animate-pulse">Verifying session…</div>
+      </div>
+    );
+  }
+
+  // Unauthenticated — always show login regardless of currentPath
+  if (!isAuthenticated) {
+    return (
+      <LoginPage
+        onLoginSuccess={() => {
+          // Force re-render by resetting to dashboard after successful login
+          setCurrentPath("dashboard");
+        }}
+      />
+    );
+  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   const handleToggleSidebar = () => {
     setIsSidebarCollapsed((prev) => {
@@ -139,11 +165,6 @@ export function AppContent() {
     } catch {}
   };
 
-  // Login view
-  if (currentPath === "login") {
-    return <LoginPage onLoginSuccess={() => setCurrentPath("dashboard")} />;
-  }
-
   return (
     <div className="min-h-screen bg-surface text-on-surface font-sans flex overflow-x-hidden">
       {/* Fixed Navigation Sidebar */}
@@ -151,6 +172,8 @@ export function AppContent() {
         currentPath={currentPath}
         onNavigate={handleNavigate}
         userProfile={userProfile}
+        userRole={authUser?.role ?? null}
+        onLogout={logout}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={handleToggleSidebar}
       />
@@ -328,6 +351,10 @@ export function AppContent() {
               onProfileUpdated={(updated) => setUserProfile(updated)}
             />
           )}
+
+          {currentPath === "admin-users" && (
+            <AdminUsersPage onNavigate={handleNavigate} />
+          )}
         </main>
       </div>
 
@@ -350,7 +377,9 @@ export function AppContent() {
 export function App() {
   return (
     <ToastProvider>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </ToastProvider>
   );
 }

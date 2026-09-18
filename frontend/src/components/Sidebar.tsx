@@ -26,12 +26,15 @@ export type NavPath =
   | "report-detail"
   | "investigation-detail"
   | "profile"
+  | "admin-users"
   | "login";
 
 interface SidebarProps {
   currentPath: NavPath;
   onNavigate: (path: NavPath) => void;
   userProfile?: UserProfile | null;
+  userRole?: string | null;
+  onLogout?: () => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
 }
@@ -40,6 +43,8 @@ export function Sidebar({
   currentPath,
   onNavigate,
   userProfile,
+  userRole,
+  onLogout,
   isCollapsed = false,
   onToggleCollapse,
 }: SidebarProps) {
@@ -72,6 +77,9 @@ export function Sidebar({
         { path: "datasets", label: "Datasets", icon: "dataset" },
         { path: "system-status", label: "System Status", icon: "health_and_safety" },
         { path: "settings", label: "Settings", icon: "settings" },
+        ...(userRole === "ADMIN"
+          ? [{ path: "admin-users" as NavPath, label: "User Management", icon: "admin_panel_settings" }]
+          : []),
       ],
     },
   ];
@@ -255,7 +263,7 @@ export function Sidebar({
             </button>
             <button
               type="button"
-              onClick={() => onNavigate("login")}
+              onClick={() => onLogout?.()}
               className="flex items-center gap-space-2xs text-outline-variant hover:text-surface-container-lowest font-label-sm text-label-sm transition-colors cursor-pointer"
             >
               <span className="material-symbols-outlined text-[16px] w-4 h-4 flex items-center justify-center overflow-hidden">logout</span>
@@ -266,7 +274,7 @@ export function Sidebar({
           <div className="pt-1 border-t border-surface-container-high/20 flex justify-center w-full">
             <button
               type="button"
-              onClick={() => onNavigate("login")}
+              onClick={() => onLogout?.()}
               title="Sign Out"
               aria-label="Sign Out"
               className="text-outline-variant hover:text-surface-container-lowest p-1 rounded transition-colors cursor-pointer overflow-hidden"

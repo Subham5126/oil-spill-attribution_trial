@@ -9,6 +9,8 @@ from backend.models.vessel import VesselModel
 from backend.models.ais import AISTrackModel
 from backend.models.attribution import AttributionResultModel
 from backend.models.report import ReportModel
+from backend.models.user import User
+from backend.models.audit_log import AuditLog
 
 __all__ = [
     "Base",
@@ -22,4 +24,7 @@ __all__ = [
     "AISTrackModel",
     "AttributionResultModel",
     "ReportModel",
+    "User",
+    "AuditLog",
 ]
+

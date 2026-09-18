@@ -25,6 +25,8 @@ uvicorn[standard]
 pydantic
 python-dotenv
 python-multipart
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
 
 # Database
 sqlalchemy

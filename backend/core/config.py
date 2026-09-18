@@ -89,6 +89,12 @@ class Settings:
 
     # Security
     SECRET_KEY: str = os.getenv("SECRET_KEY", "oiltrace-development-insecure-secret-key-2026")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+    REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+    COOKIE_SECURE: bool = _get_bool("COOKIE_SECURE", False)  # Set True in production (HTTPS)
+    COOKIE_SAMESITE: str = os.getenv("COOKIE_SAMESITE", "lax")
+    MAX_LOGIN_ATTEMPTS: int = int(os.getenv("MAX_LOGIN_ATTEMPTS", "5"))
+    LOGIN_LOCKOUT_MINUTES: int = int(os.getenv("LOGIN_LOCKOUT_MINUTES", "15"))
 
     # Global Fishing Watch (GFW) API Configuration
     GFW_API_TOKEN: Optional[str] = os.getenv("GFW_API_TOKEN")

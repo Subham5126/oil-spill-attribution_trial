@@ -28,3 +28,13 @@ def simulate_custom_drift(payload: DriftSimulateRequest, db: Session = Depends(g
     """
     service = DriftService(db)
     return service.simulate_custom_drift(payload)
+
+
+@router.get("/{investigation_id}/current-field")
+def get_current_field(investigation_id: str, db: Session = Depends(get_db)):
+    """Retrieve real Copernicus Marine surface current vectors for the incident domain."""
+    from backend.services.reconstruction_service import ReconstructionService
+    service = ReconstructionService(db)
+    recon = service.get_reconstruction(investigation_id)
+    return recon.get("ocean_current_field", {"type": "FeatureCollection", "features": []})
+

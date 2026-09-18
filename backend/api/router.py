@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from backend.api.auth import router as auth_router
+from backend.api.admin import router as admin_router
 from backend.api.attribution import router as attribution_router
 from backend.api.drift import router as drift_router
 from backend.api.health import router as health_router
@@ -20,6 +22,10 @@ from backend.api.vessels import router as vessels_router
 
 api_router = APIRouter(prefix="/api")
 
+# Auth must come first so its dependencies are registered before other routes
+api_router.include_router(auth_router)
+api_router.include_router(admin_router)
+
 api_router.include_router(health_router)
 api_router.include_router(images_router)
 api_router.include_router(investigations_router)
@@ -33,3 +39,4 @@ api_router.include_router(layers_router)
 api_router.include_router(reports_router)
 api_router.include_router(profile_router)
 api_router.include_router(settings_router)
+

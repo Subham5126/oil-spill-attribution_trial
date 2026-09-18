@@ -113,6 +113,17 @@ export const BASELINE_DEMO_RESULT: EndToEndResult = {
       vessel_name: "PACIFIC VOYAGER",
       imo: "IMO9384813",
       vessel_type: 80,
+      latitude: 18.52736,
+      longitude: 72.50525,
+      heading_deg: 204.0,
+      speed_knots: 11.8,
+      trajectory: [
+        { latitude: 18.57136, longitude: 72.48325, timestamp: "2025-01-01T00:30:00+00:00", heading: 205.0, speed_knots: 12.4 },
+        { latitude: 18.54836, longitude: 72.49425, timestamp: "2025-01-01T00:45:00+00:00", heading: 205.0, speed_knots: 12.1 },
+        { latitude: 18.52736, longitude: 72.50525, timestamp: "2025-01-01T01:00:00+00:00", heading: 204.0, speed_knots: 11.8 },
+        { latitude: 18.50536, longitude: 72.51625, timestamp: "2025-01-01T01:15:00+00:00", heading: 205.0, speed_knots: 12.2 },
+        { latitude: 18.48336, longitude: 72.52725, timestamp: "2025-01-01T01:30:00+00:00", heading: 206.0, speed_knots: 12.5 },
+      ],
       scores: {
         overall: 0.9536,
         spatial: 1.0,
@@ -139,6 +150,15 @@ export const BASELINE_DEMO_RESULT: EndToEndResult = {
       vessel_name: "NORDIC TRADER",
       imo: "IMO9245172",
       vessel_type: 70,
+      latitude: 18.53136,
+      longitude: 72.54625,
+      heading_deg: 190.0,
+      speed_knots: 13.9,
+      trajectory: [
+        { latitude: 18.56436, longitude: 72.54425, timestamp: "2025-01-01T00:35:00+00:00", heading: 190.0, speed_knots: 13.8 },
+        { latitude: 18.53136, longitude: 72.54625, timestamp: "2025-01-01T00:50:00+00:00", heading: 190.0, speed_knots: 13.9 },
+        { latitude: 18.49836, longitude: 72.54825, timestamp: "2025-01-01T01:05:00+00:00", heading: 191.0, speed_knots: 13.7 },
+      ],
       scores: {
         overall: 0.885,
         spatial: 0.871,
@@ -210,6 +230,17 @@ export const BASELINE_DEMO_RESULT: EndToEndResult = {
     vessel_name: "PACIFIC VOYAGER",
     imo: "IMO9384813",
     vessel_type: 80,
+    latitude: 18.52736,
+    longitude: 72.50525,
+    heading_deg: 204.0,
+    speed_knots: 11.8,
+    trajectory: [
+      { latitude: 18.57136, longitude: 72.48325, timestamp: "2025-01-01T00:30:00+00:00", heading: 205.0, speed_knots: 12.4 },
+      { latitude: 18.54836, longitude: 72.49425, timestamp: "2025-01-01T00:45:00+00:00", heading: 205.0, speed_knots: 12.1 },
+      { latitude: 18.52736, longitude: 72.50525, timestamp: "2025-01-01T01:00:00+00:00", heading: 204.0, speed_knots: 11.8 },
+      { latitude: 18.50536, longitude: 72.51625, timestamp: "2025-01-01T01:15:00+00:00", heading: 205.0, speed_knots: 12.2 },
+      { latitude: 18.48336, longitude: 72.52725, timestamp: "2025-01-01T01:30:00+00:00", heading: 206.0, speed_knots: 12.5 },
+    ],
     scores: {
       overall: 0.9536,
       spatial: 1.0,
@@ -264,8 +295,10 @@ export async function fetchEndToEndResult(): Promise<EndToEndResult> {
     const resReal = await fetch("/data/real_end_to_end_result.json");
     if (resReal.ok) {
       const data = await resReal.json();
-      cachedResult = data;
-      return data;
+      if (data && data.candidate_vessels && data.candidate_vessels.length > 0) {
+        cachedResult = data;
+        return data;
+      }
     }
   } catch (err) {
     // Continue to demo
@@ -275,8 +308,10 @@ export async function fetchEndToEndResult(): Promise<EndToEndResult> {
     const res = await fetch("/data/end_to_end_result.json");
     if (res.ok) {
       const data = await res.json();
-      cachedResult = data;
-      return data;
+      if (data && data.candidate_vessels && data.candidate_vessels.length > 0) {
+        cachedResult = data;
+        return data;
+      }
     }
   } catch (err) {
     // Fall back to baseline
@@ -293,8 +328,13 @@ export async function fetchLayersGeoJSON(): Promise<GeoJSONFeatureCollection> {
     const resReal = await fetch("/data/real_end_to_end_layers.geojson");
     if (resReal.ok) {
       const data = await resReal.json();
-      cachedLayers = data;
-      return data;
+      const hasVessels = data?.features?.some((f: any) =>
+        ["vessel_track", "candidate_vessel", "vessel_trajectory", "ais_track"].includes(f.properties?.layer_type)
+      );
+      if (hasVessels) {
+        cachedLayers = data;
+        return data;
+      }
     }
   } catch (err) {
     // Continue to demo

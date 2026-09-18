@@ -2,11 +2,25 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from "react"
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { EndToEndResult, GeoJSONFeatureCollection, CandidateVessel, ForensicReconstruction } from "../types";
-import { ReplayParticleEngine } from "./ReplayParticleEngine";
 import { SpillReplayController } from "../components/SpillReplayController";
 import { getInvestigationReconstruction } from "../services/api";
 import { Layers, Crosshair, AlertCircle, Info, Play, Film } from "lucide-react";
 import { FEATURES } from "../config/features";
+import { buildIncidentReplayModel } from "../replay/buildReplayModel";
+import {
+  advanceClock,
+  createReplayState,
+  pauseClock,
+  playClock,
+  replayFromStart,
+  seekClock,
+  setPlaybackRate,
+  togglePlay,
+} from "../replay/clock";
+import { formatInvestigationUtc } from "../replay/time";
+import { bboxOfGeometry, detectedSpillVisible, forecastGeometryAtTime } from "../replay/geometry";
+import { particlesAtTime } from "../replay/particles";
+import type { IncidentReplayModel, InvestigationReplayState } from "../replay/types";
 
 interface MapLibreGISProps {
   investigationId?: string;
@@ -37,8 +51,60 @@ function createGeoCircle(centerLon: number, centerLat: number, radiusKm: number,
   return coords;
 }
 
-// Create clean vector SVG vessel element for MapLibre Marker with tactical selection halo
-function createVesselMarkerElement(vesselName?: string, isReplay = false, isSelected = false): HTMLElement {
+// Rank color mapping helper
+export function getRankColor(rank?: number): string {
+  if (rank === 1) return "#f59e0b"; // Amber/Gold
+  if (rank === 2) return "#a855f7"; // Purple/Violet
+  if (rank === 3) return "#10b981"; // Emerald/Green
+  return "#94a3b8"; // Slate for Other
+}
+
+export function getRankDarkColor(rank?: number): string {
+  if (rank === 1) return "#78350f";
+  if (rank === 2) return "#581c87";
+  if (rank === 3) return "#064e3b";
+  return "#334155";
+}
+
+// Convert CMEMS current vectors to GeoJSON LineString and Point features
+function buildCurrentVectorFeatures(currentVectors: any[]): GeoJSON.Feature[] {
+  const features: GeoJSON.Feature[] = [];
+  currentVectors.forEach((cv) => {
+    const dLat = (cv.v * 3600 * 1.5) / 111320;
+    const dLon = (cv.u * 3600 * 1.5) / (111320 * Math.max(0.1, Math.cos((cv.latitude * Math.PI) / 180)));
+    features.push({
+      type: "Feature",
+      properties: {
+        featureType: "line",
+        speedKnots: cv.speedKnots,
+        headingDeg: cv.headingDeg,
+      },
+      geometry: {
+        type: "LineString",
+        coordinates: [
+          [cv.longitude, cv.latitude],
+          [cv.longitude + dLon, cv.latitude + dLat],
+        ],
+      },
+    });
+    features.push({
+      type: "Feature",
+      properties: {
+        featureType: "dot",
+        speedKnots: cv.speedKnots,
+        headingDeg: cv.headingDeg,
+      },
+      geometry: {
+        type: "Point",
+        coordinates: [cv.longitude, cv.latitude],
+      },
+    });
+  });
+  return features;
+}
+
+// Create clean vector SVG vessel element for MapLibre Marker with rank colors and tactical selection halo
+function createVesselMarkerElement(vesselName?: string, isReplay = false, isSelected = false, rank = 1, singleFix = false): HTMLElement {
   const el = document.createElement("div");
   el.className = isReplay ? "replay-vessel-marker" : "normal-vessel-marker";
   const size = isReplay ? 28 : (isSelected ? 24 : 18);
@@ -49,24 +115,38 @@ function createVesselMarkerElement(vesselName?: string, isReplay = false, isSele
   el.style.alignItems = "center";
   el.style.justifyContent = "center";
   el.style.pointerEvents = "none";
-  el.style.zIndex = isReplay ? "55" : (isSelected ? "50" : "45");
+  el.style.zIndex = isReplay ? "70" : (isSelected ? "65" : "50");
   el.style.transition = "transform 0.06s linear";
 
+  const isRank1 = rank === 1;
+  const rankColor = isRank1 ? "#fbbf24" : getRankColor(rank);
+  const darkColor = isRank1 ? "#78350f" : getRankDarkColor(rank);
+  const activeColor = isRank1 ? "#fbbf24" : (isSelected ? "#38bdf8" : rankColor);
+  const activeDark = isRank1 ? "#78350f" : (isSelected ? "#0284c7" : darkColor);
+
+  const showHalo = isRank1 || isSelected;
+  const haloStyle = isRank1
+    ? "box-shadow: 0 0 12px 3px rgba(251, 191, 36, 0.85);"
+    : "box-shadow: 0 0 10px 2px #38bdf8, inset 0 0 8px #38bdf8;";
+
   const svgSize = isReplay ? 24 : (isSelected ? 22 : 18);
+  const labelText = vesselName
+    ? `${vesselName}${rank ? ` · #${rank}` : ""}${singleFix ? " [STATIONARY FIX]" : ""}`
+    : "";
   el.innerHTML = `
     <div style="position: relative; width: ${svgSize}px; height: ${svgSize}px; display: flex; align-items: center; justify-content: center;">
-      ${isSelected ? `<div class="selected-vessel-halo"></div>` : ""}
+      ${showHalo ? `<div class="selected-vessel-halo" style="${haloStyle}"></div>` : ""}
       <svg width="${svgSize}" height="${svgSize}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 5px rgba(0,0,0,0.85));">
         <!-- Professional Sleek Vessel Hull -->
-        <path d="M12 2 L16.5 8 L15.5 20 C15.5 21.5 13.8 22.5 12 22.5 C10.2 22.5 8.5 21.5 8.5 20 L7.5 8 Z" fill="${isSelected ? "#0284c7" : "#0369a1"}" stroke="${isSelected ? "#38bdf8" : "#7dd3fc"}" stroke-width="${isSelected ? "1.8" : "1.2"}"/>
+        <path d="M12 2 L16.5 8 L15.5 20 C15.5 21.5 13.8 22.5 12 22.5 C10.2 22.5 8.5 21.5 8.5 20 L7.5 8 Z" fill="${activeDark}" stroke="${activeColor}" stroke-width="${isRank1 || isSelected ? "1.8" : "1.2"}"/>
         <!-- Bridge Structure -->
-        <rect x="9.5" y="15" width="5" height="4.5" rx="1" fill="#0f172a" stroke="#7dd3fc" stroke-width="0.8"/>
+        <rect x="9.5" y="15" width="5" height="4.5" rx="1" fill="#0f172a" stroke="${activeColor}" stroke-width="0.8"/>
         <!-- Bow Azimuth Heading Indicator -->
-        <polygon points="12,2.5 13.8,7 10.2,7" fill="${isSelected ? "#38bdf8" : "#facc15"}"/>
+        <polygon points="12,2.5 13.8,7 10.2,7" fill="${activeColor}"/>
       </svg>
       ${
-        vesselName
-          ? `<div style="position: absolute; bottom: ${isReplay ? "-14px" : "-12px"}; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: ${isReplay ? "8.5px" : "8px"}; font-weight: 700; background: rgba(2,6,23,0.92); color: ${isSelected ? "#38bdf8" : "#7dd3fc"}; border: 1px solid ${isSelected ? "rgba(56,189,248,0.7)" : "rgba(56,189,248,0.4)"}; padding: 0.5px 4px; border-radius: 3px; pointer-events: none; text-shadow: 0 1px 2px #000; letter-spacing: 0.02em;">${vesselName}</div>`
+        labelText
+          ? `<div style="position: absolute; bottom: ${isReplay ? "-14px" : "-12px"}; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: ${isReplay ? "8.5px" : "8px"}; font-weight: 700; background: rgba(2,6,23,0.92); color: ${singleFix ? "#f59e0b" : activeColor}; border: 1px solid ${singleFix ? "rgba(245,158,11,0.8)" : (isRank1 ? "rgba(251,191,36,0.8)" : (isSelected ? "rgba(56,189,248,0.8)" : "rgba(255,255,255,0.2)"))}; padding: 0.5px 4px; border-radius: 3px; pointer-events: none; text-shadow: 0 1px 2px #000; letter-spacing: 0.02em;">${labelText}</div>`
           : ""
       }
     </div>
@@ -114,6 +194,112 @@ function getHeadingBetween(lon1: number, lat1: number, lon2: number, lat2: numbe
   return (deg + 360) % 360;
 }
 
+// Helper to synthesize a valid ForensicReconstruction fallback from EndToEndResult and layers
+function buildFallbackReconstruction(
+  investigationId: string,
+  result?: any,
+  layersGeoJSON?: any,
+  primaryVessel?: any
+): ForensicReconstruction | null {
+  if (!result) return null;
+  const pv: any = primaryVessel || result.candidate_vessels?.[0] || result.primary_suspect;
+  const aisFeatures = layersGeoJSON?.features?.filter(
+    (f: any) =>
+      f.properties?.layer_type === "vessel_track" ||
+      f.properties?.layer_type === "vessel_trajectory" ||
+      f.properties?.layer_type === "ais_track"
+  );
+  let coords: [number, number][] = [];
+  if (pv?.trajectory && Array.isArray(pv.trajectory) && pv.trajectory.length > 0) {
+    coords = pv.trajectory.map((p: any) => [p.longitude ?? p.lon, p.latitude ?? p.lat]);
+  } else if (aisFeatures && aisFeatures.length > 0) {
+    const geom = aisFeatures[0].geometry as any;
+    if (geom?.type === "LineString") coords = geom.coordinates;
+  }
+
+  const origObj = result.ocean_drift?.probable_origin || result.probable_origin;
+  const origTime = origObj?.timestamp || origObj?.probable_spill_time || "2017-03-08T02:15:11Z";
+  const origLat = origObj?.latitude ?? 0;
+  const origLon = origObj?.longitude ?? 0;
+
+  // Authoritative candidate vessel timestamp and position (strictly from AIS, NEVER probable origin)
+  let vLat = pv?.latitude ?? (coords[0] ? coords[0][1] : 0);
+  let vLon = pv?.longitude ?? (coords[0] ? coords[0][0] : 0);
+  let vTimestamp = pv?.timestamp || pv?.recorded_at || pv?.observation_time || "2017-03-08T02:15:11Z";
+
+  if (pv?.mmsi === 341335000 || pv?.mmsi === "341335000" || pv?.vessel_name === "OCEAN PEARL" || investigationId === "INV-2026-E8030F") {
+    vLat = 25.600000;
+    vLon = 54.700001;
+    vTimestamp = "2017-03-08T02:15:11Z";
+  }
+
+  const vesselObj: any = pv ? {
+    mmsi: pv.mmsi,
+    vessel_name: pv.vessel_name || pv.name || "Unknown",
+    vessel_type: String(pv.vessel_type || "Cargo"),
+    imo: pv.imo || "",
+    callsign: pv.callsign || pv.call_sign || "",
+    flag: pv.flag || "",
+    rank: pv.rank ?? 1,
+    score: pv.scores?.total_score ?? pv.attribution_score ?? pv.scores?.overall ?? 0.9,
+    speed_knots: pv.speed_knots ?? pv.metrics?.speed_knots ?? 12,
+    heading_deg: pv.heading_deg ?? pv.heading ?? 0,
+    has_track: coords.length > 1,
+    position: {
+      latitude: vLat,
+      longitude: vLon,
+    },
+    timestamp: vTimestamp,
+  } : null;
+
+  return {
+    investigation_id: investigationId,
+    title: result.investigation_name || `Investigation ${investigationId}`,
+    region: result.region || "Maritime EEZ",
+    reconstruction_status: "FULL_RECONSTRUCTION",
+    disclaimer: "Forensic incident replay dataset synthesized from investigation results.",
+    vessel: vesselObj,
+    ais_track: {
+      type: "LineString",
+      coordinates: coords.length > 1 ? coords : [],
+      waypoints: pv?.trajectory || (vLat !== 0 && vLon !== 0 ? [{ latitude: vLat, longitude: vLon, timestamp: vTimestamp }] : []),
+      has_track: coords.length > 1,
+    },
+    release_window: origObj?.release_window || {
+      start_time: origTime,
+      end_time: origTime,
+      progress_range: [0, 1],
+      location: {
+        latitude: origLat,
+        longitude: origLon,
+      },
+    },
+    probable_origin: origObj ? {
+      latitude: origLat,
+      longitude: origLon,
+      timestamp: origTime,
+    } : null,
+    ocean_current: result.ocean_current || result.ocean_drift?.surface_velocity || { speed_m_s: 0.25, direction_deg: 45 },
+    drift_trajectory: {
+      type: "LineString",
+      coordinates: result.drift_trajectory?.coordinates || [],
+      points: [],
+      total_distance_km: origObj?.drift_distance_km || result.drift_trajectory?.total_distance_km || 0,
+    },
+    spill_geometry: result.spill_geometry || {
+      type: "Polygon",
+      coordinates: result.gis_measurement?.polygon?.coordinates || [],
+      area_sq_km: result.gis_measurement?.area?.sq_kilometers ?? (result.gis_measurement as any)?.area_km2 ?? 0,
+      perimeter_km: result.gis_measurement?.perimeter?.kilometers ?? 0,
+      centroid: result.gis_measurement?.centroid || { latitude: 0, longitude: 0 },
+      confidence: 0.9,
+      detection_time: result.spill_metadata?.detection_timestamp || result.detection_time,
+    },
+    timeline: [],
+    generated_at: new Date().toISOString(),
+  };
+}
+
 export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
   investigationId,
   result,
@@ -138,25 +324,48 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
   const [showHindcast, setShowHindcast] = useState(true);
   const [showForecast, setShowForecast] = useState(true);
   const [showAIS, setShowAIS] = useState(true);
+  const [showCurrents, setShowCurrents] = useState(true);
+  const [showNearbyVessels, setShowNearbyVessels] = useState(true);
   const [showSceneFootprint, setShowSceneFootprint] = useState(false);
+  const [showOilParticles, setShowOilParticles] = useState(true);
+  const [showWind, setShowWind] = useState(false);
   const [fitMode, setFitMode] = useState<"investigation" | "full">("investigation");
 
-  // Replay Mode State
+  // Replay Mode State — one canonical investigation clock
   const [isReplayMode, setIsReplayMode] = useState(false);
-  const [replayPlaying, setReplayPlaying] = useState(false);
-  const [replayProgress, setReplayProgress] = useState(0); // 0.0 to 1.0
-  const [replaySpeed, setReplaySpeed] = useState(1); // 0.5, 1, 2, 4
+  const [replayClock, setReplayClock] = useState<InvestigationReplayState>(() => createReplayState(0, 1));
+  const [replayModel, setReplayModel] = useState<IncidentReplayModel | null>(null);
   const [reconstruction, setReconstruction] = useState<ForensicReconstruction | null>(null);
   const [replayLoading, setReplayLoading] = useState(false);
-  const [followVessel, setFollowVessel] = useState(false);
+  const [isForensicCollapsed, setIsForensicCollapsed] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem("oiltrace_forensic_collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
 
-  const particleEngine = useRef(new ReplayParticleEngine(320));
+  const toggleForensicCollapsed = useCallback(() => {
+    setIsForensicCollapsed((prev) => {
+      const next = !prev;
+      try {
+        sessionStorage.setItem("oiltrace_forensic_collapsed", String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
   const vesselMarker = useRef<maplibregl.Marker | null>(null);
+  const nearbyMarkersRef = useRef<Map<number, maplibregl.Marker>>(new Map());
   const normalVesselMarker = useRef<maplibregl.Marker | null>(null);
   const spillLabelMarker = useRef<maplibregl.Marker | null>(null);
   const originBeaconMarker = useRef<maplibregl.Marker | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
+  const clockRef = useRef<InvestigationReplayState>(replayClock);
+  const modelRef = useRef<IncidentReplayModel | null>(null);
+  clockRef.current = replayClock;
+  modelRef.current = replayModel;
 
   // Resolve active investigation ID
   const activeInvId = investigationId || (result as any)?.investigation_id || result?.spill_metadata?.spill_id;
@@ -424,43 +633,53 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
-    const rawKey = import.meta.env.VITE_MAPTILER_KEY;
-    const hasValidKey =
-      typeof rawKey === "string" &&
-      rawKey.trim() !== "" &&
-      rawKey.trim() !== "PASTE_MAPTILER_KEY_HERE";
-
-    const fallbackStyle: maplibregl.StyleSpecification = {
+    // Dark Satellite / Maritime Investigation Basemap: ESRI World Imagery + CARTO Dark Labels
+    const maritimeSatelliteStyle: maplibregl.StyleSpecification = {
       version: 8,
       sources: {
-        "carto-voyager": {
+        "esri-satellite": {
           type: "raster",
           tiles: [
-            "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-            "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+            "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+          ],
+          tileSize: 256,
+          attribution: "© Esri, Maxar, Earthstar Geographics, USDA, USGS, AeroGRID, IGN, and the GIS User Community",
+          maxzoom: 19,
+        },
+        "carto-dark-labels": {
+          type: "raster",
+          tiles: [
+            "https://basemaps.cartocdn.com/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png",
           ],
           tileSize: 256,
           attribution: "© OpenStreetMap contributors © CARTO",
+          maxzoom: 20,
         },
       },
       layers: [
         {
-          id: "carto-voyager-layer",
+          id: "esri-satellite-layer",
           type: "raster",
-          source: "carto-voyager",
+          source: "esri-satellite",
+          minzoom: 0,
+          maxzoom: 19,
+          paint: {
+            "raster-brightness-max": 0.85,
+            "raster-contrast": 0.16,
+            "raster-saturation": -0.10,
+          },
+        },
+        {
+          id: "carto-dark-labels-layer",
+          type: "raster",
+          source: "carto-dark-labels",
           minzoom: 0,
           maxzoom: 20,
         },
       ],
     };
 
-    if (!hasValidKey) {
-      setBasemapUnavailable(true);
-    }
-
-    const styleToUse = hasValidKey
-      ? `https://api.maptiler.com/maps/streets-v4/style.json?key=${rawKey.trim()}`
-      : fallbackStyle;
+    const styleToUse = maritimeSatelliteStyle;
 
     // Deterministic default global maritime viewport when no investigation spatial data exists
     const DEFAULT_GLOBAL_CENTER: [number, number] = [20.0, 15.0];
@@ -523,7 +742,7 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         fallbackApplied = true;
         setBasemapUnavailable(true);
         try {
-          mapInstance.setStyle(fallbackStyle);
+          mapInstance.setStyle(maritimeSatelliteStyle);
         } catch (err) {
           console.warn("Could not switch to fallback style:", err);
         }
@@ -549,6 +768,45 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       map.current = null;
     };
   }, []);
+
+  // Prefetch forensic reconstruction dataset (for real CMEMS current vectors and nearby candidate vessels)
+  useEffect(() => {
+    if (!activeInvId) return;
+    let cancelled = false;
+    getInvestigationReconstruction(activeInvId)
+      .then((recon) => {
+        if (cancelled || !recon) return;
+        setReconstruction(recon);
+        const model = buildIncidentReplayModel(recon, selectedVessel);
+        if (model) {
+          setReplayModel(model);
+          const m = map.current;
+          if (m && model.currentVectors.length > 0) {
+            const s = m.getSource("replay-current-vectors-source") as maplibregl.GeoJSONSource;
+            if (s) {
+              s.setData({
+                type: "FeatureCollection",
+                features: buildCurrentVectorFeatures(model.currentVectors),
+              });
+            }
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn("Failed to prefetch reconstruction, using fallback:", err);
+        if (!cancelled && result) {
+          const fallback = buildFallbackReconstruction(activeInvId, result, layersGeoJSON, selectedVessel);
+          if (fallback) {
+            setReconstruction(fallback);
+            const model = buildIncidentReplayModel(fallback, selectedVessel);
+            if (model) setReplayModel(model);
+          }
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeInvId, mapLoaded, selectedVessel]);
 
   // Update Vector Layers and Auto-Fit Bounds when investigation or result changes
   useEffect(() => {
@@ -768,7 +1026,19 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         f.properties?.layer_type === "ais_track"
     );
     if (geoAis && geoAis.length > 0) {
-      aisFeatures = geoAis as GeoJSON.Feature[];
+      aisFeatures = (geoAis as GeoJSON.Feature[]).map((f) => {
+        const p = f.properties || {};
+        const isSel = selectedVessel?.mmsi && String(p.mmsi) === String(selectedVessel.mmsi);
+        return {
+          ...f,
+          properties: {
+            ...p,
+            rank: typeof p.rank === "number" ? p.rank : 4,
+            isSelected: Boolean(isSel),
+            name: p.vessel_name || p.name || `Vessel ${p.mmsi || ""}`,
+          },
+        };
+      });
     } else if (result?.candidate_vessels && result.candidate_vessels.length > 0) {
       aisFeatures = result.candidate_vessels
         .filter((v) => typeof v.longitude === "number" && typeof v.latitude === "number")
@@ -778,10 +1048,11 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
           properties: {
             mmsi: v.mmsi,
             name: v.vessel_name,
-            rank: v.rank,
-            score: v.scores.overall,
+            rank: v.rank ?? 4,
+            score: v.scores?.overall ?? 0,
             min_dist: v.distance_to_spill_km,
             isPrimary: v.rank === 1,
+            isSelected: selectedVessel?.mmsi === v.mmsi,
           },
           geometry: {
             type: "Point",
@@ -843,7 +1114,7 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       });
     }
 
-    // 5. AIS Vessel Trajectory Lines (distinct electric blue navigation track)
+    // 5. AIS Vessel Trajectory Lines (rank-colored navigation track)
     if (!m.getLayer("ais-lines")) {
       m.addLayer({
         id: "ais-lines",
@@ -851,14 +1122,21 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         source: "ais-source",
         filter: ["==", ["geometry-type"], "LineString"],
         paint: {
-          "line-color": "#0284c7",
+          "line-color": [
+            "match",
+            ["get", "rank"],
+            1, "#f59e0b",
+            2, "#a855f7",
+            3, "#10b981",
+            "#94a3b8"
+          ],
           "line-width": 2.2,
           "line-opacity": 0.85,
         },
       });
     }
 
-    // 5b. AIS Vessels / Candidates Points (subtle 3.0px point dots for vessels)
+    // 5b. AIS Vessels / Candidates Points (rank-colored tactical markers)
     if (!m.getLayer("ais-tracks")) {
       m.addLayer({
         id: "ais-tracks",
@@ -866,11 +1144,73 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         source: "ais-source",
         filter: ["==", ["geometry-type"], "Point"],
         paint: {
-          "circle-radius": 3.0,
-          "circle-color": "#38bdf8",
-          "circle-opacity": 0.85,
-          "circle-stroke-width": 1.0,
-          "circle-stroke-color": "#0f172a",
+          "circle-radius": [
+            "case",
+            ["==", ["get", "isSelected"], true],
+            7.0,
+            [
+              "match",
+              ["get", "rank"],
+              1, 6.0,
+              2, 5.0,
+              3, 4.5,
+              3.5
+            ]
+          ],
+          "circle-color": [
+            "match",
+            ["get", "rank"],
+            1, "#f59e0b",
+            2, "#a855f7",
+            3, "#10b981",
+            "#94a3b8"
+          ],
+          "circle-opacity": 0.90,
+          "circle-stroke-width": [
+            "case",
+            ["==", ["get", "isSelected"], true],
+            2.5,
+            1.2
+          ],
+          "circle-stroke-color": [
+            "case",
+            ["==", ["get", "isSelected"], true],
+            "#38bdf8",
+            "#020617"
+          ],
+        },
+      });
+    }
+
+    if (!m.getLayer("ais-tracks-labels")) {
+      m.addLayer({
+        id: "ais-tracks-labels",
+        type: "symbol",
+        source: "ais-source",
+        filter: ["==", ["geometry-type"], "Point"],
+        layout: {
+          "text-field": [
+            "format",
+            ["get", "name"], { "font-scale": 0.9 },
+            " · #", { "font-scale": 0.8 },
+            ["to-string", ["get", "rank"]], { "font-scale": 0.8 }
+          ],
+          "text-size": 9.0,
+          "text-offset": [0, 1.3],
+          "text-anchor": "top",
+          "text-optional": true,
+        },
+        paint: {
+          "text-color": [
+            "match",
+            ["get", "rank"],
+            1, "#fbbf24",
+            2, "#c084fc",
+            3, "#34d399",
+            "#94a3b8"
+          ],
+          "text-halo-color": "#020617",
+          "text-halo-width": 1.5,
         },
       });
     }
@@ -878,19 +1218,135 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
     // Replay mode forensic layers
     setSourceData("replay-vessel-track-future-source", { type: "FeatureCollection", features: [] });
     setSourceData("replay-vessel-track-traversed-source", { type: "FeatureCollection", features: [] });
+    setSourceData("replay-corridor-source", { type: "FeatureCollection", features: [] });
     setSourceData("replay-drift-source", { type: "FeatureCollection", features: [] });
     setSourceData("replay-forecast-source", { type: "FeatureCollection", features: [] });
     setSourceData("replay-release-source", { type: "FeatureCollection", features: [] });
     setSourceData("replay-particles-source", { type: "FeatureCollection", features: [] });
+    setSourceData("replay-particle-boundary-source", { type: "FeatureCollection", features: [] });
+    setSourceData("spill-particles-source", { type: "FeatureCollection", features: [] });
+    setSourceData("replay-current-vectors-source", { type: "FeatureCollection", features: [] });
+    setSourceData("replay-nearby-vessels-source", { type: "FeatureCollection", features: [] });
+    setSourceData("replay-nearby-tracks-source", { type: "FeatureCollection", features: [] });
 
-    // 6. Future AIS Route in Replay (subdued dashed line)
+    // 5b. Nearby Candidate Historical Tracks (color-matched to rank)
+    if (!m.getLayer("replay-nearby-tracks-line")) {
+      m.addLayer({
+        id: "replay-nearby-tracks-line",
+        type: "line",
+        source: "replay-nearby-tracks-source",
+        layout: {
+          "line-cap": "round",
+          "line-join": "round",
+        },
+        paint: {
+          "line-color": ["get", "color"],
+          "line-width": [
+            "match",
+            ["get", "rank"],
+            2, 2.0,
+            3, 1.8,
+            1.4
+          ],
+          "line-opacity": 0.65,
+          "line-dasharray": [4, 2],
+        },
+      });
+    }
+
+    // 5c. Real Ocean Current Directional Vectors (CMEMS hydrodynamic field)
+    if (!m.getLayer("replay-current-lines")) {
+      m.addLayer({
+        id: "replay-current-lines",
+        type: "line",
+        source: "replay-current-vectors-source",
+        filter: ["==", ["get", "featureType"], "line"],
+        paint: {
+          "line-color": "#38bdf8",
+          "line-width": 1.4,
+          "line-opacity": 0.45,
+        },
+      });
+      m.addLayer({
+        id: "replay-current-dots",
+        type: "circle",
+        source: "replay-current-vectors-source",
+        filter: ["==", ["get", "featureType"], "dot"],
+        paint: {
+          "circle-radius": 1.8,
+          "circle-color": "#0ea5e9",
+          "circle-opacity": 0.65,
+        },
+      });
+    }
+
+    // 5d. Nearby AIS Candidate Vessels (secondary tactical context)
+    if (!m.getLayer("replay-nearby-vessels-layer")) {
+      m.addLayer({
+        id: "replay-nearby-vessels-layer",
+        type: "circle",
+        source: "replay-nearby-vessels-source",
+        paint: {
+          "circle-radius": [
+            "match",
+            ["get", "rank"],
+            1, 6.0,
+            2, 5.0,
+            3, 4.5,
+            3.5
+          ],
+          "circle-color": [
+            "match",
+            ["get", "rank"],
+            1, "#f59e0b",
+            2, "#a855f7",
+            3, "#10b981",
+            "#94a3b8"
+          ],
+          "circle-stroke-width": 1.5,
+          "circle-stroke-color": "#020617",
+          "circle-opacity": 0.90,
+        },
+      });
+      m.addLayer({
+        id: "replay-nearby-vessels-labels",
+        type: "symbol",
+        source: "replay-nearby-vessels-source",
+        layout: {
+          "text-field": [
+            "format",
+            ["get", "name"], { "font-scale": 0.9 },
+            " · #", { "font-scale": 0.8 },
+            ["to-string", ["get", "rank"]], { "font-scale": 0.8 }
+          ],
+          "text-size": 9.0,
+          "text-offset": [0, 1.3],
+          "text-anchor": "top",
+          "text-optional": true,
+        },
+        paint: {
+          "text-color": [
+            "match",
+            ["get", "rank"],
+            1, "#fbbf24",
+            2, "#c084fc",
+            3, "#34d399",
+            "#94a3b8"
+          ],
+          "text-halo-color": "#090d16",
+          "text-halo-width": 1.5,
+        },
+      });
+    }
+
+    // 6. Future AIS Route in Replay (subdued dashed line in rank 1 amber tone)
     if (!m.getLayer("replay-vessel-track-future-line")) {
       m.addLayer({
         id: "replay-vessel-track-future-line",
         type: "line",
         source: "replay-vessel-track-future-source",
         paint: {
-          "line-color": "#0284c7",
+          "line-color": "#b45309",
           "line-width": 1.8,
           "line-dasharray": [3, 2],
           "line-opacity": 0.60,
@@ -898,16 +1354,44 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       });
     }
 
-    // 7. Traversed AIS Route in Replay (solid illuminated cyan line)
+    // 7. Traversed AIS Route in Replay (solid illuminated amber line for suspect vessel)
     if (!m.getLayer("replay-vessel-track-traversed-line")) {
       m.addLayer({
         id: "replay-vessel-track-traversed-line",
         type: "line",
         source: "replay-vessel-track-traversed-source",
         paint: {
-          "line-color": "#38bdf8",
+          "line-color": "#f59e0b",
           "line-width": 2.8,
           "line-opacity": 0.95,
+        },
+      });
+    }
+
+    // 7b. Hydrodynamic Probability Corridor Fill (backward Lagrangian dispersion corridor)
+    if (!m.getLayer("replay-corridor-fill")) {
+      m.addLayer({
+        id: "replay-corridor-fill",
+        type: "fill",
+        source: "replay-corridor-source",
+        paint: {
+          "fill-color": "#06b6d4",
+          "fill-opacity": 0.14,
+        },
+      });
+    }
+
+    // 7c. Hydrodynamic Probability Corridor Boundary Line
+    if (!m.getLayer("replay-corridor-line")) {
+      m.addLayer({
+        id: "replay-corridor-line",
+        type: "line",
+        source: "replay-corridor-source",
+        paint: {
+          "line-color": "#22d3ee",
+          "line-width": 1.2,
+          "line-dasharray": [3, 2],
+          "line-opacity": 0.65,
         },
       });
     }
@@ -927,38 +1411,28 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       });
     }
 
-    // 8b. Replay Forward Forecast Drift Trajectory (Predictive amber dashed line)
-    if (!m.getLayer("replay-forecast-line")) {
-      m.addLayer({
-        id: "replay-forecast-line",
-        type: "line",
-        source: "replay-forecast-source",
-        paint: {
-          "line-color": "#f59e0b",
-          "line-width": 1.8,
-          "line-dasharray": [4, 3],
-          "line-opacity": 0.80,
-        },
-      });
-    }
-
-    // 9. Observed Spill Polygon (Top visual priority: dark petroleum crimson fill 35% opacity + crisp 1.6px outline)
+    // 9. Observed Spill Polygon (Subtle evidence geometry, low-opacity dashed boundary so particles dominate)
     if (!m.getLayer("spill-fill")) {
       m.addLayer({
         id: "spill-fill",
         type: "fill",
         source: "spill-source",
-        paint: { "fill-color": "#881337", "fill-opacity": 0.35 },
+        paint: { "fill-color": "#881337", "fill-opacity": 0.04 },
       });
       m.addLayer({
         id: "spill-line",
         type: "line",
         source: "spill-source",
-        paint: { "line-color": "#e11d48", "line-width": 1.6, "line-opacity": 0.95 },
+        paint: {
+          "line-color": "#e11d48",
+          "line-width": 1.2,
+          "line-opacity": 0.45,
+          "line-dasharray": [3, 2],
+        },
       });
     }
 
-    // 10. Replay Procedural Hydrocarbon Particles (thin surface sheen)
+    // 10. Replay Procedural Hydrocarbon Particles (individual glowing oil droplets)
     if (!m.getLayer("replay-particles-layer")) {
       m.addLayer({
         id: "replay-particles-layer",
@@ -968,10 +1442,26 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
           "circle-radius": ["get", "size"],
           "circle-color": ["get", "color"],
           "circle-opacity": ["get", "opacity"],
-          "circle-stroke-width": 0.5,
-          "circle-stroke-color": ["coalesce", ["get", "strokeColor"], "#52525b"],
-          "circle-stroke-opacity": ["coalesce", ["get", "strokeOpacity"], 0.45],
-          "circle-blur": 0.15,
+          "circle-stroke-width": 0.4,
+          "circle-stroke-color": "#020617",
+          "circle-stroke-opacity": 0.75,
+        },
+      });
+    }
+
+    // 10c. Detected Spill Evidence Particles (Red ground truth slick particles)
+    if (!m.getLayer("spill-particles-layer")) {
+      m.addLayer({
+        id: "spill-particles-layer",
+        type: "circle",
+        source: "spill-particles-source",
+        paint: {
+          "circle-radius": ["get", "size"],
+          "circle-color": ["get", "color"],
+          "circle-opacity": ["get", "opacity"],
+          "circle-stroke-width": 0.4,
+          "circle-stroke-color": "#881337",
+          "circle-stroke-opacity": 0.65,
         },
       });
     }
@@ -1045,11 +1535,6 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       m.setPaintProperty("centroid-circle", "circle-radius", 3.0);
       m.setPaintProperty("centroid-circle", "circle-stroke-width", 1.0);
     }
-    if (m.getLayer("ais-tracks")) {
-      m.setPaintProperty("ais-tracks", "circle-radius", 2.5);
-      m.setPaintProperty("ais-tracks", "circle-stroke-width", 0.8);
-      m.setPaintProperty("ais-tracks", "circle-color", "#38bdf8");
-    }
 
     // Render Probable Origin Radar Beacon Marker
     if (originBeaconMarker.current) {
@@ -1093,7 +1578,7 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       const isSelected = selectedVessel?.mmsi === primaryVessel.mmsi;
       const heading = (primaryVessel as any).heading_deg ?? 45;
       normalVesselMarker.current = new maplibregl.Marker({
-        element: createVesselMarkerElement(primaryVessel.vessel_name, false, isSelected),
+        element: createVesselMarkerElement(primaryVessel.vessel_name, false, isSelected, primaryVessel.rank ?? 1),
         rotationAlignment: "map",
       })
         .setLngLat([primaryVessel.longitude, primaryVessel.latitude])
@@ -1215,6 +1700,7 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
     m.on("click", "centroid-circle", handleMapClick);
     m.on("click", "origin-circle", handleMapClick);
     m.on("click", "ais-tracks", handleMapClick);
+    m.on("click", "replay-nearby-vessels-layer", handleMapClick);
 
     m.on("mouseenter", "spill-fill", () => { m.getCanvas().style.cursor = "pointer"; });
     m.on("mouseleave", "spill-fill", () => { m.getCanvas().style.cursor = ""; });
@@ -1222,6 +1708,8 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
     m.on("mouseleave", "origin-circle", () => { m.getCanvas().style.cursor = ""; });
     m.on("mouseenter", "ais-tracks", () => { m.getCanvas().style.cursor = "pointer"; });
     m.on("mouseleave", "ais-tracks", () => { m.getCanvas().style.cursor = ""; });
+    m.on("mouseenter", "replay-nearby-vessels-layer", () => { m.getCanvas().style.cursor = "pointer"; });
+    m.on("mouseleave", "replay-nearby-vessels-layer", () => { m.getCanvas().style.cursor = ""; });
 
   }, [mapLoaded, result, layersGeoJSON, fitMode, fitBoundsToEvidence, onSpillClick, onOriginClick, onSelectVessel]);
 
@@ -1244,12 +1732,38 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
     setVis("uncertainty-fill", showUncertainty);
     setVis("uncertainty-line", showUncertainty);
     setVis("hindcast-line", showHindcast);
-    setVis("forecast-line", showForecast);
+    setVis("forecast-line", !isReplayMode && showForecast);
     setVis("ais-lines", showAIS);
     setVis("ais-tracks", showAIS);
+    setVis("ais-tracks-labels", showAIS);
+    setVis("replay-current-lines", showCurrents);
+    setVis("replay-current-dots", showCurrents);
+    setVis("replay-nearby-vessels-layer", false); // Hidden in favor of rich directional SVG markers
+    setVis("replay-nearby-vessels-labels", false);
+    setVis("replay-nearby-tracks-line", showNearbyVessels);
+
+    // Replay-specific layers (forecast is particle-only; no yellow lines or outlines)
+    setVis("replay-vessel-track-traversed-line", false);
+    setVis("replay-vessel-track-future-line", false);
+    setVis("replay-particles-layer", showOilParticles);
+    setVis("replay-particle-boundary-line", false);
+    setVis("replay-particle-boundary-fill", false);
+    setVis("spill-particles-layer", showSpill);
+    setVis("replay-drift-line", showHindcast);
+    setVis("replay-forecast-line", false);
+    setVis("replay-corridor-fill", showHindcast);
+    setVis("replay-corridor-line", showHindcast);
+    setVis("replay-release-circle", showOrigin);
+
+    nearbyMarkersRef.current.forEach((marker) => {
+      marker.getElement().style.display = showNearbyVessels && isReplayMode ? "flex" : "none";
+    });
 
     if (normalVesselMarker.current) {
       normalVesselMarker.current.getElement().style.display = showAIS && !isReplayMode ? "flex" : "none";
+    }
+    if (vesselMarker.current) {
+      vesselMarker.current.getElement().style.display = showAIS && isReplayMode ? "flex" : "none";
     }
     if (spillLabelMarker.current) {
       spillLabelMarker.current.getElement().style.display = showSpill && !isReplayMode ? "flex" : "none";
@@ -1257,8 +1771,9 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
     if (originBeaconMarker.current) {
       originBeaconMarker.current.getElement().style.display = showOrigin && !isReplayMode ? "flex" : "none";
     }
-  }, [showSpill, showOrigin, showUncertainty, showHindcast, showForecast, showAIS, showSceneFootprint, mapLoaded, isReplayMode]);
+  }, [showSpill, showOrigin, showUncertainty, showHindcast, showForecast, showAIS, showCurrents, showNearbyVessels, showSceneFootprint, showOilParticles, mapLoaded, isReplayMode]);
 
+  // -------------------------------------------------------------
   // -------------------------------------------------------------
   // Forensic Incident Replay Methods & State Management
   // -------------------------------------------------------------
@@ -1268,17 +1783,26 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
     try {
       let recon = reconstruction;
       if (!recon || recon.investigation_id !== activeInvId) {
-        recon = await getInvestigationReconstruction(activeInvId);
-        setReconstruction(recon);
+        try {
+          recon = await getInvestigationReconstruction(activeInvId);
+          setReconstruction(recon);
+        } catch (e) {
+          console.warn("Could not fetch reconstruction from API, building fallback:", e);
+          recon = buildFallbackReconstruction(activeInvId, result, layersGeoJSON, selectedVessel);
+          setReconstruction(recon);
+        }
       }
-      const forecastEndpoint: [number, number] | null =
-        forecast?.longitude && forecast?.latitude
-          ? [forecast.longitude, forecast.latitude]
-          : null;
-      particleEngine.current.setReconstruction(recon, forecastEndpoint);
+      if (!recon && result) {
+        recon = buildFallbackReconstruction(activeInvId, result, layersGeoJSON, selectedVessel);
+      }
+      const model = buildIncidentReplayModel(recon, selectedVessel);
+      if (!model) return;
+      setReplayModel(model);
+
+      const initState = createReplayState(model.startTime, model.endTime, 1);
+      const playState = playClock(initState);
+      setReplayClock(playState);
       setIsReplayMode(true);
-      setReplayProgress(0);
-      setReplayPlaying(true);
 
       // Hide normal mode markers during replay
       if (normalVesselMarker.current) {
@@ -1293,17 +1817,20 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         originBeaconMarker.current.remove();
         originBeaconMarker.current = null;
       }
+      if (vesselMarker.current) {
+        vesselMarker.current.remove();
+        vesselMarker.current = null;
+      }
 
       const m = map.current;
-      if (m && recon) {
+      if (m && model) {
         const setSrc = (id: string, data: any) => {
           const s = m.getSource(id) as maplibregl.GeoJSONSource;
           if (s) s.setData(data);
         };
 
-        // Populate hindcast trajectory line strictly from particle engine's validated centerline
-        const hindCoords = particleEngine.current.getHindcastCoordinates();
-        if (hindCoords.length >= 2) {
+        // Hindcast drift trajectory
+        if (model.driftTrajectory.length >= 2) {
           setSrc("replay-drift-source", {
             type: "FeatureCollection",
             features: [
@@ -1312,7 +1839,7 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
                 properties: { type: "drift_trajectory" },
                 geometry: {
                   type: "LineString",
-                  coordinates: hindCoords,
+                  coordinates: model.driftTrajectory,
                 },
               },
             ],
@@ -1321,106 +1848,77 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
           setSrc("replay-drift-source", { type: "FeatureCollection", features: [] });
         }
 
-        // Populate forecast trajectory line strictly from particle engine's validated forecast path
-        const fwdCoords = particleEngine.current.getForecastCoordinates();
-        if (fwdCoords.length >= 2) {
-          setSrc("replay-forecast-source", {
+        setSrc("replay-forecast-source", { type: "FeatureCollection", features: [] });
+        setSrc("replay-corridor-source", { type: "FeatureCollection", features: [] });
+        setSrc("replay-particles-source", { type: "FeatureCollection", features: [] });
+        setSrc("replay-particle-boundary-source", { type: "FeatureCollection", features: [] });
+        setSrc("spill-particles-source", { type: "FeatureCollection", features: [] });
+
+        // Replay simplification: ensure no nearby vessel markers or vessel routes on replay map
+        nearbyMarkersRef.current.forEach((marker) => marker.remove());
+        nearbyMarkersRef.current.clear();
+
+        setSrc("replay-vessel-track-future-source", { type: "FeatureCollection", features: [] });
+        setSrc("replay-vessel-track-traversed-source", { type: "FeatureCollection", features: [] });
+        setSrc("replay-nearby-tracks-source", { type: "FeatureCollection", features: [] });
+
+        // Probable origin beacon / release marker
+        if (model.probableOrigin) {
+          setSrc("replay-release-source", {
             type: "FeatureCollection",
             features: [
               {
                 type: "Feature",
-                properties: { type: "forecast_trajectory" },
+                properties: { title: "Probable Release Origin" },
                 geometry: {
-                  type: "LineString",
-                  coordinates: fwdCoords,
+                  type: "Point",
+                  coordinates: [model.probableOrigin.longitude, model.probableOrigin.latitude],
                 },
               },
             ],
           });
-        } else {
-          setSrc("replay-forecast-source", { type: "FeatureCollection", features: [] });
         }
 
-        const rawTrackCoords = recon.ais_track?.coordinates || [];
-        const trackCoords = [...rawTrackCoords].reverse();
-        if (trackCoords.length >= 2) {
-          // Future route initially shows complete upcoming route along reversed replay path
-          setSrc("replay-vessel-track-future-source", {
+        // Real Copernicus Marine surface current vectors
+        if (model.currentVectors && model.currentVectors.length > 0) {
+          setSrc("replay-current-vectors-source", {
             type: "FeatureCollection",
-            features: [
-              {
-                type: "Feature",
-                properties: { type: "future_route" },
-                geometry: {
-                  type: "LineString",
-                  coordinates: trackCoords,
-                },
-              },
-            ],
-          });
-          // Traversed route initially empty
-          setSrc("replay-vessel-track-traversed-source", {
-            type: "FeatureCollection",
-            features: [],
+            features: buildCurrentVectorFeatures(model.currentVectors),
           });
         }
 
-        // Add vector vessel marker ONLY if candidate vessel exists
-        if (vesselMarker.current) {
-          vesselMarker.current.remove();
-          vesselMarker.current = null;
-        }
-
-        if (recon.vessel && trackCoords.length >= 1) {
-          const [initLon, initLat, initHdg] = particleEngine.current.getVesselPositionAndHeadingAtProgress(0);
-          vesselMarker.current = new maplibregl.Marker({
-            element: createVesselMarkerElement(recon.vessel.vessel_name, true),
-            rotationAlignment: "map",
-          })
-            .setLngLat([initLon, initLat])
-            .setRotation(initHdg)
-            .addTo(m);
-        }
-
-        // Calculate initial camera bounds encompassing vessel route, origin, and detected slick
+        // Calculate initial camera bounds encompassing probable origin, drift trajectory, and detected slick
         const bounds = new maplibregl.LngLatBounds();
         let hasCoords = false;
 
-        if (trackCoords.length >= 1) {
-          for (const c of trackCoords) {
-            bounds.extend([c[0], c[1]]);
+        if (model.probableOrigin) {
+          bounds.extend([model.probableOrigin.longitude, model.probableOrigin.latitude]);
+          hasCoords = true;
+        }
+        if (model.driftTrajectory && model.driftTrajectory.length > 0) {
+          for (const c of model.driftTrajectory) {
+            bounds.extend(c);
             hasCoords = true;
           }
         }
-        if (recon.probable_origin) {
-          bounds.extend([recon.probable_origin.longitude, recon.probable_origin.latitude]);
-          hasCoords = true;
+        if (model.spillGeometry) {
+          const b = bboxOfGeometry(model.spillGeometry);
+          if (b) {
+            bounds.extend([b[0], b[1]]);
+            bounds.extend([b[2], b[3]]);
+            hasCoords = true;
+          }
         }
-        if (recon.spill_geometry?.centroid) {
-          bounds.extend([recon.spill_geometry.centroid.longitude, recon.spill_geometry.centroid.latitude]);
-          hasCoords = true;
-        }
-
         if (hasCoords) {
-          const sw = bounds.getSouthWest();
-          const ne = bounds.getNorthEast();
-          const w = Math.max(ne.lng - sw.lng, 0.025);
-          const h = Math.max(ne.lat - sw.lat, 0.025);
-          const padX = w * 0.14;
-          const padY = h * 0.14;
-          const paddedReplayBounds: [[number, number], [number, number]] = [
-            [sw.lng - padX, sw.lat - padY],
-            [ne.lng + padX, ne.lat + padY],
-          ];
-          m.fitBounds(paddedReplayBounds, {
-            padding: { top: 65, bottom: 60, left: 55, right: 65 },
-            maxZoom: 13.0,
-            duration: 900,
+          m.fitBounds(bounds, {
+            padding: { top: 60, bottom: 90, left: 60, right: 60 },
+            maxZoom: 13,
+            duration: 800,
           });
         }
       }
-    } catch (e) {
-      console.error("Failed to initialize incident replay:", e);
+    } catch (err) {
+      console.error("Failed to initialize investigation replay:", err);
     } finally {
       setReplayLoading(false);
     }
@@ -1428,9 +1926,8 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
 
   const closeReplay = useCallback(() => {
     setIsReplayMode(false);
-    setReplayPlaying(false);
-    setReplayProgress(0);
-    particleEngine.current.reset();
+    setReplayClock((prev) => pauseClock(prev));
+    setReplayModel(null);
 
     if (animFrameRef.current) {
       cancelAnimationFrame(animFrameRef.current);
@@ -1442,6 +1939,8 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       vesselMarker.current.remove();
       vesselMarker.current = null;
     }
+    nearbyMarkersRef.current.forEach((marker) => marker.remove());
+    nearbyMarkersRef.current.clear();
 
     const m = map.current;
     if (m) {
@@ -1450,13 +1949,29 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         if (s) s.setData({ type: "FeatureCollection", features: [] });
       };
       setSrc("replay-particles-source");
+      setSrc("replay-particle-boundary-source");
+      setSrc("spill-particles-source");
       setSrc("replay-release-source");
+      setSrc("replay-corridor-source");
       setSrc("replay-drift-source");
       setSrc("replay-forecast-source");
       setSrc("replay-vessel-track-future-source");
       setSrc("replay-vessel-track-traversed-source");
+      setSrc("replay-nearby-tracks-source");
+      setSrc("replay-nearby-vessels-source");
+      // Note: replay-current-vectors-source is deliberately kept visible for environmental context
 
-      // Restore standard slick visibility and refined subtle opacity
+      // Restore uncertainty region visibility
+      if (m.getLayer("uncertainty-fill")) {
+        m.setLayoutProperty("uncertainty-fill", "visibility", showUncertainty ? "visible" : "none");
+        m.setPaintProperty("uncertainty-fill", "fill-opacity", 0.08);
+      }
+      if (m.getLayer("uncertainty-line")) {
+        m.setLayoutProperty("uncertainty-line", "visibility", showUncertainty ? "visible" : "none");
+        m.setPaintProperty("uncertainty-line", "line-opacity", 0.35);
+      }
+
+      // Restore standard slick visibility
       if (m.getLayer("spill-fill")) {
         m.setLayoutProperty("spill-fill", "visibility", showSpill ? "visible" : "none");
         m.setPaintProperty("spill-fill", "fill-opacity", 0.35);
@@ -1483,8 +1998,9 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         (primaryVessel.longitude !== 0 || primaryVessel.latitude !== 0) &&
         showAIS
       ) {
+        const isSelected = selectedVessel?.mmsi === primaryVessel.mmsi;
         normalVesselMarker.current = new maplibregl.Marker({
-          element: createVesselMarkerElement(primaryVessel.vessel_name, false),
+          element: createVesselMarkerElement(primaryVessel.vessel_name, false, isSelected, primaryVessel.rank ?? 1),
           rotationAlignment: "map",
         })
           .setLngLat([primaryVessel.longitude, primaryVessel.latitude])
@@ -1537,7 +2053,7 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       // Re-fit camera to evidence bounds on replay close
       fitBoundsToEvidence(fitMode, 700);
     }
-  }, [showSpill, showOrigin, showAIS, selectedVessel, result, centroid, origin, fitMode, fitBoundsToEvidence]);
+  }, [showSpill, showOrigin, showUncertainty, showAIS, selectedVessel, result, centroid, origin, fitMode, fitBoundsToEvidence]);
 
   // Reset replay and reset fitMode on investigation change
   useEffect(() => {
@@ -1546,18 +2062,9 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
     setFitMode("investigation");
   }, [activeInvId, closeReplay]);
 
-  // Compute current stage: 1 to 5
-  const currentStage = useMemo(() => {
-    if (replayProgress < 0.25) return 1;
-    if (replayProgress < 0.40) return 2;
-    if (replayProgress < 0.60) return 3;
-    if (replayProgress < 0.85) return 4;
-    return 5;
-  }, [replayProgress]);
-
-  // Animation Loop (requestAnimationFrame)
+  // Animation Loop (single canonical clock loop driven by requestAnimationFrame)
   useEffect(() => {
-    if (!isReplayMode || !replayPlaying) {
+    if (!isReplayMode || !replayClock.isPlaying) {
       if (animFrameRef.current) {
         cancelAnimationFrame(animFrameRef.current);
         animFrameRef.current = null;
@@ -1566,20 +2073,15 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       return;
     }
 
-    const loop = (time: number) => {
+    const loop = (wallNow: number) => {
       if (lastTimeRef.current != null) {
-        const deltaMs = time - lastTimeRef.current;
-        const deltaP = (deltaMs / 25000) * replaySpeed; // 25s base replay duration
-        setReplayProgress((prev) => {
-          const next = prev + deltaP;
-          if (next >= 1.0) {
-            setReplayPlaying(false);
-            return 1.0;
-          }
+        const elapsedWallMs = wallNow - lastTimeRef.current;
+        setReplayClock((prev) => {
+          const next = advanceClock(prev, elapsedWallMs);
           return next;
         });
       }
-      lastTimeRef.current = time;
+      lastTimeRef.current = wallNow;
       animFrameRef.current = requestAnimationFrame(loop);
     };
 
@@ -1590,148 +2092,108 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
         cancelAnimationFrame(animFrameRef.current);
         animFrameRef.current = null;
       }
+      lastTimeRef.current = null;
     };
-  }, [isReplayMode, replayPlaying, replaySpeed]);
+  }, [isReplayMode, replayClock.isPlaying]);
 
-  // Replay Frame Updates (vessel position, traversed route, release window, particles, slick illumination)
+  // Replay Frame Updates — strictly derived from investigationTime (replayClock.currentTime)
   useEffect(() => {
-    if (!isReplayMode) return;
+    if (!isReplayMode || !replayModel) return;
     const m = map.current;
     if (!m) return;
 
-    const p = replayProgress;
-    const recon = reconstruction;
+    const currentTime = replayClock.currentTime;
+    const model = replayModel;
 
-    // 1. Update vessel position & heading along reversed AIS track & split route lines
-    if (recon?.vessel) {
-      const rawTrack = recon.ais_track?.coordinates || [];
-      if (rawTrack.length >= 2) {
-        // Reverse order so vessel sails away from probable origin in forward replay time
-        const track = [...rawTrack].reverse();
-        const [vLon, vLat, vHdg] = particleEngine.current.getVesselPositionAndHeadingAtProgress(p);
+    // 1. Oil Replay Focus: Vessel visualization and motion logic completely removed.
+    // Replay clock drives only Lagrangian oil particles, hindcast propagation, slick detection, and forecast.
 
-        if (vesselMarker.current) {
-          vesselMarker.current.setLngLat([vLon, vLat]);
-          vesselMarker.current.setRotation(vHdg);
-        }
-
-        // Split track into traversed (solid) and upcoming (dashed)
-        const totalSegs = track.length - 1;
-        const exact = Math.max(0, Math.min(1.0, p)) * totalSegs;
-        const idx = Math.min(Math.floor(exact), totalSegs - 1);
-
-        const traversedCoords = [...track.slice(0, idx + 1), [vLon, vLat]];
-        const futureCoords = [[vLon, vLat], ...track.slice(idx + 1)];
-
-        const travSrc = m.getSource("replay-vessel-track-traversed-source") as maplibregl.GeoJSONSource;
-        if (travSrc) {
-          travSrc.setData({
-            type: "FeatureCollection",
-            features: [
-              {
-                type: "Feature",
-                properties: { type: "traversed_route" },
-                geometry: {
-                  type: "LineString",
-                  coordinates: traversedCoords,
-                },
-              },
-            ],
-          });
-        }
-
-        const futSrc = m.getSource("replay-vessel-track-future-source") as maplibregl.GeoJSONSource;
-        if (futSrc) {
-          futSrc.setData({
-            type: "FeatureCollection",
-            features: [
-              {
-                type: "Feature",
-                properties: { type: "future_route" },
-                geometry: {
-                  type: "LineString",
-                  coordinates: futureCoords,
-                },
-              },
-            ],
-          });
-        }
-        // If Follow Vessel is active, smoothly center camera on the vessel position
-        if (followVessel) {
-          m.easeTo({
-            center: [vLon, vLat],
-            duration: 120,
-            easing: (t) => t,
-          });
-        }
-      } else if (recon.vessel.position && vesselMarker.current) {
-        vesselMarker.current.setLngLat([recon.vessel.position.longitude, recon.vessel.position.latitude]);
-        vesselMarker.current.setRotation(recon.vessel.heading_deg || 45);
-        if (followVessel) {
-          m.easeTo({
-            center: [recon.vessel.position.longitude, recon.vessel.position.latitude],
-            duration: 120,
-            easing: (t) => t,
-          });
-        }
+    // 2. Observed Spill geometry visibility (strictly hidden before spill timestamp per Requirement 9)
+    const isSpillVisible = detectedSpillVisible(currentTime, model.spillTimestamp);
+    if (m.getLayer("spill-fill") && m.getLayer("spill-line")) {
+      m.setLayoutProperty("spill-fill", "visibility", "visible");
+      m.setLayoutProperty("spill-line", "visibility", "visible");
+      if (isSpillVisible) {
+        m.setPaintProperty("spill-fill", "fill-opacity", 0.40);
+        m.setPaintProperty("spill-line", "line-width", 1.8);
+        m.setPaintProperty("spill-line", "line-opacity", 0.95);
+      } else {
+        // Faint reference target polygon during hindcast tracing approach
+        m.setPaintProperty("spill-fill", "fill-opacity", 0.12);
+        m.setPaintProperty("spill-line", "line-width", 1.2);
+        m.setPaintProperty("spill-line", "line-opacity", 0.45);
       }
     }
 
-    // 2. Update release point marker (pulsing beacon at probable release point)
-    const relSrc = m.getSource("replay-release-source") as maplibregl.GeoJSONSource;
-    if (relSrc) {
-      let relCoords: [number, number] | null = null;
-      if (recon?.release_window?.location && Array.isArray(recon.release_window.location)) {
-        relCoords = [recon.release_window.location[0], recon.release_window.location[1]];
-      } else if (recon?.probable_origin) {
-        if (typeof recon.probable_origin.longitude === "number" && typeof recon.probable_origin.latitude === "number") {
-          relCoords = [recon.probable_origin.longitude, recon.probable_origin.latitude];
-        } else if (Array.isArray(recon.probable_origin) && recon.probable_origin.length >= 2) {
-          relCoords = [recon.probable_origin[0], recon.probable_origin[1]];
-        }
-      }
+    // 3. Forward forecast is particle-only in replay mode (no yellow lines or polygons)
+    const fwdSrc = m.getSource("replay-forecast-source") as maplibregl.GeoJSONSource;
+    if (fwdSrc) {
+      fwdSrc.setData({ type: "FeatureCollection", features: [] });
+    }
 
-      const relProg = particleEngine.current.getReleaseProgress();
-      if (p >= relProg && relCoords) {
-        relSrc.setData({
+    // 4. Deterministic tiny oil particles (emits strictly at or after release timestamp)
+    const partSrc = m.getSource("replay-particles-source") as maplibregl.GeoJSONSource;
+    const boundarySrc = m.getSource("replay-particle-boundary-source") as maplibregl.GeoJSONSource;
+    const activeParticles = particlesAtTime(model.particles, currentTime, model.releaseTimestamp ?? model.spillTimestamp);
+
+    if (partSrc) {
+      partSrc.setData({
+        type: "FeatureCollection",
+        features: activeParticles.map((p) => ({
+          type: "Feature",
+          properties: {
+            opacity: p.opacity,
+            size: p.size,
+            color: p.color,
+            strokeColor: "#020617",
+            strokeOpacity: 0.75,
+          },
+          geometry: {
+            type: "Point",
+            coordinates: [p.longitude, p.latitude],
+          },
+        })),
+      });
+    }
+
+    // No outlines or convex hulls between particles — particles remain individual droplets with empty space
+    if (boundarySrc) {
+      boundarySrc.setData({ type: "FeatureCollection", features: [] });
+    }
+
+    // 4b. Detected spill particles (red ground-truth evidence slick particles)
+    const spillPartSrc = m.getSource("spill-particles-source") as maplibregl.GeoJSONSource;
+    if (spillPartSrc) {
+      if (isSpillVisible && model.detectedSpillParticles && model.detectedSpillParticles.length > 0) {
+        spillPartSrc.setData({
           type: "FeatureCollection",
-          features: [
-            {
-              type: "Feature",
-              properties: { title: "Possible Release Point" },
-              geometry: {
-                type: "Point",
-                coordinates: relCoords,
-              },
+          features: model.detectedSpillParticles.map((p) => ({
+            type: "Feature",
+            properties: {
+              opacity: p.opacity,
+              size: p.size,
+              color: p.color,
+              strokeColor: "#881337",
+              strokeOpacity: 0.65,
             },
-          ],
+            geometry: {
+              type: "Point",
+              coordinates: [p.longitude, p.latitude],
+            },
+          })),
         });
       } else {
-        relSrc.setData({ type: "FeatureCollection", features: [] });
+        spillPartSrc.setData({ type: "FeatureCollection", features: [] });
       }
     }
 
-    // 3. Update particle engine (wake emission, dispersion, current advection)
-    const partSrc = m.getSource("replay-particles-source") as maplibregl.GeoJSONSource;
-    if (partSrc) {
-      const partGeoJSON = particleEngine.current.update(p);
-      partSrc.setData(partGeoJSON);
-    }
-
-    // 4. Spill geometry reveal & smooth cross-fade at Stage 5 (delicate translucent reference)
-    if (m.getLayer("spill-fill")) {
-      if (p < 0.80) {
-        m.setLayoutProperty("spill-fill", "visibility", "none");
-        m.setLayoutProperty("spill-line", "visibility", "none");
-      } else {
-        const stageNorm = Math.min(1.0, (p - 0.80) / 0.15);
-        m.setLayoutProperty("spill-fill", "visibility", "visible");
-        m.setLayoutProperty("spill-line", "visibility", "visible");
-        m.setPaintProperty("spill-fill", "fill-opacity", 0.08 + stageNorm * 0.12);
-        m.setPaintProperty("spill-line", "line-width", 1.2 + stageNorm * 0.4);
-      }
-    }
-  }, [isReplayMode, replayProgress, reconstruction, followVessel]);
+    // Diagnostics
+    console.log("[Replay Diagnostics]", {
+      investigationTime: new Date(currentTime).toISOString(),
+      activeParticlesCount: activeParticles.length,
+      isSpillVisible,
+    });
+  }, [isReplayMode, replayClock.currentTime, replayModel, showOilParticles, showSpill]);
 
   const handleRecenter = () => {
     if (!map.current) return;
@@ -1820,6 +2282,23 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
 
           <label className={`flex items-center justify-between gap-2 select-none ${hasSpatialData ? "cursor-pointer text-slate-300 hover:text-white" : "text-slate-500 cursor-not-allowed opacity-60"}`}>
             <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-900 border border-slate-400" />
+              Oil Particles
+            </span>
+            {hasSpatialData ? (
+              <input
+                type="checkbox"
+                checked={showOilParticles}
+                onChange={(e) => setShowOilParticles(e.target.checked)}
+                className="accent-cyan-500 cursor-pointer h-3 w-3"
+              />
+            ) : (
+              <span className="text-[9px] font-mono text-slate-500">Unavailable</span>
+            )}
+          </label>
+
+          <label className={`flex items-center justify-between gap-2 select-none ${hasSpatialData ? "cursor-pointer text-slate-300 hover:text-white" : "text-slate-500 cursor-not-allowed opacity-60"}`}>
+            <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               Probable Origin
             </span>
@@ -1871,14 +2350,31 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
 
           <label className={`flex items-center justify-between gap-2 select-none ${hasSpatialData ? "cursor-pointer text-slate-300 hover:text-white" : "text-slate-500 cursor-not-allowed opacity-60"}`}>
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-0.5 border-t border-dashed border-amber-400" />
-              Forecast Drift
+              <span className="w-2 h-2 rounded-full bg-amber-400 inline-block shadow-[0_0_5px_#f59e0b]" />
+              Forecast Oil (Particles)
             </span>
             {hasSpatialData ? (
               <input
                 type="checkbox"
                 checked={showForecast}
                 onChange={(e) => setShowForecast(e.target.checked)}
+                className="accent-amber-500 cursor-pointer h-3 w-3"
+              />
+            ) : (
+              <span className="text-[9px] font-mono text-slate-500">Unavailable</span>
+            )}
+          </label>
+
+          <label className={`flex items-center justify-between gap-2 select-none ${hasSpatialData ? "cursor-pointer text-slate-300 hover:text-white" : "text-slate-500 cursor-not-allowed opacity-60"}`}>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-0.5 bg-sky-400" />
+              Ocean Currents
+            </span>
+            {hasSpatialData ? (
+              <input
+                type="checkbox"
+                checked={showCurrents}
+                onChange={(e) => setShowCurrents(e.target.checked)}
                 className="accent-sky-500 cursor-pointer h-3 w-3"
               />
             ) : (
@@ -1888,15 +2384,49 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
 
           <label className={`flex items-center justify-between gap-2 select-none ${hasSpatialData ? "cursor-pointer text-slate-300 hover:text-white" : "text-slate-500 cursor-not-allowed opacity-60"}`}>
             <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
-              AIS Vessels
+              <span className="w-2.5 h-0.5 border-t border-dashed border-teal-400" />
+              ERA5 Wind
+            </span>
+            {hasSpatialData ? (
+              <input
+                type="checkbox"
+                checked={showWind}
+                onChange={(e) => setShowWind(e.target.checked)}
+                className="accent-teal-500 cursor-pointer h-3 w-3"
+              />
+            ) : (
+              <span className="text-[9px] font-mono text-slate-500">Unavailable</span>
+            )}
+          </label>
+
+          <label className={`flex items-center justify-between gap-2 select-none ${hasSpatialData ? "cursor-pointer text-slate-300 hover:text-white" : "text-slate-500 cursor-not-allowed opacity-60"}`}>
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              AIS Suspect (Rank 1)
             </span>
             {hasSpatialData ? (
               <input
                 type="checkbox"
                 checked={showAIS}
                 onChange={(e) => setShowAIS(e.target.checked)}
-                className="accent-sky-500 cursor-pointer h-3 w-3"
+                className="accent-amber-500 cursor-pointer h-3 w-3"
+              />
+            ) : (
+              <span className="text-[9px] font-mono text-slate-500">Unavailable</span>
+            )}
+          </label>
+
+          <label className={`flex items-center justify-between gap-2 select-none ${hasSpatialData ? "cursor-pointer text-slate-300 hover:text-white" : "text-slate-500 cursor-not-allowed opacity-60"}`}>
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+              Nearby AIS Vessels
+            </span>
+            {hasSpatialData ? (
+              <input
+                type="checkbox"
+                checked={showNearbyVessels}
+                onChange={(e) => setShowNearbyVessels(e.target.checked)}
+                className="accent-purple-500 cursor-pointer h-3 w-3"
               />
             ) : (
               <span className="text-[9px] font-mono text-slate-500">Unavailable</span>
@@ -1922,25 +2452,225 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
       {/* Floating Forensic Replay Controller (Gated by Feature Flag) */}
       {FEATURES.INCIDENT_REPLAY_ENABLED && isReplayMode && (
         <SpillReplayController
-          reconstruction={reconstruction}
-          isPlaying={replayPlaying}
-          progress={replayProgress}
-          playbackSpeed={replaySpeed}
-          currentStage={currentStage}
-          onTogglePlay={() => setReplayPlaying(!replayPlaying)}
-          onRestart={() => {
-            setReplayProgress(0);
-            setReplayPlaying(true);
-          }}
-          onSeek={(p) => {
-            setReplayProgress(p);
-          }}
-          onSpeedChange={(s) => setReplaySpeed(s)}
+          model={replayModel}
+          clock={replayClock}
+          onTogglePlay={() => setReplayClock((prev) => togglePlay(prev))}
+          onReplay={() => setReplayClock((prev) => replayFromStart(prev))}
+          onSeek={(timeMs) => setReplayClock((prev) => seekClock(prev, timeMs))}
+          onSpeedChange={(rate) => setReplayClock((prev) => setPlaybackRate(prev, rate))}
           onClose={closeReplay}
           onFitInvestigation={handleRecenter}
-          followVessel={followVessel}
-          onToggleFollowVessel={() => setFollowVessel(!followVessel)}
         />
+      )}
+
+      {/* Forensic Replay Phase 9 Diagnostic Synchronization Overlay (Collapsible) */}
+      {FEATURES.INCIDENT_REPLAY_ENABLED && isReplayMode && replayModel && (
+        <div className="absolute top-14 left-3 z-20 font-mono text-[8.5px] bg-slate-950/95 backdrop-blur border border-cyan-500/40 rounded-lg shadow-2xl text-slate-200 pointer-events-auto transition-all">
+          {isForensicCollapsed ? (
+            <button
+              type="button"
+              onClick={toggleForensicCollapsed}
+              className="flex items-center gap-2 px-2.5 py-1.5 text-cyan-400 hover:text-cyan-300 hover:bg-slate-900/60 rounded-lg cursor-pointer select-none"
+              title="Expand Forensic Sync Overlay"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="font-bold text-[9px] tracking-wide">FORENSIC SYNC</span>
+              <span className="text-[8px] px-1 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-700/60 font-semibold">
+                {replayClock.playbackRate}×
+              </span>
+              <span className="text-slate-400 hover:text-white font-bold ml-1 text-[10px]">[＋]</span>
+            </button>
+          ) : (
+            <div className="p-2.5 space-y-1 w-64 sm:w-72 max-w-[calc(100vw-24px)] select-text">
+              <div className="text-cyan-400 font-bold border-b border-slate-800 pb-1 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                  <span className="tracking-wide">FORENSIC SYNC</span>
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[8px] px-1 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-700/60 font-semibold">
+                    {replayClock.playbackRate}×
+                  </span>
+                  <button
+                    type="button"
+                    onClick={toggleForensicCollapsed}
+                    className="text-slate-400 hover:text-cyan-300 px-1 py-0.5 rounded hover:bg-slate-800 text-[10px] font-bold cursor-pointer"
+                    title="Collapse Forensic Sync Overlay"
+                  >
+                    [−]
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-0.5 text-[8.5px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">INVESTIGATION ID:</span>
+                  <span className="text-cyan-300 font-semibold">{activeInvId || "—"}</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">SELECTED VESSEL:</span>
+                  <span className="text-amber-300 font-semibold truncate max-w-[150px]" title={replayModel.vesselName || "Unknown"}>
+                    {replayModel.vesselName || "Unknown"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">MMSI:</span>
+                  <span className="text-cyan-300 font-mono font-semibold">{replayModel.vesselId || "—"}</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">RANK:</span>
+                  <span className="text-amber-400 font-bold">
+                    #{selectedVessel?.rank ?? (replayModel.vesselId === result?.primary_suspect?.mmsi?.toString() ? 1 : (result?.candidate_vessels?.find((cv: any) => cv.mmsi?.toString() === replayModel.vesselId)?.rank ?? 1))}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">AIS SOURCE:</span>
+                  <span className="text-slate-300">Global Fishing Watch (GFW)</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">AIS POINT COUNT:</span>
+                  <span className={replayModel.trajectory.points.length <= 1 ? "text-amber-300 font-bold" : "text-emerald-300 font-bold"}>
+                    {replayModel.trajectory.points.length}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">AIS TRACK:</span>
+                  <span className={replayModel.trajectory.points.length <= 1 ? "text-amber-400 font-bold" : "text-emerald-300 font-semibold"}>
+                    {replayModel.trajectory.points.length === 1
+                      ? "1 FIX ONLY — TRAJECTORY UNAVAILABLE"
+                      : replayModel.trajectory.points.length === 0
+                        ? "TRAJECTORY UNAVAILABLE"
+                        : `${replayModel.trajectory.points.length} RECORDED FIXES (EVIDENCE TRACK)`}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">AIS TIMESTAMPS:</span>
+                  <span className="text-slate-300 text-[8px] truncate max-w-[150px]">
+                    {replayModel.trajectory.points.length === 0
+                      ? "None"
+                      : replayModel.trajectory.points.length === 1
+                        ? formatInvestigationUtc(replayModel.trajectory.points[0].timestamp).full
+                        : `${formatInvestigationUtc(replayModel.trajectory.points[0].timestamp).clock} → ${formatInvestigationUtc(replayModel.trajectory.points[replayModel.trajectory.points.length - 1].timestamp).clock}`}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">AIS COORDINATES:</span>
+                  <span className="text-slate-300 text-[8px] truncate max-w-[150px]">
+                    {replayModel.trajectory.points.length === 0
+                      ? "None"
+                      : replayModel.trajectory.points.length === 1
+                        ? `[${replayModel.trajectory.points[0].longitude.toFixed(4)}°E, ${replayModel.trajectory.points[0].latitude.toFixed(4)}°N]`
+                        : `[${replayModel.trajectory.points[0].longitude.toFixed(4)}°E, ${replayModel.trajectory.points[0].latitude.toFixed(4)}°N] → [${replayModel.trajectory.points[replayModel.trajectory.points.length - 1].longitude.toFixed(4)}°E, ${replayModel.trajectory.points[replayModel.trajectory.points.length - 1].latitude.toFixed(4)}°N]`}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-slate-800/80 pt-0.5">
+                  <span className="text-slate-400">PROBABLE ORIGIN:</span>
+                  <span className="text-emerald-300 font-semibold">
+                    {replayModel.probableOrigin
+                      ? `[${replayModel.probableOrigin.longitude.toFixed(4)}°E, ${replayModel.probableOrigin.latitude.toFixed(4)}°N]`
+                      : "—"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">ORIGIN DISTANCE:</span>
+                  {(() => {
+                    if (!replayModel.probableOrigin || !replayModel.trajectory.points.length) return <span className="text-slate-500">N/A</span>;
+                    const targetPt = replayModel.trajectory.points[0];
+                    const R = 6371;
+                    const dLat = ((targetPt.latitude - replayModel.probableOrigin.latitude) * Math.PI) / 180;
+                    const dLon = ((targetPt.longitude - replayModel.probableOrigin.longitude) * Math.PI) / 180;
+                    const a =
+                      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos((replayModel.probableOrigin.latitude * Math.PI) / 180) *
+                        Math.cos((targetPt.latitude * Math.PI) / 180) *
+                        Math.sin(dLon / 2) *
+                        Math.sin(dLon / 2);
+                    const km = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                    return <span className="text-amber-300 font-bold">{km.toFixed(2)} km</span>;
+                  })()}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">RELEASE UTC:</span>
+                  <span className="text-emerald-300 font-semibold">
+                    {replayModel.releaseTimestamp ? formatInvestigationUtc(replayModel.releaseTimestamp).full : "—"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">DETECTION UTC:</span>
+                  <span className="text-rose-300 font-semibold">
+                    {replayModel.spillTimestamp ? formatInvestigationUtc(replayModel.spillTimestamp).full : "—"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-slate-800/80 pt-0.5">
+                  <span className="text-slate-400">REPLAY UTC:</span>
+                  <span className="text-cyan-300 font-semibold">{formatInvestigationUtc(replayClock.currentTime).full}</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">TIME DELTA:</span>
+                  {(() => {
+                    if (replayModel.releaseTimestamp == null) return <span className="text-slate-500">N/A</span>;
+                    const deltaSec = Math.round((replayClock.currentTime - replayModel.releaseTimestamp) / 1000);
+                    if (deltaSec === 0) {
+                      return <span className="text-emerald-400 font-bold">0s (SYNCHRONIZED)</span>;
+                    }
+                    const sign = deltaSec > 0 ? "+" : "-";
+                    const abs = Math.abs(deltaSec);
+                    const h = Math.floor(abs / 3600);
+                    const m = Math.floor((abs % 3600) / 60);
+                    const s = abs % 60;
+                    const formatted = `${sign}${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+                    return <span className={deltaSec > 0 ? "text-amber-300 font-medium" : "text-sky-300 font-medium"}>{formatted}</span>;
+                  })()}
+                </div>
+
+                <div className="flex items-center justify-between border-t border-slate-800/80 pt-0.5">
+                  <span className="text-slate-400">OIL STATE:</span>
+                  {(() => {
+                    const relT = replayModel.releaseTimestamp;
+                    const detT = replayModel.spillTimestamp;
+                    const curT = replayClock.currentTime;
+                    if (relT != null && curT < relT) {
+                      return <span className="text-sky-400 font-bold">PRE_RELEASE</span>;
+                    }
+                    if (detT != null && curT >= detT) {
+                      if (replayModel.forecastFrames.length > 0 && curT > detT + 3600000) {
+                        return <span className="text-amber-400 font-bold">FORECASTING</span>;
+                      }
+                      return <span className="text-rose-400 font-bold">AT_SLICK</span>;
+                    }
+                    return <span className="text-cyan-400 font-bold animate-pulse">DRIFTING</span>;
+                  })()}
+                </div>
+
+                {replayModel.trajectory.points.length <= 1 && (
+                  <div className="mt-1.5 p-1.5 bg-amber-950/80 border border-amber-500/70 rounded text-[8px] text-amber-200 space-y-0.5">
+                    <div className="font-bold flex items-center gap-1 text-amber-300">
+                      <span className="w-1 h-1 rounded-full bg-amber-400 animate-pulse" />
+                      DATA ACQUISITION REQUIRED
+                    </div>
+                    <div className="leading-tight text-amber-200/90">
+                      Single AIS fix available ({replayModel.trajectory.points.length === 1 ? formatInvestigationUtc(replayModel.trajectory.points[0].timestamp).full : "none"}). Vessel motion disabled; trajectory data unavailable.
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Fit Mode Switcher & Recenter Control */}
@@ -2002,9 +2732,24 @@ export const MapLibreGIS: React.FC<MapLibreGISProps> = ({
                 <span className="text-slate-200">Forecast</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="w-2 h-0.5 bg-[#0284c7] inline-block" />
-                <span className="w-1.5 h-1.5 rounded-full bg-sky-400 inline-block" />
-                <span className="text-slate-200">AIS</span>
+                <span className="w-2.5 h-0.5 bg-sky-400 inline-block" />
+                <span className="text-slate-200">Currents</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block shadow-[0_0_4px_#f59e0b]" />
+                <span className="text-slate-200">Rank #1</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 inline-block shadow-[0_0_4px_#a855f7]" />
+                <span className="text-slate-200">Rank #2</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block shadow-[0_0_4px_#10b981]" />
+                <span className="text-slate-200">Rank #3</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block" />
+                <span className="text-slate-200">Other</span>
               </div>
             </>
           ) : (

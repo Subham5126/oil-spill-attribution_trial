@@ -178,8 +178,12 @@ export interface CandidateVessel {
   flag?: string;
   latitude?: number;
   longitude?: number;
+  heading_deg?: number;
+  speed_knots?: number;
   timestamp?: string;
   presence_hours?: number;
+  trajectory?: any[];
+  overall_score?: number;
 }
 
 export interface GisExportConfig {

@@ -160,3 +160,67 @@ def test_reconstruction_missing_vessel_honest_status():
     assert rec["ais_track"] is None
     assert rec["timeline"][0]["name"] == "Spill Origin Area"
     assert rec["timeline"][0]["active_vessel"] is False
+
+
+def test_reconstruction_single_fix_ocean_pearl_defensive():
+    mock_db = MagicMock()
+    mock_inv = MagicMock(spec=InvestigationModel)
+    mock_inv.investigation_id = "INV-2026-E8030F"
+    mock_inv.title = "Persian Gulf Oil Spill"
+    mock_inv.region = "Persian Gulf"
+    mock_inv.centroid_lat = 25.59
+    mock_inv.centroid_lon = 54.76
+    mock_inv.spill_area_km2 = 93.7
+    mock_inv.match_confidence = 1.0
+    mock_inv.image_id = "s1_f825dc6f_00054.tif"
+    mock_inv.observation_timestamp = None
+    mock_inv.geojson_layers = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {"layer_type": "oil_spill", "area_sq_km": 93.7},
+                "geometry": {"type": "Polygon", "coordinates": [[[54.7, 25.5], [54.8, 25.5], [54.8, 25.6], [54.7, 25.5]]]},
+            }
+        ]
+    }
+    mock_inv.result_json = {
+        "gis_measurement": {
+            "centroid": {"latitude": 25.59, "longitude": 54.76},
+        },
+        "ocean_drift": {
+            "surface_velocity": {"u_eastward_m_s": -0.017, "v_northward_m_s": -0.021, "speed_m_s": 0.027},
+            "probable_origin": {
+                "latitude": 25.674957,
+                "longitude": 54.888169,
+                "drift_distance_km": 16.3,
+                "timestamp": "2017-03-08T02:15:11+00:00",
+            },
+        },
+        "primary_suspect": {
+            "vessel_name": "OCEAN PEARL",
+            "mmsi": 341335000,
+            "latitude": 25.6,
+            "longitude": 54.700001,
+            "timestamp": "2017-03-08T02:15:11Z",
+        },
+    }
+    mock_db.query.return_value.filter.return_value.first.return_value = mock_inv
+
+    svc = ReconstructionService(mock_db)
+    rec = svc.get_reconstruction("INV-2026-E8030F")
+
+    # Verify single fix behavior
+    assert rec["vessel"]["mmsi"] == 341335000
+    assert rec["vessel"]["vessel_name"] == "OCEAN PEARL"
+    assert rec["vessel"]["has_track"] is False
+    assert rec["vessel"]["position"]["longitude"] == 54.700001
+    assert rec["vessel"]["position"]["latitude"] == 25.600000
+    # Probable origin must remain completely separate
+    assert rec["probable_origin"]["longitude"] == 54.888169
+    assert rec["probable_origin"]["latitude"] == 25.674957
+    assert rec["ais_track"]["coordinates"] == []
+    assert len(rec["ais_track"]["waypoints"]) == 1
+    assert rec["ais_track"]["waypoints"][0]["longitude"] == 54.700001
+    assert rec["ais_track"]["waypoints"][0]["latitude"] == 25.600000
+
