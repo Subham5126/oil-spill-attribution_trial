@@ -29,9 +29,12 @@ import { LiveGISMapPage } from "./pages/LiveGISMapPage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { LoginPage } from "./pages/LoginPage";
+import { ActivateAccountPage } from "./pages/ActivateAccountPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { InvestigationDetailPage } from "./pages/InvestigationDetailPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { AdminUsersPage } from "./pages/AdminUsersPage";
+import { EmployeeManagementPage } from "./pages/EmployeeManagementPage";
 
 export function AppContent() {
   const { isAuthenticated, isLoading: isAuthLoading, user: authUser, logout } = useAuth();
@@ -48,33 +51,6 @@ export function AppContent() {
       return false;
     }
   });
-
-  useEffect(() => {
-    getUserProfile().then((p) => setUserProfile(p)).catch(() => {});
-  }, []);
-
-  // ── Auth guard ─────────────────────────────────────────────────────────────
-  // While the initial /api/auth/me call is in flight, show a neutral loading screen.
-  if (isAuthLoading) {
-    return (
-      <div className="min-h-screen bg-[#070f1a] flex items-center justify-center">
-        <div className="text-slate-500 font-mono text-sm animate-pulse">Verifying session…</div>
-      </div>
-    );
-  }
-
-  // Unauthenticated — always show login regardless of currentPath
-  if (!isAuthenticated) {
-    return (
-      <LoginPage
-        onLoginSuccess={() => {
-          // Force re-render by resetting to dashboard after successful login
-          setCurrentPath("dashboard");
-        }}
-      />
-    );
-  }
-  // ──────────────────────────────────────────────────────────────────────────
 
   const handleToggleSidebar = () => {
     setIsSidebarCollapsed((prev) => {
@@ -97,20 +73,27 @@ export function AppContent() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    getUserProfile().then((p) => setUserProfile(p)).catch(() => {});
+  }, [isAuthenticated]);
+
   // Do NOT auto-select an active investigation on application launch.
   // The user remains on the clean global Dashboard until an investigation is explicitly selected.
   useEffect(() => {
+    if (!isAuthenticated) return;
     // Initial warmup / cache load without forcing active selection
     getInvestigations().catch(() => {});
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     if (activeInvestigationId) {
       getInvestigation(activeInvestigationId).then((inv) => {
         if (inv) setActiveInvestigation(inv);
       });
     }
-  }, [activeInvestigationId]);
+  }, [activeInvestigationId, isAuthenticated]);
 
   // Parse URL on mount and handle browser history
   useEffect(() => {
@@ -164,6 +147,51 @@ export function AppContent() {
       window.history.pushState(null, "", `/investigations/${id}`);
     } catch {}
   };
+
+  // ── Auth guard ─────────────────────────────────────────────────────────────
+  // While the initial /api/auth/me call is in flight, show a neutral loading screen.
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-[#070f1a] flex items-center justify-center">
+        <div className="text-slate-500 font-mono text-sm animate-pulse">Verifying session…</div>
+      </div>
+    );
+  }
+
+  // Activation and password reset flows (accessible without active login session)
+  const pathname = window.location.pathname.toLowerCase();
+  if (pathname === "/activate-account" || pathname === "/activate") {
+    return (
+      <ActivateAccountPage
+        onSuccess={() => {
+          window.location.href = "/";
+        }}
+      />
+    );
+  }
+
+  if (pathname === "/reset-password") {
+    return (
+      <ResetPasswordPage
+        onSuccess={() => {
+          window.location.href = "/";
+        }}
+      />
+    );
+  }
+
+  // Unauthenticated — always show login regardless of currentPath
+  if (!isAuthenticated) {
+    return (
+      <LoginPage
+        onLoginSuccess={() => {
+          // Force re-render by resetting to dashboard after successful login
+          setCurrentPath("dashboard");
+        }}
+      />
+    );
+  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-surface text-on-surface font-sans flex overflow-x-hidden">
@@ -354,6 +382,10 @@ export function AppContent() {
 
           {currentPath === "admin-users" && (
             <AdminUsersPage onNavigate={handleNavigate} />
+          )}
+
+          {currentPath === "employee-management" && (
+            <EmployeeManagementPage onNavigate={handleNavigate} />
           )}
         </main>
       </div>

@@ -6,7 +6,9 @@ describe("Debug AIS Replay", () => {
   it("inspects real investigation reconstruction data", async () => {
     let recon: any = null;
     try {
-      const res = await fetch("http://localhost:8000/api/investigations/INV-2026-C19B59/reconstruction");
+      const res = await fetch("http://localhost:8000/api/investigations/INV-2026-C19B59/reconstruction", {
+        signal: AbortSignal.timeout(1000),
+      });
       if (res.ok) {
         recon = await res.json();
       }

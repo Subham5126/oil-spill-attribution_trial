@@ -118,4 +118,9 @@ def require_role(*roles: str):
             raise _403
         return current_user
 
-    return Depends(_check_role)
+    return _check_role
+
+
+# Convenience dependency for TECH_ADMIN only endpoints
+require_tech_admin = require_role("TECH_ADMIN")
+

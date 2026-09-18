@@ -27,6 +27,7 @@ export type NavPath =
   | "investigation-detail"
   | "profile"
   | "admin-users"
+  | "employee-management"
   | "login";
 
 interface SidebarProps {
@@ -82,6 +83,20 @@ export function Sidebar({
           : []),
       ],
     },
+    ...(userRole === "TECH_ADMIN"
+      ? [
+          {
+            heading: "TECH ADMIN",
+            items: [
+              {
+                path: "employee-management" as NavPath,
+                label: "Employee Management",
+                icon: "badge",
+              },
+            ],
+          },
+        ]
+      : []),
   ];
 
   return (

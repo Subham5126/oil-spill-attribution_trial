@@ -38,16 +38,20 @@ const ENABLE_DEMO_FALLBACK = (import.meta as any).env?.VITE_ENABLE_DEMO_FALLBACK
 export type DataSourceOrigin = "BACKEND" | "DEMO_FALLBACK";
 
 // ── Auth API ──────────────────────────────────────────────────────────────────
-
-export interface AuthUser {
-  id: number;
-  email: string;
-  employee_id: string | null;
-  full_name: string;
-  role: "ADMIN" | "ANALYST" | "OPERATOR" | "VIEWER";
-  department: string | null;
-  last_login_at: string | null;
-}
+export type {
+  AuthUser,
+  EmployeeItem,
+  CreateEmployeePayload,
+  TokenVerificationData,
+  AccountStatus,
+  UserRole,
+} from "../types/auth";
+import type {
+  AuthUser,
+  EmployeeItem,
+  CreateEmployeePayload,
+  TokenVerificationData,
+} from "../types/auth";
 
 /**
  * Authenticate with org email or employee ID + password.
@@ -110,6 +114,194 @@ export async function refreshAuth(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * List all employees (TECH_ADMIN only).
+ */
+export async function listEmployees(page = 1, pageSize = 50): Promise<{ total: number; page: number; page_size: number; items: EmployeeItem[] }> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/users?page=${page}&page_size=${pageSize}`, {
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Failed to fetch employees (${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Provision a new employee (TECH_ADMIN only).
+ */
+export async function createEmployee(payload: CreateEmployeePayload): Promise<EmployeeItem> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/users`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Failed to create employee (${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Update employee details (TECH_ADMIN only).
+ */
+export async function updateEmployee(id: number, payload: { full_name?: string; department?: string; role?: string }): Promise<EmployeeItem> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/users/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Failed to update employee (${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Re-activate an employee account (TECH_ADMIN only).
+ */
+export async function activateEmployee(id: number): Promise<{ detail: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/users/${id}/activate`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Failed to activate employee (${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Deactivate an employee account (TECH_ADMIN only).
+ */
+export async function deactivateEmployee(id: number): Promise<{ detail: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/users/${id}/deactivate`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Failed to deactivate employee (${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Resend activation invitation email to employee (TECH_ADMIN only).
+ */
+export async function resendInvitation(id: number): Promise<{ detail: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/users/${id}/resend-invitation`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Failed to resend invitation (${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Send password reset email link to employee (TECH_ADMIN only).
+ */
+export async function triggerPasswordReset(id: number): Promise<{ detail: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/users/${id}/reset-password`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Failed to send password reset email (${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Backwards-compatibility alias for triggerPasswordReset.
+ */
+export async function resetEmployeePassword(id: number): Promise<{ detail: string }> {
+  return triggerPasswordReset(id);
+}
+
+/**
+ * Verify an activation token and fetch read-only employee info.
+ */
+export async function verifyActivationToken(token: string): Promise<TokenVerificationData> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/verify-activation-token?token=${encodeURIComponent(token)}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Invalid or expired activation link (${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Complete account activation by setting password.
+ */
+export async function activateAccount(token: string, new_password: string): Promise<{ detail: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/activate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, new_password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Account activation failed (${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Verify a password reset token and fetch read-only employee info.
+ */
+export async function verifyResetToken(token: string): Promise<TokenVerificationData> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/verify-reset-token?token=${encodeURIComponent(token)}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Invalid or expired reset link (${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Complete password reset by setting new password.
+ */
+export async function completePasswordReset(token: string, new_password: string): Promise<{ detail: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, new_password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Password reset failed (${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Self-service password change.
+ */
+export async function changeOwnPassword(current_password: string, new_password: string): Promise<{ detail: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ current_password, new_password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Failed to change password (${res.status})`);
+  }
+  return res.json();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

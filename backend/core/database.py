@@ -69,6 +69,26 @@ def _create_tables(engine):
                     conn.execute(text("ALTER TABLE user_profiles ADD COLUMN department VARCHAR(128) DEFAULT 'Maritime Environmental Enforcement Division'"))
                 if "specialization" not in profile_cols:
                     conn.execute(text("ALTER TABLE user_profiles ADD COLUMN specialization VARCHAR(128) DEFAULT 'SAR Detection & Hydrodynamic Drift Reconstruction'"))
+            user_cols = [c[1] for c in conn.execute(text("PRAGMA table_info(users)")).fetchall()]
+            if user_cols:
+                if "official_email" not in user_cols and "email" in user_cols:
+                    conn.execute(text("ALTER TABLE users RENAME COLUMN email TO official_email"))
+                if "must_change_password" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN must_change_password BOOLEAN DEFAULT 0"))
+                if "account_status" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN account_status VARCHAR(32) DEFAULT 'ACTIVE'"))
+                if "activation_token_hash" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN activation_token_hash VARCHAR(64)"))
+                if "activation_token_expires_at" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN activation_token_expires_at DATETIME"))
+                if "activation_used_at" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN activation_used_at DATETIME"))
+                if "reset_token_hash" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN reset_token_hash VARCHAR(64)"))
+                if "reset_token_expires_at" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN reset_token_expires_at DATETIME"))
+                if "last_invitation_sent_at" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN last_invitation_sent_at DATETIME"))
             conn.commit()
     except Exception as e:
         logger.error(f"Error creating database tables: {e}")
@@ -79,43 +99,67 @@ def _init_engine():
 
     db_url = settings.DATABASE_URL
     if not db_url:
+        if settings.is_production:
+            logger.critical("FATAL: DATABASE_URL is not set in production. Application startup aborted.")
+            _db_available = False
+            raise RuntimeError(
+                "CRITICAL: Production environment (APP_ENV=production) requires a valid PostgreSQL DATABASE_URL. "
+                "No DATABASE_URL was provided. Local SQLite fallback is prohibited in production."
+            )
         logger.warning("DATABASE_URL is not set. Database persistence will be in fallback/demo mode.")
         _db_available = False
         return None, None
 
-    try:
-        # If postgresql:// or postgresql+psycopg:// is supplied
-        # Ensure proper driver specification if generic postgresql:// was passed
-        if db_url.startswith("postgresql://"):
-            try:
-                import psycopg
-                db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
-            except ImportError:
-                pass
-
-        connect_args = {}
-        if "sqlite" in db_url:
-            connect_args["check_same_thread"] = False
-        elif "postgresql" in db_url:
-            connect_args["connect_timeout"] = 1
-
-        engine = create_engine(
-            db_url,
-            pool_pre_ping=True,
-            echo=settings.DB_ECHO,
-            connect_args=connect_args,
+    if settings.is_production and not settings.is_postgres:
+        logger.critical(f"FATAL: Production environment requires PostgreSQL. Found non-PostgreSQL URL.")
+        _db_available = False
+        raise RuntimeError(
+            "CRITICAL: Production environment (APP_ENV=production) requires PostgreSQL. "
+            "SQLite is strictly prohibited in production."
         )
+
+    try:
+        connect_args = {}
+        if "postgresql" in db_url:
+            connect_args["connect_timeout"] = 10
+            engine = create_engine(
+                db_url,
+                pool_pre_ping=True,
+                pool_size=settings.DB_POOL_SIZE,
+                max_overflow=settings.DB_MAX_OVERFLOW,
+                pool_timeout=30,
+                pool_recycle=1800,
+                echo=settings.DB_ECHO,
+                connect_args=connect_args,
+            )
+        else:
+            connect_args["check_same_thread"] = False
+            engine = create_engine(
+                db_url,
+                pool_pre_ping=True,
+                echo=settings.DB_ECHO,
+                connect_args=connect_args,
+            )
 
         # Test connection
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         _engine = engine
         _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-        _create_tables(engine)
+
+        # In SQLite local dev, run lightweight schema creation if migrations haven't run
+        if "sqlite" in db_url:
+            _create_tables(engine)
+
         _db_available = True
-        logger.info(f"Connected successfully to database. Tables initialized.")
+        logger.info(f"Connected successfully to database ({'PostgreSQL' if 'postgresql' in db_url else 'SQLite'}).")
         return _engine, _SessionLocal
     except Exception as exc:
+        if settings.is_production:
+            logger.critical(f"FATAL: Failed to connect to production PostgreSQL database ({exc}).")
+            _db_available = False
+            raise RuntimeError(f"Production PostgreSQL connection failed: {exc}") from exc
+
         logger.warning(f"Could not connect to database {db_url} ({exc}). Falling back to local SQLite database.")
         try:
             sqlite_path = settings.REPO_ROOT / "data" / "oiltrace.db"
@@ -138,6 +182,7 @@ def _init_engine():
 
 # Attempt initial connection
 _engine, _SessionLocal = _init_engine()
+SessionLocal = _SessionLocal
 
 
 def get_engine():

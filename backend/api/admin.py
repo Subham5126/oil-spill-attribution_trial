@@ -32,7 +32,7 @@ from backend.models.user import ROLES, User
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
-_admin_only = require_role("ADMIN")
+_admin_only = Depends(require_role("TECH_ADMIN", "ADMIN"))
 
 
 # ──────────────────────────────────────────────────────────────────────────────

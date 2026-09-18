@@ -14,14 +14,15 @@ router = APIRouter(tags=["Health"])
 @router.get("/health")
 def health_check():
     """System health and operational status endpoint. Checks backend, DB, and Redis liveness."""
-    db_status = check_db_health()
+    db_raw = check_db_health()
+    db_connected = db_raw == "ok"
     redis_status = check_redis_health()
-    overall = "healthy" if db_status == "ok" or settings.DEMO_MODE else "degraded"
+    overall = "healthy" if db_connected or settings.DEMO_MODE else "degraded"
 
     return {
         "status": overall,
         "backend": "ok",
-        "database": db_status,
+        "database": "connected" if db_connected else "unavailable",
         "redis": redis_status,
         "demo_mode": settings.DEMO_MODE,
         "app_env": settings.APP_ENV,

@@ -15,7 +15,7 @@ if str(REPO_ROOT) not in sys.path:
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from backend.core.config import settings
+from backend.core.config import settings, normalize_database_url
 from backend.models import Base
 
 # this is the Alembic Config object, which provides
@@ -30,18 +30,11 @@ target_metadata = Base.metadata
 
 
 def get_url():
-    """Retrieve database URL from application settings with fallback."""
-    url = settings.DATABASE_URL
-    if not url:
-        # Default SQLite memory or placeholder for offline schema generation
+    """Retrieve database URL from application settings or environment with normalization."""
+    raw_url = os.getenv("DATABASE_URL") or settings.DATABASE_URL
+    if not raw_url:
         return "sqlite:///./oiltrace_dev.db"
-    if url.startswith("postgresql://"):
-        try:
-            import psycopg
-            url = url.replace("postgresql://", "postgresql+psycopg://", 1)
-        except ImportError:
-            pass
-    return url
+    return normalize_database_url(raw_url)
 
 
 def run_migrations_offline() -> None:
