@@ -23,8 +23,8 @@ import rasterio
 import xarray as xr
 from sqlalchemy.orm import Session
 
-from ai.inference.infer import OilSpillInference
 from ais.filtering.spatial import haversine_distance_km
+
 from ais.integration.search_request import AISSearchRequest
 from ais.providers.gfw import GlobalFishingWatchAISProvider
 from backend.adapters.demo_adapter import demo_provider
@@ -36,11 +36,12 @@ from backend.models.investigation import InvestigationModel
 from backend.repositories.investigations import InvestigationRepository
 from backend.schemas.common import PipelineStatusEnum
 from backend.services.image_service import ImageService
-from demo.end_to_end_real_workflow_demo import (
+from backend.services.geo_service import (
     inspect_sentinel1_tiff,
-    run_m2_preprocessing,
     run_m3_geometry,
 )
+
+
 from gis.geometry.geojson import to_geojson
 from ocean.copernicus.client import compute_adaptive_aoi
 from ocean.currents import load_currents
@@ -597,7 +598,9 @@ class PipelineService:
             # -------------------------------------------------------------
             _update_status(25, "M2 — U-Net Segmentation", "RUNNING", "Running U-Net deep learning inference on SAR scene")
             import cv2
+            from ai.inference.infer import OilSpillInference
             infer = OilSpillInference(MODEL_PATH, model_provider=settings.OILTRACE_MODEL_PROVIDER)
+
             pred_res = infer.predict(tiff_path)
             binary_mask = pred_res["mask"]
             full_prob = pred_res["probability"]

@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 from backend.core.database import get_db
 from backend.core.logging import logger
-from backend.services.pipeline_service import PipelineService
 from backend.workers.celery_app import celery_app
 
 def _dummy_task_decorator(*args, **kwargs):
@@ -25,6 +24,8 @@ def run_pipeline_task(
     forward_steps: int = 2,
 ) -> Dict[str, Any]:
     """Execute attribution pipeline asynchronously in background worker."""
+    from backend.services.pipeline_service import PipelineService
+
     task_id = self.request.id
     logger.info(f"Celery task {task_id} started for investigation: {investigation_id}")
 
@@ -32,6 +33,7 @@ def run_pipeline_task(
     db = next(db_gen)
     try:
         service = PipelineService(db=db)
+
         result = service.run_pipeline(
             investigation_id=investigation_id,
             particles_count=particles_count,

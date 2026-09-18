@@ -1,13 +1,10 @@
-"""OilTrace Services Package."""
+"""OilTrace Services Package.
 
-from backend.services.investigation_service import InvestigationService
-from backend.services.pipeline_service import PipelineService
-from backend.services.drift_service import DriftService
-from backend.services.layer_service import LayerService
-from backend.services.report_service import ReportService
-from backend.services.spill_service import SpillService
-from backend.services.vessel_service import VesselService
-from backend.services.attribution_service import AttributionService
+Services should be imported directly from their respective modules
+(e.g. `from backend.services.email_service import get_email_service` or
+`from backend.services.pipeline_service import PipelineService`)
+to prevent circular imports and heavy eager loading during lightweight application startup.
+"""
 
 __all__ = [
     "InvestigationService",
