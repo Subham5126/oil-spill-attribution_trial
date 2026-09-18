@@ -6,7 +6,8 @@ scikit-learn
 matplotlib
 
 # Computer Vision
-opencv-python
+opencv-python-headless
+
 
 # Deep Learning
 torch
