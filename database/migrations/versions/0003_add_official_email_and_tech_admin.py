@@ -1,6 +1,6 @@
 """Add official_email and tech_admin provisioning fields.
 
-Revision ID: 0003_add_official_email_and_tech_admin
+Revision ID: 0003_official_email_tech_admin
 Revises: 0002_add_auth_users
 Create Date: 2026-09-18 00:00:00.000000
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "0003_add_official_email_and_tech_admin"
+revision: str = "0003_official_email_tech_admin"
 down_revision: Union[str, None] = "0002_add_auth_users"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

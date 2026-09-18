@@ -1,7 +1,7 @@
 """Add account activation and password reset fields.
 
-Revision ID: 0004_add_account_activation_and_reset
-Revises: 0003_add_official_email_and_tech_admin
+Revision ID: 0004_account_activation_reset
+Revises: 0003_official_email_tech_admin
 Create Date: 2026-09-18 00:00:00.000000
 """
 
@@ -11,8 +11,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "0004_add_account_activation_and_reset"
-down_revision: Union[str, None] = "0003_add_official_email_and_tech_admin"
+revision: str = "0004_account_activation_reset"
+down_revision: Union[str, None] = "0003_official_email_tech_admin"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

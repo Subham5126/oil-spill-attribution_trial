@@ -6,6 +6,7 @@ Handles missing/offline PostgreSQL gracefully with fallback options.
 
 from __future__ import annotations
 
+import sys
 from typing import Generator, Optional
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
@@ -148,8 +149,23 @@ def _init_engine():
         _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
         # In SQLite local dev, run lightweight schema creation if migrations haven't run
-        if "sqlite" in db_url:
+        is_alembic = any("alembic" in arg.lower() for arg in sys.argv)
+        if "sqlite" in db_url and not is_alembic:
             _create_tables(engine)
+        elif "postgresql" in db_url:
+            try:
+                from sqlalchemy import inspect
+                inspector = inspect(engine)
+                table_names = inspector.get_table_names()
+                if "users" not in table_names:
+                    logger.warning(
+                        "PostgreSQL database connected, but 'users' table not found. "
+                        "Ensure Alembic migrations have executed via 'alembic upgrade head'."
+                    )
+                else:
+                    logger.info("PostgreSQL database tables verified ('users' table present).")
+            except Exception as check_err:
+                logger.debug(f"Schema inspection note: {check_err}")
 
         _db_available = True
         logger.info(f"Connected successfully to database ({'PostgreSQL' if 'postgresql' in db_url else 'SQLite'}).")
